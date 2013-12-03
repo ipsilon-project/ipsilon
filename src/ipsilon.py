@@ -23,12 +23,18 @@ sys.stdout = sys.stderr
 import atexit
 import threading
 import cherrypy
+from util import plugin
 
 class Root(object):
 
     @cherrypy.expose
     def index(self):
         return '/'
+
+
+plugins = plugin.Plugins()
+idp_providers = plugins.get_providers()
+cherrypy.config.update({'idp_providers': idp_providers})
 
 if __name__ == "__main__":
     cherrypy.quickstart(Root())
