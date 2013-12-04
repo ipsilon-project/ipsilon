@@ -32,6 +32,8 @@ class Root(object):
         return '/'
 
 
+cherrypy.config.update('ipsilon.conf')
+
 plugins = plugin.Plugins()
 idp_providers = plugins.get_providers()
 cherrypy.config.update({'idp_providers': idp_providers})
