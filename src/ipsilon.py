@@ -24,6 +24,7 @@ import atexit
 import threading
 import cherrypy
 from util import plugin
+from util import data
 
 class Root(object):
 
@@ -37,6 +38,10 @@ cherrypy.config.update('ipsilon.conf')
 plugins = plugin.Plugins()
 idp_providers = plugins.get_providers()
 cherrypy.config.update({'idp_providers': idp_providers})
+
+datastore = data.Store()
+admin_config = datastore.get_admin_config()
+cherrypy.config.update(admin_config)
 
 if __name__ == "__main__":
     cherrypy.quickstart(Root())
