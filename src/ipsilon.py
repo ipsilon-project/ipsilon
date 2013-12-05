@@ -20,17 +20,14 @@
 import sys
 sys.stdout = sys.stderr
 
+import os
 import atexit
 import threading
 import cherrypy
 from util import plugin
 from util import data
-
-class Root(object):
-
-    @cherrypy.expose
-    def index(self):
-        return '/'
+from jinja2 import Environment, FileSystemLoader
+import root
 
 
 cherrypy.config.update('ipsilon.conf')
@@ -43,8 +40,11 @@ datastore = data.Store()
 admin_config = datastore.get_admin_config()
 cherrypy.config.update(admin_config)
 
+templates = os.path.join(cherrypy.config['base.dir'], 'templates')
+env = Environment(loader=FileSystemLoader(templates))
+
 if __name__ == "__main__":
-    cherrypy.quickstart(Root())
+    cherrypy.quickstart(root.Root(env))
 
 else:
     cherrypy.config.update({'environment': 'embedded'})
@@ -53,4 +53,5 @@ else:
         cherrypy.engine.start(blocking=False)
         atexit.register(cherrypy.engine.stop)
 
-    application = cherrypy.Application(Root(), script_name=None, config=None)
+    application = cherrypy.Application(root.Root(env),
+                                       script_name=None, config=None)
