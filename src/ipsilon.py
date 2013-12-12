@@ -34,20 +34,26 @@ cherrypy.config.update('ipsilon.conf')
 
 plugins = plugin.Plugins(path=cherrypy.config['base.dir'])
 idp_providers = plugins.get_providers()
-cherrypy.config.update({'idp_providers': idp_providers})
+if idp_providers:
+    cherrypy.config['idp_providers'] = idp_providers
 
 datastore = data.Store()
 admin_config = datastore.get_admin_config()
-cherrypy.config.update(admin_config)
+for option in admin_config:
+    cherrypy.config[option] = admin_config[option]
 
 templates = os.path.join(cherrypy.config['base.dir'], 'templates')
 env = Environment(loader=FileSystemLoader(templates))
 
 if __name__ == "__main__":
-    cherrypy.quickstart(root.Root(env))
+    conf = { '/': {'tools.staticdir.root': os.getcwd()},
+             '/ui': { 'tools.staticdir.on': True,
+                      'tools.staticdir.dir': 'ui' }
+           }
+    cherrypy.quickstart(root.Root(env), '/', conf)
 
 else:
-    cherrypy.config.update({'environment': 'embedded'})
+    cherrypy.config['environment'] = 'embedded'
 
     if cherrypy.__version__.startswith('3.0') and cherrypy.engine.state == 0:
         cherrypy.engine.start(blocking=False)
