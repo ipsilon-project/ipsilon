@@ -8,15 +8,28 @@
 </head>
 <body>
     <div id="container">
-        <div id="background">
-            <div id="background-header"></div>
-            <div id="background-navigation"></div>
-            <div id="background-left"></div>
-            <div id="background-center"></div>
-            <div id="background-right"></div>
+        <div id="logo">
+            <p>Ipsilon</p>
+        </div>
+        <div id="admin">
+            {% if user.is_admin %}
+                <a href="admin">admin</a>
+            {% endif %}
+        </div>
+        <div id="welcome">
+            {% if user.name %}
+                <p>Welcome {{ user.fullname }}</p>
+            {% endif %}
         </div>
         <div id="content">
-            <p>{{ content }}</p>
+            {% if not user.name %}
+                <p>Please <a href="login">Log In</a>
+            {% elif user.sites %}
+                <p>Registered application shortcuts:</p>
+                {% for site in user.sites %}
+                    <p><a href="{{ site.link }}">{{ site.name }}</a></p>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 </body>

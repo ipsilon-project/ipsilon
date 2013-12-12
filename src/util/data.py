@@ -51,7 +51,15 @@ class Store(object):
 
         conf = {}
         for row in rows:
-            conf[row[0]] = row[1]
+            if row[0] in conf:
+                # multivalued
+                if conf[row[0]] is list:
+                    conf[row[0]].append(row[1])
+                else:
+                    v = conf[row[0]]
+                    conf[row[0]] = [v, row[1]]
+            else:
+                conf[row[0]] = row[1]
 
         return conf
 
@@ -63,3 +71,42 @@ class Store(object):
             path = os.path.join(self._path, 'adminconfig.sqlite')
 
         return self._load_config(path)
+
+    def _load_user_prefs(self, dbname, user):
+        con = None
+        rows = []
+        try:
+            con = sqlite3.connect(dbname)
+            cur = con.cursor()
+            cur.executescript("""
+                CREATE TABLE IF NOT EXISTS users(name TEXT,
+                                                 option TEXT,
+                                                 value TEXT)
+                """)
+            cur.execute("SELECT option, value FROM users "
+                        "where name = '%s'" % user)
+            rows = cur.fetchall()
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to load %s's prefs from "
+                               "%s: [%s]" % ( user, dbname, e))
+        finally:
+            if con:
+                con.close()
+
+        conf = {}
+        for row in rows:
+            conf[row[0]] = row[1]
+
+        return conf
+
+    def _get_user_preferences(self, user):
+        path = None
+        if 'user.prefs.db' in cherrypy.config:
+            path = cherrypy.config['user.prefs.db']
+        if not path:
+            path = os.path.join(self._path, 'userprefs.sqlite')
+
+        return self._load_user_prefs(path, user)
