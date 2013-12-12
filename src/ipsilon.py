@@ -32,7 +32,7 @@ import root
 
 cherrypy.config.update('ipsilon.conf')
 
-plugins = plugin.Plugins()
+plugins = plugin.Plugins(path=cherrypy.config['base.dir'])
 idp_providers = plugins.get_providers()
 cherrypy.config.update({'idp_providers': idp_providers})
 

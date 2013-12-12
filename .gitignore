@@ -2,3 +2,4 @@ dist/
 MANIFEST
 *.pyc
 *.pyo
+ipsilon.conf
