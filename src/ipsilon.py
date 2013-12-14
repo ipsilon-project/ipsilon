@@ -26,9 +26,9 @@ import threading
 import cherrypy
 from util import plugin
 from util import data
+from util import page
 from jinja2 import Environment, FileSystemLoader
 import root
-
 
 cherrypy.config.update('ipsilon.conf')
 
@@ -44,6 +44,8 @@ for option in admin_config:
 
 templates = os.path.join(cherrypy.config['base.dir'], 'templates')
 env = Environment(loader=FileSystemLoader(templates))
+
+cherrypy.tools.protect = cherrypy.Tool('before_handler', page.protect)
 
 if __name__ == "__main__":
     conf = { '/': {'tools.staticdir.root': os.getcwd()},

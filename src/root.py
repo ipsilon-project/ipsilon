@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from util import data
+from util import page
 import cherrypy
 
 class Site(object):
@@ -78,16 +79,8 @@ class User(object):
         #TODO: implement setting sites via the user object ?
         raise AttributeError
 
-class Root(object):
+class Root(page.Page):
 
-    def __init__(self, template_env):
-        self._env = template_env
-
-    @cherrypy.expose
-    def index_html(self):
+    def root(self):
         tmpl = self._env.get_template('index.html')
-        return tmpl.render(title='Root', user=User(None))
-
-    @cherrypy.expose
-    def index(self):
-        return self.index_html()
+        return tmpl.render(title='Root', user=User(self.username))
