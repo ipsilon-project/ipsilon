@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from util import user
 import cherrypy
 
 def protect():
@@ -31,10 +32,12 @@ def protect():
 class Page(object):
     def __init__(self, template_env):
         self._env = template_env
+        self.basepath = cherrypy.config.get('base.mount', "")
         self.username = None
 
     def __call__(self, *args, **kwargs):
         self.username = cherrypy.session.get('user', None)
+        self.user = user.User(self.username)
 
         if len(args) > 0:
             op = getattr(self, args[0], None)
@@ -46,6 +49,10 @@ class Page(object):
                 return op(**kwargs)
 
         return self.default(*args, **kwargs)
+
+    def _template(self, *args, **kwargs):
+        t = self._env.get_template(args[0])
+        return t.render(basepath=self.basepath, user=self.user, **kwargs)
 
     def default(self, *args, **kwargs):
         raise cherrypy.HTTPError(404)
