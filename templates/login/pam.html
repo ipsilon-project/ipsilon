@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"></meta>
+    <title>{{ title }}</title>
+    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
+    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
+</head>
+<body>
+    <div id="container">
+        <div id="logo">
+            <p>Ipsilon</p>
+        </div>
+        <div id="login">
+            <form id="login_form" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
+                <p>
+                    <label for="username">{{ username_text }}</label>
+                    <br>
+                    <input id="username" name="login_name" value="" size="32" type="text">
+                </p>
+                <p>
+                    <label for="password">{{ password_text }}</label>
+                    <br>
+                    <input id="password" name="login_password" value="" size="32" type="password">
+                </p>
+                <p>
+                    <input id="submit" name="submit" value="Login" type="submit">
+                </p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
