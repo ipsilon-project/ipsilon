@@ -1,0 +1,57 @@
+Introduction
+------------
+
+Ipsilon is an Identity Provider (IdP)
+
+In our view an IdP is a gateway that allows applications to authenticate a
+user "by proxy", ie deferring to the authentication proxy the actual
+authentication.
+
+Applications that most benefit from authentication by proxy are web
+applications deployed by a third party (or an internal party) that do not
+have direct access to the Identity store containing the user identity.
+
+IdPs not only provide authentication, but can also provide user identity
+information depending on the protocol used.
+
+The Ipsilon Idp is by nature multi-protocol, both in the interface it
+exposes to applications and in the authentication method supported. All the
+protocols and authentication providers are implemented as plugins.
+
+The use of a reduced set of external python dependencies is the driving
+philosophy. This is to reduce the amount of maintenance required going
+forward. By their very nature in fact, authentication protocols are very
+slow moving, so we predict we can build a longer lived project if we avoid
+the churn of adding fast moving frameworks or modules.
+
+Architecture
+------------
+
+Ipsilon is mostly a web service builtin in python on the cherrypy framework.
+It is normally installed and run in an apache server and some plugins depend
+on authentication modules available in apache like mod_auth_kerb.
+
+Each authentication method is chained to the next in line so that automatic
+fallback can happen and multiple authentication methods can be employed at
+the same time. The administrator configures which authentication methods are
+made available.
+
+Identity Provider protocols are made available through a different set of
+plugins. These methods own their subtrees but are required to reference the
+authentication pugin to perform actual user authentication in most cases.
+
+Identity information will be provided in future by pluggable identity
+modules. However the most basic implementation will only use authentication
+from external sources but will allow users to augment the information
+provided to third parties by directly adding the information to thorugh the
+IdP's own database.
+
+The project is complemented by an install script that will perform all the
+necessary configuration steps to set up the apche server and connect to the
+external identity and authentication sources.
+
+A companion client install script will be provided to automatically
+configure, when possible, applications, and to perform the encessary
+registration of applications, exchange of keys or other setup operations
+necessary to allow third party application to interact with the selected
+IdP protocol.
