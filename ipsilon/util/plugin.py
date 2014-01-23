@@ -37,11 +37,11 @@ class Plugins(object):
         try:
             if ext.lower() == '.py':
                 mod = imp.load_source(name, file_name)
-            elif ex.lower() == '.pyc':
+            elif ext.lower() == '.pyc':
                 mod = imp.load_compiled(name, file_name)
             else:
                 return
-        except Exception, e:
+        except Exception, e:  # pylint: disable=broad-except
             cherrypy.log.error('Failed to load "%s" module: [%s]' % (name, e))
             return
 
@@ -53,12 +53,12 @@ class Plugins(object):
         files = None
         try:
             files = os.listdir(path)
-        except Exception, e:
+        except Exception, e:  # pylint: disable=broad-except
             cherrypy.log.error('No modules in %s: [%s]' % (path, e))
             return
 
         for name in files:
-            filename = od.path.join(path, name)
+            filename = os.path.join(path, name)
             self._load_class(tree, class_type, filename)
 
     def get_providers(self):
@@ -74,7 +74,7 @@ class Plugins(object):
 
         return self._providers_tree
 
-    def get_custom(self, class_type):
+    def get_custom(self, path, class_type):
         tree = []
-        self._load_classes(tree, class_type)
+        self._load_classes(tree, path, class_type)
         return tree

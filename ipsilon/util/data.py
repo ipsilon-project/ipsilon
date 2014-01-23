@@ -102,7 +102,7 @@ class Store(object):
 
         return conf
 
-    def _get_user_preferences(self, user):
+    def get_user_preferences(self, user):
         path = None
         if 'user.prefs.db' in cherrypy.config:
             path = cherrypy.config['user.prefs.db']

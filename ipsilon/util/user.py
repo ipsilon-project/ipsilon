@@ -36,7 +36,7 @@ class User(object):
 
     def _get_user_data(self, username):
         store = Store()
-        return store._get_user_preferences(username)
+        return store.get_user_preferences(username)
 
     @property
     def is_admin(self):

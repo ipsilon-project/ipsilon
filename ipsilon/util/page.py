@@ -34,8 +34,10 @@ class Page(object):
         self._env = template_env
         self.basepath = cherrypy.config.get('base.mount', "")
         self.username = None
+        self.user = None
 
     def __call__(self, *args, **kwargs):
+        # pylint: disable=star-args
         self.username = cherrypy.session.get('user', None)
         self.user = User(self.username)
 
