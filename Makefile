@@ -1,4 +1,4 @@
-all: lint
+all: lint pep8
 
 lint:
 	# Analyze code
@@ -9,3 +9,7 @@ lint:
 		   --notes= \
 		   --ignored-classes=cherrypy \
 		   ./ipsilon
+
+pep8:
+	# Check style consistency
+	pep8 ipsilon

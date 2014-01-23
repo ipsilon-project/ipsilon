@@ -19,6 +19,7 @@
 
 from ipsilon.util.page import Page
 
+
 class Root(Page):
 
     def root(self):

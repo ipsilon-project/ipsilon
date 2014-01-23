@@ -21,6 +21,7 @@ import os
 import imp
 import cherrypy
 
+
 class Plugins(object):
 
     def __init__(self, path=None):

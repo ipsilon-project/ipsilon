@@ -19,11 +19,13 @@
 
 from ipsilon.util.data import Store
 
+
 class Site(object):
     def __init__(self, value):
         # implement lookup of sites id for link/name
         self.link = value
         self.name = value
+
 
 class User(object):
     def __init__(self, username):
@@ -76,4 +78,3 @@ class User(object):
     def sites(self):
         #TODO: implement setting sites via the user object ?
         raise AttributeError
-

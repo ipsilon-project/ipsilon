@@ -47,10 +47,9 @@ env = Environment(loader=FileSystemLoader(templates))
 cherrypy.tools.protect = cherrypy.Tool('before_handler', page.protect)
 
 if __name__ == "__main__":
-    conf = { '/': {'tools.staticdir.root': os.getcwd()},
-             '/ui': { 'tools.staticdir.on': True,
-                      'tools.staticdir.dir': 'ui' }
-           }
+    conf = {'/': {'tools.staticdir.root': os.getcwd()},
+            '/ui': {'tools.staticdir.on': True,
+                    'tools.staticdir.dir': 'ui'}}
     cherrypy.quickstart(Root(env), '/', conf)
 
 else:

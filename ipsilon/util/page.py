@@ -20,6 +20,7 @@
 from ipsilon.util.user import User
 import cherrypy
 
+
 def protect():
     if cherrypy.request.login:
         user = cherrypy.session.get('user', None)
@@ -28,6 +29,7 @@ def protect():
         else:
             cherrypy.session.regenerate()
             cherrypy.session['user'] = cherrypy.request.login
+
 
 class Page(object):
     def __init__(self, template_env):

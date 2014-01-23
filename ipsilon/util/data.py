@@ -21,6 +21,7 @@ import os
 import sqlite3
 import cherrypy
 
+
 class Store(object):
 
     def __init__(self, path=None):
@@ -91,7 +92,7 @@ class Store(object):
             if con:
                 con.rollback()
             cherrypy.log.error("Failed to load %s's prefs from "
-                               "%s: [%s]" % ( user, dbname, e))
+                               "%s: [%s]" % (user, dbname, e))
         finally:
             if con:
                 con.close()
