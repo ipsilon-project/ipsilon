@@ -188,3 +188,69 @@ class Store(object):
         finally:
             if con:
                 con.close()
+
+    def get_data(self, plugin):
+        con = None
+        rows = []
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS " +
+                        plugin + "_data (id INTEGER, name TEXT, value TEXT)")
+            cur.execute("SELECT * FROM " + plugin + "_data")
+            rows = cur.fetchall()
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to load %s data: [%s]" % (plugin, e))
+        finally:
+            if con:
+                con.close()
+
+        data = dict()
+        for row in rows:
+            if row[0] not in data:
+                data[row[0]] = dict()
+
+            item = data[row[0]]
+            if row[1] in item:
+                if item[row[1]] is list:
+                    item[row[1]].append(row[2])
+                else:
+                    v = item[row[1]]
+                    item[row[1]] = [v, row[2]]
+            else:
+                item[row[1]] = row[2]
+
+        return data
+
+    def save_data(self, plugin, data):
+        SELECT = "SELECT name, value FROM %s_data WHERE id=?" % plugin
+        UPDATE = "UPDATE %s_data SET value=? WHERE id=? AND name=?" % plugin
+        INSERT = "INSERT INTO %s_data VALUES(?,?,?)" % plugin
+        con = None
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            for idval in data:
+                curvals = dict()
+                for row in cur.execute(SELECT, (idval,)):
+                    curvals[row[0]] = row[1]
+
+                datum = data[idval]
+                for name in datum:
+                    if name in curvals:
+                        cur.execute(UPDATE, (datum[name], idval, name))
+                    else:
+                        cur.execute(INSERT, (idval, name, datum[name]))
+
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to store %s data: [%s]" % (plugin, e))
+            raise
+        finally:
+            if con:
+                con.close()

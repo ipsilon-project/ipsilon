@@ -102,6 +102,7 @@ class PluginObject(object):
         self.name = None
         self._config = None
         self._options = None
+        self._data = Store()
 
     def get_config_desc(self):
         """ The configuration description is a dictionary that provides
@@ -136,3 +137,9 @@ class PluginObject(object):
         if not self._config:
             self._config = dict()
         self._config[option] = value
+
+    def get_data(self):
+        return self._data.get_data(self.name)
+
+    def save_data(self, data):
+        self._data.save_data(self.name, data)

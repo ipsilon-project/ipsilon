@@ -22,6 +22,7 @@ from ipsilon.util import errors
 from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
 from ipsilon.admin.common import Admin
+from ipsilon.providers.common import LoadProviders
 import cherrypy
 
 sites = dict()
@@ -44,6 +45,9 @@ class Root(Page):
         # now set up the default login plugins
         self.login = Login(self._site)
         self.logout = Logout(self._site)
+
+        # set up idp providers now
+        LoadProviders(self, self._site)
 
         # after all plugins are setup we can instantiate the admin pages
         self.admin = Admin(self._site)
