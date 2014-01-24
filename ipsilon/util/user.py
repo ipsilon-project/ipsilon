@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from util import data
+from ipsilon.util.data import Store
 
 class Site(object):
     def __init__(self, value):
@@ -35,7 +35,7 @@ class User(object):
             self.name = username
 
     def _get_user_data(self, username):
-        store = data.Store()
+        store = Store()
         return store._get_user_preferences(username)
 
     @property

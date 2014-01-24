@@ -22,22 +22,21 @@ sys.stdout = sys.stderr
 
 import os
 import atexit
-import threading
 import cherrypy
-from util import plugin
-from util import data
-from util import page
+from ipsilon.util.plugin import Plugins
+from ipsilon.util.data import Store
+from ipsilon.util import page
+from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
-import root
 
 cherrypy.config.update('ipsilon.conf')
 
-plugins = plugin.Plugins(path=cherrypy.config['base.dir'])
+plugins = Plugins(path=cherrypy.config['base.dir'])
 idp_providers = plugins.get_providers()
 if idp_providers:
     cherrypy.config['idp_providers'] = idp_providers
 
-datastore = data.Store()
+datastore = Store()
 admin_config = datastore.get_admin_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
@@ -52,7 +51,7 @@ if __name__ == "__main__":
              '/ui': { 'tools.staticdir.on': True,
                       'tools.staticdir.dir': 'ui' }
            }
-    cherrypy.quickstart(root.Root(env), '/', conf)
+    cherrypy.quickstart(Root(env), '/', conf)
 
 else:
     cherrypy.config['environment'] = 'embedded'
@@ -61,5 +60,5 @@ else:
         cherrypy.engine.start(blocking=False)
         atexit.register(cherrypy.engine.stop)
 
-    application = cherrypy.Application(root.Root(env),
+    application = cherrypy.Application(Root(env),
                                        script_name=None, config=None)

@@ -17,10 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from util import page
-import cherrypy
+from ipsilon.util.page import Page
 
-class Root(page.Page):
+class Root(Page):
 
     def root(self):
         return self._template('index.html', title='Root')

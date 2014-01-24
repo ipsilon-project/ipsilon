@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from util import user
+from ipsilon.util.user import User
 import cherrypy
 
 def protect():
@@ -37,7 +37,7 @@ class Page(object):
 
     def __call__(self, *args, **kwargs):
         self.username = cherrypy.session.get('user', None)
-        self.user = user.User(self.username)
+        self.user = User(self.username)
 
         if len(args) > 0:
             op = getattr(self, args[0], None)
