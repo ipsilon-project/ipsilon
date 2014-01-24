@@ -20,6 +20,7 @@
 from ipsilon.util.page import Page
 from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
+from ipsilon.admin.common import Admin
 
 sites = dict()
 
@@ -36,6 +37,9 @@ class Root(Page):
         # now set up the default login plugins
         self.login = Login(self._site)
         self.logout = Logout(self._site)
+
+        # after all plugins are setup we can instantiate the admin pages
+        self.admin = Admin(self._site)
 
     def root(self):
         return self._template('index.html', title='Root')
