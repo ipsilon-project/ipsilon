@@ -29,6 +29,24 @@ class Store(object):
             self._path = os.getcwd()
         else:
             self._path = path
+        self._admin_dbname = self._get_admin_dbname()
+        self._user_dbname = self._get_userprefs_dbname()
+
+    def _get_admin_dbname(self):
+        path = None
+        if 'admin.config.db' in cherrypy.config:
+            path = cherrypy.config['admin.config.db']
+        if not path:
+            path = os.path.join(self._path, 'adminconfig.sqlite')
+        return path
+
+    def _get_userprefs_dbname(self):
+        path = None
+        if 'user.prefs.db' in cherrypy.config:
+            path = cherrypy.config['user.prefs.db']
+        if not path:
+            path = os.path.join(self._path, 'userprefs.sqlite')
+        return path
 
     def _load_config(self, dbname):
         con = None
@@ -65,13 +83,7 @@ class Store(object):
         return conf
 
     def get_admin_config(self):
-        path = None
-        if 'admin.config.db' in cherrypy.config:
-            path = cherrypy.config['admin.config.db']
-        if not path:
-            path = os.path.join(self._path, 'adminconfig.sqlite')
-
-        return self._load_config(path)
+        return self._load_config(self._admin_dbname)
 
     def _load_user_prefs(self, dbname, user):
         con = None
@@ -104,10 +116,75 @@ class Store(object):
         return conf
 
     def get_user_preferences(self, user):
-        path = None
-        if 'user.prefs.db' in cherrypy.config:
-            path = cherrypy.config['user.prefs.db']
-        if not path:
-            path = os.path.join(self._path, 'userprefs.sqlite')
+        return self._load_user_prefs(self._user_dbname, user)
 
-        return self._load_user_prefs(path, user)
+    def get_plugins_config(self, facility):
+        con = None
+        rows = []
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS " +
+                        facility + " (name TEXT,option TEXT,value TEXT)")
+            cur.execute("SELECT * FROM " + facility)
+            rows = cur.fetchall()
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to load %s config: [%s]" % (facility,
+                                                                   e))
+        finally:
+            if con:
+                con.close()
+
+        lpo = []
+        plco = dict()
+        for row in rows:
+            if row[0] == 'global':
+                if row[1] == 'order':
+                    lpo = row[2].split(',')
+                continue
+            if row[0] not in plco:
+                # one dict per provider
+                plco[row[0]] = dict()
+
+            conf = plco[row[0]]
+            if row[1] in conf:
+                if conf[row[1]] is list:
+                    conf[row[1]].append(row[2])
+                else:
+                    v = conf[row[1]]
+                    conf[row[1]] = [v, row[2]]
+            else:
+                conf[row[1]] = row[2]
+
+        return (lpo, plco)
+
+    def save_plugin_config(self, facility, plugin, options):
+        SELECT = "SELECT option, value FROM %s WHERE name=?" % facility
+        UPDATE = "UPDATE %s SET value=? WHERE name=? AND option=?" % facility
+        INSERT = "INSERT INTO %s VALUES(?,?,?)" % facility
+        con = None
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            curvals = dict()
+            for row in cur.execute(SELECT, (plugin,)):
+                curvals[row[0]] = row[1]
+
+            for name in options:
+                if name in curvals:
+                    cur.execute(UPDATE, (options[name], plugin, name))
+                else:
+                    cur.execute(INSERT, (plugin, name, options[name]))
+
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to store config: [%s]" % e)
+            raise
+        finally:
+            if con:
+                con.close()

@@ -23,18 +23,12 @@ sys.stdout = sys.stderr
 import os
 import atexit
 import cherrypy
-from ipsilon.util.plugin import Plugins
 from ipsilon.util.data import Store
 from ipsilon.util import page
 from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
 
 cherrypy.config.update('ipsilon.conf')
-
-plugins = Plugins(path=cherrypy.config['base.dir'])
-idp_providers = plugins.get_providers()
-if idp_providers:
-    cherrypy.config['idp_providers'] = idp_providers
 
 datastore = Store()
 admin_config = datastore.get_admin_config()

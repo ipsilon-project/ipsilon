@@ -20,6 +20,8 @@
 import os
 import imp
 import cherrypy
+import inspect
+from ipsilon.util.data import Store
 
 
 class Plugins(object):
@@ -38,8 +40,8 @@ class Plugins(object):
         try:
             if ext.lower() == '.py':
                 mod = imp.load_source(name, file_name)
-            elif ext.lower() == '.pyc':
-                mod = imp.load_compiled(name, file_name)
+            #elif ext.lower() == '.pyc':
+            #    mod = imp.load_compiled(name, file_name)
             else:
                 return
         except Exception, e:  # pylint: disable=broad-except
@@ -47,8 +49,10 @@ class Plugins(object):
             return
 
         if hasattr(mod, class_type):
-            tree[name] = getattr(mod, class_type)()
-            cherrypy.log.error('Added module %s' % (name))
+            instance = getattr(mod, class_type)()
+            public_name = getattr(instance, 'name', name)
+            tree[public_name] = instance
+            cherrypy.log.error('Added module %s as %s' % (name, public_name))
 
     def _load_classes(self, tree, path, class_type):
         files = None
@@ -62,20 +66,73 @@ class Plugins(object):
             filename = os.path.join(path, name)
             self._load_class(tree, class_type, filename)
 
-    def get_providers(self):
-        if self._providers_tree is None:
-            path = None
-            if 'providers.dir' in cherrypy.config:
-                path = cherrypy.config['providers.dir']
-            if not path:
-                path = os.path.join(self._path, 'providers')
+    def get_plugins(self, path, class_type):
+        plugins = dict()
+        self._load_classes(plugins, path, class_type)
+        return plugins
 
-            self._providers_tree = []
-            self._load_classes(self._providers_tree, path, 'IdpProvider')
 
-        return self._providers_tree
+class PluginLoader(object):
 
-    def get_custom(self, path, class_type):
-        tree = []
-        self._load_classes(tree, path, class_type)
-        return tree
+    def __init__(self, baseobj, facility, plugin_type):
+        (whitelist, config) = Store().get_plugins_config(facility)
+        if cherrypy.config.get('debug', False):
+            cherrypy.log('[%s] %s: %s' % (facility, whitelist, config))
+        if whitelist is None:
+            whitelist = []
+        if config is None:
+            config = dict()
+
+        p = Plugins(path=cherrypy.config['base.dir'])
+        (pathname, dummy) = os.path.split(inspect.getfile(baseobj))
+        self._plugins = {
+            'config': config,
+            'available': p.get_plugins(pathname, plugin_type),
+            'whitelist': whitelist,
+            'enabled': []
+        }
+
+    def get_plugin_data(self):
+        return self._plugins
+
+
+class PluginObject(object):
+
+    def __init__(self):
+        self.name = None
+        self._config = None
+        self._options = None
+
+    def get_config_desc(self):
+        """ The configuration description is a dictionary that provides
+            A description of the supported configuration options, as well
+            as the default configuration option values.
+            The key is the option name, the value is an array of 3 elements:
+             - description
+             - option type
+             - default value
+        """
+        return self._options
+
+    def set_config(self, config):
+        self._config = config
+
+    def get_config_value(self, name):
+        value = None
+        if self._config:
+            value = self._config.get(name, None)
+        if not value:
+            if self._options:
+                opt = self._options.get(name, None)
+                if opt:
+                    value = opt[2]
+
+        if cherrypy.config.get('debug', False):
+            cherrypy.log('[%s] %s: %s' % (self.name, name, value))
+
+        return value
+
+    def set_config_value(self, option, value):
+        if not self._config:
+            self._config = dict()
+        self._config[option] = value
