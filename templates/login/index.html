@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"></meta>
+    <title>{{ title }}</title>
+    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
+    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
+</head>
+<body>
+    <div id="container">
+        <div id="logo">
+            <p>Ipsilon</p>
+        </div>
+        <div id="admin">
+            {% if user.is_admin %}
+                <a href="admin">admin</a>
+            {% endif %}
+        </div>
+        <div id="login">
+            <p>Redirecting ... {{ redirect }}</p>
+        </div>
+    </div>
+</body>
+</html>

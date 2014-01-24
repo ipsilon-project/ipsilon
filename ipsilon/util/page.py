@@ -17,45 +17,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.util.user import User
+from ipsilon.util.user import UserSession
 import cherrypy
 
 
 def protect():
-    if cherrypy.request.login:
-        user = cherrypy.session.get('user', None)
-        if user == cherrypy.request.login:
-            return
-        else:
-            cherrypy.session.regenerate()
-            cherrypy.session['user'] = cherrypy.request.login
+    UserSession().remote_login()
 
 
 class Page(object):
-    def __init__(self, template_env):
-        self._env = template_env
+    def __init__(self, site):
+        if not 'template_env' in site:
+            raise ValueError('Missing template environment')
+        self._site = site
         self.basepath = cherrypy.config.get('base.mount', "")
-        self.username = None
         self.user = None
 
     def __call__(self, *args, **kwargs):
         # pylint: disable=star-args
-        self.username = cherrypy.session.get('user', None)
-        self.user = User(self.username)
+        self.user = UserSession().get_user()
 
         if len(args) > 0:
             op = getattr(self, args[0], None)
             if callable(op) and getattr(self, args[0]+'.exposed', None):
-                return op(args[1:], **kwargs)
+                return op(*args[1:], **kwargs)
         else:
             op = getattr(self, 'root', None)
             if callable(op):
-                return op(**kwargs)
+                return op(*args, **kwargs)
 
         return self.default(*args, **kwargs)
 
     def _template(self, *args, **kwargs):
-        t = self._env.get_template(args[0])
+        t = self._site['template_env'].get_template(args[0])
         return t.render(basepath=self.basepath, user=self.user, **kwargs)
 
     def default(self, *args, **kwargs):

@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.data import Store
+import cherrypy
 
 
 class Site(object):
@@ -39,6 +40,10 @@ class User(object):
     def _get_user_data(self, username):
         store = Store()
         return store.get_user_preferences(username)
+
+    def reset(self):
+        self.name = None
+        self._userdata = dict()
 
     @property
     def is_admin(self):
@@ -78,3 +83,37 @@ class User(object):
     def sites(self):
         #TODO: implement setting sites via the user object ?
         raise AttributeError
+
+
+class UserSession(object):
+    def __init__(self):
+        self.user = cherrypy.session.get('user', None)
+
+    def get_user(self):
+        return User(self.user)
+
+    def remote_login(self):
+        if cherrypy.request.login:
+            return self.login(cherrypy.request.login)
+
+    def login(self, username):
+        if self.user == username:
+            return
+
+        # REMOTE_USER changed, destroy old session and regenerate new
+        cherrypy.session.regenerate()
+        cherrypy.session['user'] = username
+        cherrypy.session.save()
+
+        cherrypy.log('LOGIN SUCCESSFUL: %s', username)
+
+    def logout(self, user):
+        if user is not None:
+            if not type(user) is User:
+                raise TypeError
+            # Completely reset user data
+            cherrypy.log.error('%s %s' % (user.name, user.fullname))
+            user.reset()
+
+        # Destroy current session in all cases
+        cherrypy.lib.sessions.expire()

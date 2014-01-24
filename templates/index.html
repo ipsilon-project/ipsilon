@@ -9,7 +9,7 @@
 <body>
     <div id="container">
         <div id="logo">
-            <p>Ipsilon</p>
+            <p><a href="{{ basepath }}">Ipsilon</a></p>
         </div>
         <div id="admin">
             {% if user.is_admin %}
@@ -23,12 +23,17 @@
         </div>
         <div id="content">
             {% if not user.name %}
-                <p>Please <a href="login">Log In</a>
+                <p>Please <a href="{{ basepath }}/login">Log In</a>
             {% elif user.sites %}
                 <p>Registered application shortcuts:</p>
                 {% for site in user.sites %}
                     <p><a href="{{ site.link }}">{{ site.name }}</a></p>
                 {% endfor %}
+            {% endif %}
+        </div>
+        <div id="logout">
+            {% if user.name %}
+                <p><a href="{{ basepath }}/logout">Log Out</a></p>
             {% endif %}
         </div>
     </div>

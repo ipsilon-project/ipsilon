@@ -23,7 +23,7 @@ setup(
     name = 'ipsilon',
     version = '0.1',
     license = 'GPLv3+',
-    packages = ['ipsilon', 'ipsilon.util'],
+    packages = ['ipsilon', 'ipsilon.login', 'ipsilon.util'],
     data_files = [('share/man/man7', ["man/ipsilon.7"]),
                   ('doc', ['COPYING']),
                   ('examples', ['examples/ipsilon.conf'])]

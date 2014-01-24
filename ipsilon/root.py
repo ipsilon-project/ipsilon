@@ -18,9 +18,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.page import Page
+from ipsilon.login.common import Login
+from ipsilon.login.common import Logout
+
+sites = dict()
 
 
 class Root(Page):
+
+    def __init__(self, site, template_env):
+        if not site in sites:
+            sites[site] = dict()
+        if template_env:
+            sites[site]['template_env'] = template_env
+        super(Root, self).__init__(sites[site])
+
+        # now set up the default login plugins
+        self.login = Login(self._site)
+        self.logout = Logout(self._site)
 
     def root(self):
         return self._template('index.html', title='Root')

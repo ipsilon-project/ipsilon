@@ -35,16 +35,16 @@ admin_config = datastore.get_admin_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
 
-templates = os.path.join(cherrypy.config['base.dir'], 'templates')
-env = Environment(loader=FileSystemLoader(templates))
-
 cherrypy.tools.protect = cherrypy.Tool('before_handler', page.protect)
+
+templates = os.path.join(cherrypy.config['base.dir'], 'templates')
+template_env = Environment(loader=FileSystemLoader(templates))
 
 if __name__ == "__main__":
     conf = {'/': {'tools.staticdir.root': os.getcwd()},
             '/ui': {'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'ui'}}
-    cherrypy.quickstart(Root(env), '/', conf)
+    cherrypy.quickstart(Root('default', template_env), '/', conf)
 
 else:
     cherrypy.config['environment'] = 'embedded'
@@ -53,5 +53,5 @@ else:
         cherrypy.engine.start(blocking=False)
         atexit.register(cherrypy.engine.stop)
 
-    application = cherrypy.Application(Root(env),
+    application = cherrypy.Application(Root('default', template_env),
                                        script_name=None, config=None)
