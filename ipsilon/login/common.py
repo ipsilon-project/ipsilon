@@ -37,7 +37,7 @@ class LoginManagerBase(PluginObject):
     def auth_successful(self, username):
         # save ref before calling UserSession login() as it
         # may regenerate the session
-        ref = '/idp'
+        ref = cherrypy.config.get('base.mount', "") + '/'
         if 'referral' in cherrypy.session:
             ref = cherrypy.session['referral']
 
@@ -51,8 +51,8 @@ class LoginManagerBase(PluginObject):
         if self.next_login:
             return self.redirect_to_path(self.next_login.path)
 
-        # FIXME: show an error page instead
-        raise cherrypy.HTTPError(401)
+        ref = cherrypy.config.get('base.mount', "") + '/unauthorized'
+        raise cherrypy.HTTPRedirect(ref)
 
 
 class LoginPageBase(Page):

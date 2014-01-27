@@ -21,6 +21,7 @@ from ipsilon.util.page import Page
 from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
 from ipsilon.admin.common import Admin
+from ipsilon.unauthorized import Unauthorized
 
 sites = dict()
 
@@ -33,6 +34,9 @@ class Root(Page):
         if template_env:
             sites[site]['template_env'] = template_env
         super(Root, self).__init__(sites[site])
+
+        # set up error pages
+        self.unauthorized = Unauthorized(self._site)
 
         # now set up the default login plugins
         self.login = Login(self._site)
