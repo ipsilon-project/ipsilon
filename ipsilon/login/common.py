@@ -79,9 +79,9 @@ class Login(Page):
         plugins = self._site[FACILITY]
 
         prev_obj = None
-        for item in plugins['available']:
-            self._log('Login plugin available: %s' % item)
-            if item not in plugins['whitelist']:
+        for item in plugins['whitelist']:
+            self._log('Login plugin in whitelist: %s' % item)
+            if item not in plugins['available']:
                 continue
             self._log('Login plugin enabled: %s' % item)
             plugins['enabled'].append(item)
