@@ -13,3 +13,16 @@ lint:
 pep8:
 	# Check style consistency
 	pep8 ipsilon
+
+# Requires python-lesscpy
+ui: less/ipsilon.less less/admin.less
+	# Create CSS
+	lesscpy less/ipsilon.less > ui/css/ipsilon.css
+	lesscpy less/admin.less > ui/css/admin.css
+
+# Requires NodeJS less and clear-css packages
+# Should be removed when lesscpy starts to work properly
+ui-node: less/ipsilon.less less/admin.less
+	# Create and minify CSS
+	lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
+	lessc --clean-css less/admin.less ui/css/admin.css
