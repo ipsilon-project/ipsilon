@@ -1,20 +1,7 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"></meta>
-    <title>{{ title }}</title>
-    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
-    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
-</head>
-<body>
-    <div id="container">
-        <div id="logo">
-            <p>Ipsilon</p>
-        </div>
-        <div id="login">
-            <p>Press <a href="{{ cont }}">here</a> if your browser does not
-               redirect you in a few seconds</a>
-        </div>
-    </div>
-</body>
-</html>
+{% extends "master.html" %}
+{% block main %}
+<div id="login">
+    <p>Press <a href="{{ cont }}">here</a> if your browser does not
+       redirect you in a few seconds</p>
+</div>
+{% endblock %}
