@@ -41,6 +41,7 @@ class Pam(LoginPageBase):
         return self._template('login/pam.html', title='Login',
                               action='%s/login/pam' % self.basepath,
                               service_name=self.lm.service_name,
+                              help_text=self.lm.help_text,
                               username_text=self.lm.username_text,
                               password_text=self.lm.password_text)
 
@@ -85,6 +86,11 @@ for authentication. """
                 'string',
                 'remote'
             ],
+            'help text': [
+                """ The text shown to guide the user at login time. """,
+                'string',
+                'Insert your Username and Password and then submit.'
+            ],
             'username text': [
                 """ The text shown to ask for the username in the form. """,
                 'string',
@@ -100,6 +106,10 @@ for authentication. """
     @property
     def service_name(self):
         return self.get_config_value('service name')
+
+    @property
+    def help_text(self):
+        return self.get_config_value('help text')
 
     @property
     def username_text(self):
