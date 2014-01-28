@@ -1,41 +1,30 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"></meta>
-    <title>{{ title }}</title>
-    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
-    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
-</head>
-<body>
-    <div id="container">
-        <div id="logo">
-            <p><a href="{{ basepath }}">Ipsilon</a></p>
-        </div>
-        <div id="admin">
-            {% if user.is_admin %}
-                <a href="{{ basepath }}/admin">admin</a>
-            {% endif %}
-        </div>
-        <div id="welcome">
-            {% if user.name %}
-                <p>Welcome {{ user.fullname }}</p>
-            {% endif %}
-        </div>
-        <div id="content">
-            {% if not user.name %}
-                <p>Please <a href="{{ basepath }}/login">Log In</a>
-            {% elif user.sites %}
-                <p>Registered application shortcuts:</p>
-                {% for site in user.sites %}
-                    <p><a href="{{ site.link }}">{{ site.name }}</a></p>
-                {% endfor %}
-            {% endif %}
-        </div>
-        <div id="logout">
-            {% if user.name %}
-                <p><a href="{{ basepath }}/logout">Log Out</a></p>
-            {% endif %}
-        </div>
-    </div>
-</body>
-</html>
+{% extends "master.html" %}
+{% block main %}
+<div class="col-sm-12">
+  <div id="welcome">
+    {% if user.name %}
+      <p>Welcome {{ user.fullname }}!</p>
+    {% endif %}
+  </div>
+  <div id="content">
+    {% if not user.name %}
+      <p>Please <a href="{{ basepath }}/login">Log In</a>
+    {% elif user.sites %}
+      <p>Registered application shortcuts:</p>
+        {% for site in user.sites %}
+          <p><a href="{{ site.link }}">{{ site.name }}</a></p>
+        {% endfor %}
+    {% endif %}
+  </div>
+  <div id="authenticated">
+    {% if user.name %}
+      <p>
+        {% if user.is_admin %}
+          <a href="{{ basepath }}/admin" id="admin">Administration</a> |
+        {% endif %}
+        <a href="{{ basepath }}/logout" id="logout">Log Out</a>
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

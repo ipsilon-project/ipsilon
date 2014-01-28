@@ -42,4 +42,4 @@ class Root(Page):
         self.admin = Admin(self._site)
 
     def root(self):
-        return self._template('index.html', title='Root')
+        return self._template('index.html', title='Ipsilon')
