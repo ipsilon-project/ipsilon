@@ -1,36 +1,43 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"></meta>
-    <title>{{ title }}</title>
-    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
-    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
-</head>
-<body>
-    <div id="container">
-        <div id="logo">
-            <p>Ipsilon</p>
-        </div>
-        <div id="login">
-            <p>
-                {{ help_text }}
-            </p>
-            <form id="login_form" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
-                <p>
-                    <label for="username">{{ username_text }}</label>
-                    <br>
-                    <input id="username" name="login_name" value="" size="32" type="text">
-                </p>
-                <p>
-                    <label for="password">{{ password_text }}</label>
-                    <br>
-                    <input id="password" name="login_password" value="" size="32" type="password">
-                </p>
-                <p>
-                    <input id="submit" name="submit" value="Login" type="submit">
-                </p>
-            </form>
-        </div>
+{% extends "master.html" %}
+{% block main %}
+
+{% if error %}
+<div class="col-sm-12">
+  <div class="alert alert-danger">
+    <p>{{ error }}</p>
+  </div>
+</div>
+
+{% endif %}
+
+<div class="col-sm-7 col-md-6 col-lg-5 login">
+  <form class="form-horizontal" role="form" id="login_form" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
+    <div class="form-group {% if error_username %} has-error{% endif %}">
+      <label for="login_name" class="col-sm-2 col-md-2 control-label">{{ username_text }}</label>
+      <div class="col-sm-10 col-md-10">
+        <input type="text" class="form-control" name="login_name" id="login_name" placeholder="" tabindex="1" value="{{ username | e }}">
+      </div>
     </div>
-</body>
-</html>
+    <div class="form-group{% if error_password %} has-error{% endif %}">
+      <label for="login_password" class="col-sm-2 col-md-2 control-label">{{ password_text }}</label>
+      <div class="col-sm-10 col-md-10">
+        <input type="password" class="form-control" name="login_password" id="login_password" placeholder="" tabindex="2">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-md-offset-2 col-xs-12 col-sm-10 col-md-10 submit">
+        <a href="{{ basepath }}/" title="Cancel" class="btn btn-link" tabindex="4">Cancel</a>
+        {% if next_url %}
+          <a href="{{ next_url }}" title="Next authentication method" class="btn btn-link" tabindex="5">Next method </a>
+        {% endif %}
+        <button type="submit" value="login" class="btn btn-primary btn-lg" tabindex="3">Log In</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="col-sm-5 col-md-6 col-lg-7 details">
+  <p>{{description}}</p>
+</div>
+
+{% endblock %}

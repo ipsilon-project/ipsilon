@@ -38,36 +38,57 @@ class Pam(LoginPageBase):
         return None
 
     def GET(self, *args, **kwargs):
-        return self._template('login/pam.html', title='Login',
-                              action='%s/login/pam' % self.basepath,
-                              service_name=self.lm.service_name,
-                              help_text=self.lm.help_text,
-                              username_text=self.lm.username_text,
-                              password_text=self.lm.password_text)
+        context = self.create_tmpl_context()
+        # pylint: disable=star-args
+        return self._template('login/pam.html', **context)
 
     def POST(self, *args, **kwargs):
-        username = None
-        password = None
+        username = kwargs.get("login_name")
+        password = kwargs.get("login_password")
         user = None
-        for key, value in kwargs.iteritems():
-            if key == 'login_name':
-                username = value
-            elif key == 'login_password':
-                password = value
-        if username is not None and password is not None:
-            user = self._authenticate(username, password)
-        else:
-            cherrypy.log.error("Error: Username or password is missing")
+        error = None
 
-        if user:
-            return self.lm.auth_successful(user)
+        if username and password:
+            user = self._authenticate(username, password)
+            if user:
+                return self.lm.auth_successful(user)
+            else:
+                error = "Authentication failed"
+                cherrypy.log.error(error)
         else:
-            return self.lm.auth_failed()
+            error = "Username or password is missing"
+            cherrypy.log.error("Error: " + error)
+
+        context = self.create_tmpl_context(
+            username=username,
+            error=error,
+            error_password=not password,
+            error_username=not username
+        )
+        # pylint: disable=star-args
+        return self._template('login/pam.html', **context)
 
     def root(self, *args, **kwargs):
         op = getattr(self, cherrypy.request.method, self.GET)
         if callable(op):
             return op(*args, **kwargs)
+
+    def create_tmpl_context(self, **kwargs):
+        next_url = None
+        if self.lm.next_login is not None:
+            next_url = self.lm.next_login.path
+
+        context = {
+            "title": 'Login',
+            "action": '%s/login/pam' % self.basepath,
+            "service_name": self.lm.service_name,
+            "username_text": self.lm.username_text,
+            "password_text": self.lm.password_text,
+            "description": self.lm.help_text,
+            "next_url": next_url,
+        }
+        context.update(kwargs)
+        return context
 
 
 class LoginManager(LoginManagerBase):
