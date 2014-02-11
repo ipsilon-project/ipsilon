@@ -1,41 +1,23 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"></meta>
-    <title>{{ title }}</title>
-    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
-    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
-</head>
-<body>
-    <div id="container">
-        <div id="logo">
-            <p><a href="{{ basepath }}">Ipsilon</a></p>
-        </div>
-        <div id="logout">
-            <p><a href="{{ basepath }}/logout">Log Out</a></p>
-        </div>
-        <div id="options">
-            {% if user.is_admin %}
-                <p>Login plugins:</p>
-                <ul>
-                {% for p in available %}
-                    <li> {{ p }} -
-                    {% if p in enabled %}
-                        <a href="{{ basepath }}/admin/login/{{ p }}/disable">Disable</a> -
-                        <a href="{{ basepath }}/admin/login/{{ p }}">Configure</a>
-                    {% else %}
-                        <a href="{{ basepath }}/admin/login/{{ p }}/enable">Enable</a>
-                    {% endif %}
-                    </li>
-                {% endfor %}
-                </ul>
-                <p>Plugins order: [list here and form button to change?]</p>
-            {% endif %}
-        </div>
-        <div id="home">
-            <p><a href="{{ basepath }}/">Home</a></p>
-        </div>
-    </div>
-</body>
-</html>
+{% extends "master-admin.html" %}
+{% block main %}
+{% if user.is_admin %}
+    <h2>Login plugins</h2>
 
+    {% for p in available %}
+        <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-6">{{ p }}</div>
+        <div class="col-md-3 col-sm-3 col-xs-6">
+        {% if p in enabled %}
+            <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}/disable">Disable</a>
+            <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}">Configure</a>
+        {% else %}
+            <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}/enable">Enable</a>
+        {% endif %}
+        </div>
+        </div>
+    {% endfor %}
+
+    <h3>Plugins order</h3>
+    <p>[list here and form button to change?]</p>
+{% endif %}
+{% endblock %}

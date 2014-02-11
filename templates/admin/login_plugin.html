@@ -1,42 +1,26 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"></meta>
-    <title>{{ title }}</title>
-    <link href="{{ basepath }}/ui/ipsilon.css" type="text/css" rel="stylesheet"></link>
-    <link href="{{ basepath }}/ui/favicon.ico" type="image/ico" rel="icon"></link>
-</head>
-<body>
-    <div id="container">
-        <div id="logo">
-            <p><a href="{{ basepath }}">Ipsilon</a></p>
-        </div>
-        <div id="logout">
-            <p><a href="{{ basepath }}/logout">Log Out</a></p>
-        </div>
-        <div id="message">
-            <p>{{ message }}</p>
-        </div>
-        <div id="options">
-            <form id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
-            <ul>
-            {% for o in options %}
-                <li>{{ o }}:
-                    <p>{{ options[o][0] }}</p>
-                    <input type="text" name="{{ o }}" value="{{ options[o][2] }}">
-                </li>
-            {% endfor %}
-            </ul>
-            <input id="submit" name="submit" type="submit" value="Submit">
-            </form>
-        </div>
-        <div id="home">
-            <p>
-                <a href="{{ basepath }}/admin">Admin</a> -
-                <a href="{{ basepath }}/">Home</a>
-            </p>
-        </div>
+{% extends "master-admin.html" %}
+{% block main %}
+    <h2>{{ title }}</h2>
+    {% if message %}
+    <div class="alert alert-{{message_type}}">
+        <p>{{ message }}</p>
     </div>
-</body>
-</html>
+    {% endif %}
+    <div id="options">
+        <form role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
 
+        {% for o in options %}
+            <div class="form-group">
+            <label for="{{ o }}">{{ o }}:</label>
+                <input type="text" class="form-control" name="{{ o }}" value="{{ options[o][2] }}">
+            </div>
+            <span class="help-block">{{ options[o][0] }}</span>
+        {% endfor %}
+
+        <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
+            Save
+        </button>
+        <a href="{{ basepath }}/admin" class="btn btn-default" title="Back">Back</a>
+        </form>
+    </div>
+{% endblock %}

@@ -63,6 +63,7 @@ class LoginPluginPage(Page):
     def POST(self, *args, **kwargs):
 
         message = "Nothing was modified."
+        message_type = "info"
         new_values = dict()
 
         for key, value in kwargs.iteritems():
@@ -79,8 +80,10 @@ class LoginPluginPage(Page):
                 store.save_plugin_config(LOGIN_FACILITY,
                                          self._obj.name, new_values)
                 message = "New configuration saved."
+                message_type = "success"
             except Exception:  # pylint: disable=broad-except
                 message = "Failed to save data!"
+                message_type = "error"
 
             # And only if it succeeds we change the live object
             for name, value in new_values.items():
@@ -89,6 +92,7 @@ class LoginPluginPage(Page):
 
         return self._template('admin/login_plugin.html',
                               message=message,
+                              message_type=message_type,
                               title='%s plugin' % self._obj.name,
                               name='admin_login_%s_form' % self._obj.name,
                               action=self.url,

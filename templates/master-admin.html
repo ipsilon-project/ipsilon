@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="ie8"><![endif]-->
+<!--[if gt IE 8]><!--><html><!--<![endif]-->
+  <head>
+    <title>{{ title }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ basepath }}/ui/css/admin.css" rel="stylesheet" media="screen, print">
+    <script src="{{ basepath }}/ui/js/jquery.js"></script>
+    <script src="{{ basepath }}/ui/js/bootstrap.js"></script>
+    <script src="{{ basepath }}/ui/js/patternfly.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-pf" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">
+          <img src="{{ basepath }}/ui/img/brand.png" alt="Ipsilon" />
+        </a>
+      </div>
+      <div class="collapse navbar-collapse navbar-collapse-1">
+        <ul class="nav navbar-nav navbar-utility">
+          <!-- <li>
+            <a href="#">Status</a>
+          </li> -->
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <span class="pficon pficon-user"></span>
+              {{ user.fullname }} <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a href="{{ basepath }}/logout" id="logout">Log Out</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-primary">
+          <li>
+            <a href="{{ basepath }}/admin">Login plugins</a>
+          </li>
+          <li>
+            <a href="{{ basepath }}/admin">Providers</a>
+          </li>
+          <li>
+            <a href="{{ basepath }}/admin">Sites</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+      {% block main %}
+      {% endblock %}
+    </div>
+  </body>
+</html>
