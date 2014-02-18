@@ -48,9 +48,19 @@ class Page(object):
 
         return self.default(*args, **kwargs)
 
+    def _template_model(self):
+        model = dict()
+        model['basepath'] = self.basepath
+        model['title'] = 'IPSILON'
+        model['user'] = self.user
+        return model
+
     def _template(self, *args, **kwargs):
+        # pylint: disable=star-args
         t = self._site['template_env'].get_template(args[0])
-        return t.render(basepath=self.basepath, user=self.user, **kwargs)
+        m = self._template_model()
+        m.update(kwargs)
+        return t.render(**m)
 
     def default(self, *args, **kwargs):
         raise cherrypy.HTTPError(404)
