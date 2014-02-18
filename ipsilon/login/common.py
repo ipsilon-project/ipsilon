@@ -78,6 +78,9 @@ class Login(Page):
         self._site[FACILITY] = loader.get_plugin_data()
         plugins = self._site[FACILITY]
 
+        available = plugins['available'].keys()
+        self._log('Available login managers: %s' % str(available))
+
         prev_obj = None
         for item in plugins['whitelist']:
             self._log('Login plugin in whitelist: %s' % item)
