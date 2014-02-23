@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.page import Page
-import cherrypy
+
 
 class Errors(Page):
 
@@ -34,8 +34,10 @@ class Errors(Page):
 
     def handler(self, status, message, traceback, version):
         self._debug(repr([status, message, traceback, version]))
-        return self._error_template('internalerror.html', title='Internal Error')
+        return self._error_template('internalerror.html',
+                                    title='Internal Error')
 
+    # pylint: disable=W0221
     def __call__(self, status, message, traceback, version):
         return self.handler(status, message, traceback, version)
 
@@ -45,6 +47,7 @@ class Error_400(Errors):
     def handler(self, status, message, traceback, version):
         return self._error_template('badrequest.html',
                                     title='Bad Request', message=message)
+
 
 class Error_401(Errors):
 

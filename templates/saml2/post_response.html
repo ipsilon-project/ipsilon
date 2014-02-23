@@ -1,0 +1,13 @@
+{% extends "master.html" %}
+{% block main %}
+<div class="col-sm-5 col-md-6 col-lg-7 details">
+  <form id="saml-response" method="post" action="{{ action }}">
+    {% for field in fields %}
+        <input type="hidden" name="{{ field[0] }}" value="{{ field[1] }}">
+        </input>
+    {% endfor %}
+    <button type="submit">{{ submit }}</button>
+  </form>
+  <script>document.getElementById("saml-response").submit();</script>
+</div>
+{% endblock %}
