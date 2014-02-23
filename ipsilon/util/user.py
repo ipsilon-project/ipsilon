@@ -89,6 +89,10 @@ class UserSession(object):
     def __init__(self):
         self.user = cherrypy.session.get('user', None)
 
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log(fact)
+
     def get_user(self):
         return User(self.user)
 
@@ -100,8 +104,7 @@ class UserSession(object):
         if self.user == username:
             return
 
-        # REMOTE_USER changed, destroy old session and regenerate new
-        cherrypy.session.regenerate()
+        # REMOTE_USER changed, replace user
         cherrypy.session['user'] = username
         cherrypy.session.save()
 
@@ -117,3 +120,29 @@ class UserSession(object):
 
         # Destroy current session in all cases
         cherrypy.lib.sessions.expire()
+
+    def save_data(self, facility, name, data):
+        """ Save named data in the session so it can be retrieved later """
+        if facility not in cherrypy.session:
+            cherrypy.session[facility] = dict()
+        cherrypy.session[facility][name] = data
+        cherrypy.session.save()
+        self._debug('Saved session data named [%s:%s]' % (facility, name))
+
+    def get_data(self, facility, name):
+        """ Get named data in the session if available """
+        if facility not in cherrypy.session:
+            return None
+        if name not in cherrypy.session[facility]:
+            return None
+        return cherrypy.session[facility][name]
+
+    def nuke_data(self, facility, name):
+        if facility not in cherrypy.session:
+            return
+        if name not in cherrypy.session[facility]:
+            return
+        cherrypy.session[facility][name] = None
+        del cherrypy.session[facility][name]
+        cherrypy.session.save()
+        self._debug('Nuked session data named [%s:%s]' % (facility, name))
