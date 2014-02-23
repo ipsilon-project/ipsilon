@@ -37,21 +37,29 @@ class LoginManagerBase(PluginObject):
     def auth_successful(self, username):
         # save ref before calling UserSession login() as it
         # may regenerate the session
-        ref = cherrypy.config.get('base.mount', "") + '/'
-        if 'referral' in cherrypy.session:
-            ref = cherrypy.session['referral']
+        session = UserSession()
+        ref = session.get_data('login', 'Return')
+        if not ref:
+            ref = cherrypy.config.get('base.mount', "") + '/'
 
-        UserSession().login(username)
+        session.login(username)
         raise cherrypy.HTTPRedirect(ref)
 
     def auth_failed(self):
-        # Just make sure we destroy the session
-        UserSession().logout(None)
-
+        # try with next module
         if self.next_login:
             return self.redirect_to_path(self.next_login.path)
 
-        ref = cherrypy.config.get('base.mount', "") + '/unauthorized'
+        # return to the caller if any
+        session = UserSession()
+        ref = session.get_data('login', 'Return')
+
+        # otherwise destroy session and return error
+        if not ref:
+            ref = cherrypy.config.get('base.mount', "") + '/unauthorized'
+            # Just make sure we destroy the session
+            session.logout(None)
+
         raise cherrypy.HTTPRedirect(ref)
 
 
