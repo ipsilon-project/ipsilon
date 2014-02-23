@@ -46,6 +46,12 @@ class User(object):
         self._userdata = dict()
 
     @property
+    def is_anonymous(self):
+        if self.name:
+            return False
+        return True
+
+    @property
     def is_admin(self):
         if 'is_admin' in self._userdata:
             if self._userdata['is_admin'] == '1':
