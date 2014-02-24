@@ -56,9 +56,8 @@ class LoginManagerBase(PluginObject):
 
         # otherwise destroy session and return error
         if not ref:
-            ref = cherrypy.config.get('base.mount', "") + '/unauthorized'
-            # Just make sure we destroy the session
             session.logout(None)
+            raise cherrypy.HTTPError(401)
 
         raise cherrypy.HTTPRedirect(ref)
 

@@ -1,12 +1,12 @@
 {% extends "master.html" %}
 {% block main %}
 <div class="col-sm-12">
-  <h1>401 - Unauthorized</h1>
+  <h1>400 - Bad Request</h1>
   {% if message: %}
     <p>{{ message }}</p>
   {% else %}
-    <p>Authentication was not successful</p>
+    <p>Your client made a request that could not be understood.</p>
+    <p>Sorry!</p>
   {% endif %}
-  <p><a href="{{ basepath }}/login" title="Login">Try to login again</a></p>
 </div>
 {% endblock %}

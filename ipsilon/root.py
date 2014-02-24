@@ -18,10 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.page import Page
+from ipsilon.util import errors
 from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
 from ipsilon.admin.common import Admin
-from ipsilon.unauthorized import Unauthorized
+import cherrypy
 
 sites = dict()
 
@@ -36,7 +37,9 @@ class Root(Page):
         super(Root, self).__init__(sites[site])
 
         # set up error pages
-        self.unauthorized = Unauthorized(self._site)
+        cherrypy.config['error_page.400'] = errors.Error_400(self._site)
+        cherrypy.config['error_page.401'] = errors.Error_401(self._site)
+        cherrypy.config['error_page.500'] = errors.Errors(self._site)
 
         # now set up the default login plugins
         self.login = Login(self._site)

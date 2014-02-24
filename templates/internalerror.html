@@ -1,0 +1,15 @@
+{% extends "master.html" %}
+{% block main %}
+<div class="col-sm-12">
+  <h1>500 - Internal Server Error</h1>
+  {% if message: %}
+    <p>{{ message }}</p>
+  {% else %}
+    <p>Ipsilon encountered an unexpected internal error while trying to
+       fulfill your request.</p>
+  {% endif %}
+  <p>Please retry again.</p>
+  <p>If the error persists, contact the server administrator to resolve
+     the problem.</p>
+</div>
+{% endblock %}
