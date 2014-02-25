@@ -62,6 +62,10 @@ class Page(object):
         m.update(kwargs)
         return t.render(**m)
 
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log(fact)
+
     def default(self, *args, **kwargs):
         raise cherrypy.HTTPError(404)
 

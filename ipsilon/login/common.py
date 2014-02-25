@@ -79,14 +79,14 @@ class Login(Page):
         plugins = self._site[FACILITY]
 
         available = plugins['available'].keys()
-        self._log('Available login managers: %s' % str(available))
+        self._debug('Available login managers: %s' % str(available))
 
         prev_obj = None
         for item in plugins['whitelist']:
-            self._log('Login plugin in whitelist: %s' % item)
+            self._debug('Login plugin in whitelist: %s' % item)
             if item not in plugins['available']:
                 continue
-            self._log('Login plugin enabled: %s' % item)
+            self._debug('Login plugin enabled: %s' % item)
             plugins['enabled'].append(item)
             obj = plugins['available'][item]
             if prev_obj:
@@ -97,10 +97,6 @@ class Login(Page):
             if item in plugins['config']:
                 obj.set_config(plugins['config'][item])
             self.__dict__[item] = obj.get_tree(self._site)
-
-    def _log(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
     def root(self, *args, **kwargs):
         if self.first_login:
