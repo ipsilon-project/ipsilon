@@ -24,6 +24,17 @@ import datetime
 import lasso
 
 
+class AuthenticationError(Exception):
+
+    def __init__(self, message, code):
+        super(AuthenticationError, self).__init__(message)
+        self.message = message
+        self.code = code
+
+    def __str__(self):
+        return repr(self.message)
+
+
 class InvalidRequest(Exception):
 
     def __init__(self, message):
@@ -43,8 +54,11 @@ class AuthenticateRequest(ProviderPageBase):
         self.stage = self.STAGE_INIT
 
     def auth(self, login):
-        self.saml2checks(login)
-        self.saml2assertion(login)
+        try:
+            self.saml2checks(login)
+            self.saml2assertion(login)
+        except AuthenticationError, e:
+            self.saml2error(login, e.code, e.message)
         return self.reply(login)
 
     def _parse_request(self, message):
@@ -69,9 +83,11 @@ class AuthenticateRequest(ProviderPageBase):
         except (lasso.ServerProviderNotFoundError,
                 lasso.ProfileUnknownProviderError), e:
 
-            msg = 'Invalid Service Provider (%r [%r])' % (e, message)
-            # TODO: return to SP anyway ?
+            msg = 'Invalid SP [%s] (%r [%r])' % (login.remoteProviderId,
+                                                 e, message)
             raise InvalidRequest(msg)
+
+        self._debug('SP %s requested authentication' % login.remoteProviderId)
 
         return login
 
@@ -104,7 +120,8 @@ class AuthenticateRequest(ProviderPageBase):
                                   '%s/saml2/SSO/Continue' % self.basepath)
                 raise cherrypy.HTTPRedirect('%s/login' % self.basepath)
             else:
-                raise cherrypy.HTTPError(401)
+                raise AuthenticationError(
+                    "Unknown user", lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
         self._audit("Logged in user: %s [%s]" % (user.name, user.fullname))
 
@@ -144,6 +161,14 @@ class AuthenticateRequest(ProviderPageBase):
         login.assertion.subject.nameId.content = user.name
 
         # TODO: add user attributes as policy requires taking from 'user'
+
+    def saml2error(self, login, code, message):
+        status = lasso.Samlp2Status()
+        status.statusCode = lasso.Samlp2StatusCode()
+        status.statusCode.value = lasso.SAML2_STATUS_CODE_RESPONDER
+        status.statusCode.statusCode = lasso.Samlp2StatusCode()
+        status.statusCode.statusCode.value = code
+        login.response.status = status
 
     def reply(self, login):
         if login.protocolProfile == lasso.LOGIN_PROTOCOL_PROFILE_BRWS_ART:
