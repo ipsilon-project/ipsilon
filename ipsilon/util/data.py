@@ -189,21 +189,43 @@ class Store(object):
             if con:
                 con.close()
 
-    def get_data(self, plugin):
+    def get_data(self, plugin, idval=None, name=None, value=None):
         con = None
         rows = []
+        names = None
+        values = ()
+        if idval or name or value:
+            names = ""
+            if idval:
+                names += " id=?"
+                values = values + (idval,)
+            if name:
+                if len(names) != 0:
+                    names += " AND"
+                names += " name=?"
+                values = values + (name,)
+            if value:
+                if len(names) != 0:
+                    names += " AND"
+                names += " value=?"
+                values = values + (value,)
         try:
             con = sqlite3.connect(self._admin_dbname)
             cur = con.cursor()
             cur.execute("CREATE TABLE IF NOT EXISTS " +
                         plugin + "_data (id INTEGER, name TEXT, value TEXT)")
-            cur.execute("SELECT * FROM " + plugin + "_data")
+            if not names:
+                cur.execute("SELECT * FROM " + plugin + "_data")
+            else:
+                cur.execute("SELECT * FROM " + plugin + "_data WHERE" +
+                            names, values)
             rows = cur.fetchall()
             con.commit()
         except sqlite3.Error, e:
             if con:
                 con.rollback()
             cherrypy.log.error("Failed to load %s data: [%s]" % (plugin, e))
+            cherrypy.log.error(repr([names, values]))
         finally:
             if con:
                 con.close()

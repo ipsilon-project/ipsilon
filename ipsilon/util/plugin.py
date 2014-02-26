@@ -138,8 +138,9 @@ class PluginObject(object):
             self._config = dict()
         self._config[option] = value
 
-    def get_data(self):
-        return self._data.get_data(self.name)
+    def get_data(self, idval=None, name=None, value=None):
+        return self._data.get_data(self.name, idval=idval, name=name,
+                                   value=value)
 
     def save_data(self, data):
         self._data.save_data(self.name, data)

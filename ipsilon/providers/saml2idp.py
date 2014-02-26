@@ -162,6 +162,16 @@ Provides SAML 2.0 authentication infrastructure. """
                 """ Allow authenticated users to register applications. """,
                 'boolean',
                 True
+            ],
+            'default allowed nameids': [
+                """Default Allowed NameIDs for Service Providers. """,
+                'list',
+                ['transient', 'email', 'kerberos', 'x509']
+            ],
+            'default nameid': [
+                """Default NameID used by Service Providers. """,
+                'string',
+                'email'
             ]
         }
 
@@ -187,6 +197,14 @@ Provides SAML 2.0 authentication infrastructure. """
     def idp_key_file(self):
         return os.path.join(self.idp_storage_path,
                             self.get_config_value('idp key file'))
+
+    @property
+    def default_allowed_nameids(self):
+        return self.get_config_value('default allowed nameids')
+
+    @property
+    def default_nameid(self):
+        return self.get_config_value('default nameid')
 
     def get_tree(self, site):
         self.page = SAML2(site, self)
