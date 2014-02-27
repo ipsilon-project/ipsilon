@@ -18,6 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderPageBase
+from ipsilon.providers.saml2.provider import ServiceProvider
+from ipsilon.providers.saml2.provider import InvalidProviderId
+from ipsilon.providers.saml2.provider import NameIdNotAllowed
 from ipsilon.util.user import UserSession
 import cherrypy
 import datetime
@@ -52,6 +55,7 @@ class AuthenticateRequest(ProviderPageBase):
         self.STAGE_INIT = 0
         self.STAGE_AUTH = 1
         self.stage = self.STAGE_INIT
+        self.nameidfmt = None
 
     def auth(self, login):
         try:
@@ -130,7 +134,19 @@ class AuthenticateRequest(ProviderPageBase):
         # record it
         consent = True
 
-        # TODO: check Name-ID Policy
+        # TODO: check destination
+
+        try:
+            provider = ServiceProvider(self.cfg, login.remoteProviderId)
+            nameid = provider.get_valid_nameid(login.request.nameIdPolicy)
+        except NameIdNotAllowed, e:
+            raise AuthenticationError(
+                str(e), lasso.SAML2_STATUS_CODE_INVALID_NAME_ID_POLICY)
+        except InvalidProviderId, e:
+            raise AuthenticationError(
+                str(e), lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
+
+        self.nameidfmt = nameid
 
         # TODO: check login.request.forceAuthn
 
@@ -156,11 +172,21 @@ class AuthenticateRequest(ProviderPageBase):
                              None,
                              authtime_notbefore.strftime(timeformat),
                              authtime_notafter.strftime(timeformat))
-        login.assertion.subject.nameId.format = \
-            lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT
-        login.assertion.subject.nameId.content = user.name
 
-        # TODO: add user attributes as policy requires taking from 'user'
+        nameid = None
+        if self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
+            nameid = user.name  ## TODO map to something else ?
+        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
+            nameid = user.name  ## TODO map to something else ?
+
+        if nameid:
+            login.assertion.subject.nameId.format = self.nameidfmt
+            login.assertion.subject.nameId.content = nameid
+        else:
+            raise AuthenticationError("Unavailable Name ID type",
+                                      lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
+
+        # TODO: add user attributes as policy requires taking from 'usersession'
 
     def saml2error(self, login, code, message):
         status = lasso.Samlp2Status()

@@ -166,12 +166,12 @@ Provides SAML 2.0 authentication infrastructure. """
             'default allowed nameids': [
                 """Default Allowed NameIDs for Service Providers. """,
                 'list',
-                ['transient', 'email', 'kerberos', 'x509']
+                ['persistent', 'transient', 'email', 'kerberos', 'x509']
             ],
             'default nameid': [
                 """Default NameID used by Service Providers. """,
                 'string',
-                'email'
+                'persistent'
             ]
         }
 
