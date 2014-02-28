@@ -159,7 +159,8 @@ class AuthenticateRequest(ProviderPageBase):
         authtime_notbefore = authtime - skew
         authtime_notafter = authtime + skew
 
-        user = UserSession().get_user()
+        us = UserSession()
+        user = us.get_user()
 
         # TODO: get authentication type fnd name format from session
         # need to save which login manager authenticated and map it to a
@@ -178,6 +179,8 @@ class AuthenticateRequest(ProviderPageBase):
             nameid = user.name  ## TODO map to something else ?
         elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
             nameid = user.name  ## TODO map to something else ?
+        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
+            nameid = us.get_data('user', 'krb_principal_name')
 
         if nameid:
             login.assertion.subject.nameId.format = self.nameidfmt
