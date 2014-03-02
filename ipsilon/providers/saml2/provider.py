@@ -106,3 +106,8 @@ class ServiceProvider(object):
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
             cherrypy.log(fact)
+
+    def normalize_username(self, username):
+        if 'strip domain' in self._properties:
+            return username.split('@', 1)[0]
+        return username
