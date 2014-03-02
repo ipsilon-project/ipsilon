@@ -93,7 +93,7 @@ class User(object):
 
 class UserSession(object):
     def __init__(self):
-        self.user = cherrypy.session.get('user', None)
+        self.user = self.get_data('user', 'name')
 
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
@@ -111,8 +111,8 @@ class UserSession(object):
             return
 
         # REMOTE_USER changed, replace user
-        cherrypy.session['user'] = username
-        cherrypy.session.save()
+        self.nuke_data('user')
+        self.save_data('user', 'name', username)
 
         cherrypy.log('LOGIN SUCCESSFUL: %s', username)
 
@@ -143,12 +143,16 @@ class UserSession(object):
             return None
         return cherrypy.session[facility][name]
 
-    def nuke_data(self, facility, name):
+    def nuke_data(self, facility, name=None):
         if facility not in cherrypy.session:
             return
-        if name not in cherrypy.session[facility]:
-            return
-        cherrypy.session[facility][name] = None
-        del cherrypy.session[facility][name]
+        if name:
+            if name not in cherrypy.session[facility]:
+                return
+            cherrypy.session[facility][name] = None
+            del cherrypy.session[facility][name]
+            self._debug('Nuked session data named [%s:%s]' % (facility, name))
+        else:
+            del cherrypy.session[facility]
+            self._debug('Nuked session facility [%s]' % (facility,))
         cherrypy.session.save()
-        self._debug('Nuked session data named [%s:%s]' % (facility, name))
