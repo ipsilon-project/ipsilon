@@ -55,12 +55,10 @@ class AuthenticateRequest(ProviderPageBase):
         self.STAGE_INIT = 0
         self.STAGE_AUTH = 1
         self.stage = self.STAGE_INIT
-        self.nameidfmt = None
 
     def auth(self, login):
         try:
             self.saml2checks(login)
-            self.saml2assertion(login)
         except AuthenticationError, e:
             self.saml2error(login, e.code, e.message)
         return self.reply(login)
@@ -138,7 +136,7 @@ class AuthenticateRequest(ProviderPageBase):
 
         try:
             provider = ServiceProvider(self.cfg, login.remoteProviderId)
-            nameid = provider.get_valid_nameid(login.request.nameIdPolicy)
+            nameidfmt = provider.get_valid_nameid(login.request.nameIdPolicy)
         except NameIdNotAllowed, e:
             raise AuthenticationError(
                 str(e), lasso.SAML2_STATUS_CODE_INVALID_NAME_ID_POLICY)
@@ -146,13 +144,9 @@ class AuthenticateRequest(ProviderPageBase):
             raise AuthenticationError(
                 str(e), lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
-        self.nameidfmt = nameid
-
         # TODO: check login.request.forceAuthn
 
         login.validateRequestMsg(not user.is_anonymous, consent)
-
-    def saml2assertion(self, login):
 
         authtime = datetime.datetime.utcnow()
         skew = datetime.timedelta(0, 60)
@@ -175,19 +169,19 @@ class AuthenticateRequest(ProviderPageBase):
                              authtime_notafter.strftime(timeformat))
 
         nameid = None
-        if self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
+        if nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
             nameid = user.name  ## TODO map to something else ?
-        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
             nameid = user.name  ## TODO map to something else ?
-        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
             nameid = us.get_data('user', 'krb_principal_name')
-        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
             nameid = us.get_user().email
             if not nameid:
                 nameid = '%s@%s' % (user.name, self.cfg.default_email_domain)
 
         if nameid:
-            login.assertion.subject.nameId.format = self.nameidfmt
+            login.assertion.subject.nameId.format = nameidfmt
             login.assertion.subject.nameId.content = nameid
         else:
             raise AuthenticationError("Unavailable Name ID type",
