@@ -181,6 +181,10 @@ class AuthenticateRequest(ProviderPageBase):
             nameid = user.name  ## TODO map to something else ?
         elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
             nameid = us.get_data('user', 'krb_principal_name')
+        elif self.nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
+            nameid = us.get_user().email
+            if not nameid:
+                nameid = '%s@%s' % (user.name, self.cfg.default_email_domain)
 
         if nameid:
             login.assertion.subject.nameId.format = self.nameidfmt

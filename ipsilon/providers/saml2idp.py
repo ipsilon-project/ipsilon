@@ -172,6 +172,11 @@ Provides SAML 2.0 authentication infrastructure. """
                 """Default NameID used by Service Providers. """,
                 'string',
                 'persistent'
+            ],
+            'default email domain': [
+                """Default email domain, for users missing email property.""",
+                'string',
+                'example.com'
             ]
         }
 
@@ -205,6 +210,10 @@ Provides SAML 2.0 authentication infrastructure. """
     @property
     def default_nameid(self):
         return self.get_config_value('default nameid')
+
+    @property
+    def default_email_domain(self):
+        return self.get_config_value('default email domain')
 
     def get_tree(self, site):
         self.page = SAML2(site, self)

@@ -77,6 +77,13 @@ class User(object):
         self._userdata['fullname'] = value
 
     @property
+    def email(self):
+        if 'email' in self._userdata:
+            return self._userdata['email']
+        else:
+            return None
+
+    @property
     def sites(self):
         if 'sites' in self._userdata:
             d = []
