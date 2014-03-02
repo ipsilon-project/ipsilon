@@ -34,7 +34,7 @@ class LoginManagerBase(PluginObject):
         base = cherrypy.config.get('base.mount', "")
         raise cherrypy.HTTPRedirect('%s/login/%s' % (base, path))
 
-    def auth_successful(self, username):
+    def auth_successful(self, username, userdata=None):
         # save ref before calling UserSession login() as it
         # may regenerate the session
         session = UserSession()
@@ -43,6 +43,12 @@ class LoginManagerBase(PluginObject):
             ref = cherrypy.config.get('base.mount', "") + '/'
 
         session.login(username)
+
+        # Save additional data provided by the login manager
+        if userdata:
+            for key in userdata:
+                session.save_data('user', key, userdata[key])
+
         raise cherrypy.HTTPRedirect(ref)
 
     def auth_failed(self):
