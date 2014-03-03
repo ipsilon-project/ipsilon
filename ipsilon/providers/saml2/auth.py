@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.providers.common import ProviderPageBase
+from ipsilon.providers.common import ProviderPageBase, ProviderException
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
@@ -27,25 +27,19 @@ import datetime
 import lasso
 
 
-class AuthenticationError(Exception):
+class AuthenticationError(ProviderException):
 
     def __init__(self, message, code):
         super(AuthenticationError, self).__init__(message)
-        self.message = message
         self.code = code
-
-    def __str__(self):
-        return repr(self.message)
+        self._debug('%s [%s]' % (message, code))
 
 
-class InvalidRequest(Exception):
+class InvalidRequest(ProviderException):
 
     def __init__(self, message):
         super(InvalidRequest, self).__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
+        self._debug(message)
 
 
 class AuthenticateRequest(ProviderPageBase):

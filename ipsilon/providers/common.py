@@ -22,6 +22,20 @@ from ipsilon.util.page import Page
 import cherrypy
 
 
+class ProviderException(Exception):
+
+    def __init__(self, message):
+        super(ProviderException, self).__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)
+
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log('%s: %s' % (self.__class__.__name__, fact))
+
+
 class ProviderBase(PluginObject):
 
     def __init__(self, name, path):

@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ipsilon.providers.common import ProviderException
 import cherrypy
 import lasso
 
@@ -34,15 +35,12 @@ NAMEID_MAP = {
 }
 
 
-class InvalidProviderId(Exception):
+class InvalidProviderId(ProviderException):
 
-    def __init__(self, message):
-        msg = 'Invalid Provider ID: %s' % message
-        super(InvalidProviderId, self).__init__(msg)
-        self.message = msg
-
-    def __str__(self):
-        return repr(self.message)
+    def __init__(self, code):
+        message = 'Invalid Provider ID: %s' % code
+        super(InvalidProviderId, self).__init__(message)
+        self._debug(message)
 
 
 class NameIdNotAllowed(Exception):
@@ -101,7 +99,7 @@ class ServiceProvider(object):
             for nameid in allowed:
                 if nip.format == NAMEID_MAP[nameid]:
                     return nip.format
-        raise NameIdNotAllowed()
+        raise NameIdNotAllowed(nip.format)
 
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
