@@ -18,15 +18,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup
+from glob import glob
+
+DATA = 'share/ipsilon/'
 
 setup(
     name = 'ipsilon',
     version = '0.1',
     license = 'GPLv3+',
-    packages = ['ipsilon', 'ipsilon.admin', 'ipsilon.login',
-                'ipsilon.providers', 'ipsilon.util'],
+    packages = ['ipsilon', 'ipsilon.admin', 'ipsilon.login', 'ipsilon.util',
+                'ipsilon.providers', 'ipsilon.providers.saml2'],
     data_files = [('share/man/man7', ["man/ipsilon.7"]),
-                  ('doc', ['COPYING']),
-                  ('examples', ['examples/ipsilon.conf'])]
+                  ('share/doc/ipsilon', ['COPYING']),
+                  ('share/doc/ipsilon/examples', ['examples/ipsilon.conf',
+                                                  'examples/apache.conf']),
+                  (DATA+'ui/css', glob('ui/css/*.css')),
+                  (DATA+'ui/img', glob('ui/img/*')),
+                  (DATA+'ui/js', glob('ui/js/*.js')),
+                  (DATA+'templates', glob('templates/*.html')),
+                  (DATA+'templates/admin', glob('templates/admin/*.html')),
+                  (DATA+'templates/login', glob('templates/login/*.html')),
+                  (DATA+'templates/saml2', glob('templates/saml2/*.html'))
+                 ]
 )
 
