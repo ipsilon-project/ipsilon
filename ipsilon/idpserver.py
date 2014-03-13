@@ -54,7 +54,8 @@ if __name__ == "__main__":
     conf = {'/': {'tools.staticdir.root': os.getcwd()},
             '/ui': {'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'ui'}}
-    cherrypy.quickstart(Root('default', template_env), '/', conf)
+    cherrypy.quickstart(Root('default', template_env),
+                        cherrypy.config['base.mount'], conf)
 
 else:
     cherrypy.config['environment'] = 'embedded'

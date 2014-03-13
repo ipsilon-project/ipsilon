@@ -26,11 +26,7 @@ from ipsilon.util.data import Store
 
 class Plugins(object):
 
-    def __init__(self, path=None):
-        if path is None:
-            self._path = os.getcwd()
-        else:
-            self._path = path
+    def __init__(self):
         self._providers_tree = None
 
     def _load_class(self, tree, class_type, file_name):
@@ -83,7 +79,7 @@ class PluginLoader(object):
         if config is None:
             config = dict()
 
-        p = Plugins(path=cherrypy.config['base.dir'])
+        p = Plugins()
         (pathname, dummy) = os.path.split(inspect.getfile(baseobj))
         self._plugins = {
             'config': config,
