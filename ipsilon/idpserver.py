@@ -28,7 +28,17 @@ from ipsilon.util import page
 from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
 
-cherrypy.config.update('ipsilon.conf')
+cfgfile = None
+if (len(sys.argv) > 1):
+    cfgfile = sys.argv[-1]
+elif os.path.isfile('ipsilon.conf'):
+    cfgfile = 'ipsilon.conf'
+elif os.path.isfile('/etc/ipsilon/ipsilon.conf'):
+    cfgfile = '/etc/ipsilon/ipsilon.conf'
+else:
+    raise IOError("Configuration file not found")
+
+cherrypy.config.update(cfgfile)
 
 datastore = Store()
 admin_config = datastore.get_admin_config()
