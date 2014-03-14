@@ -143,3 +143,24 @@ for authentication. """
     def get_tree(self, site):
         self.page = Pam(site, self)
         return self.page
+
+
+class Installer(object):
+
+    def __init__(self):
+        self.name = 'pam'
+        self.ptype = 'login'
+
+    def install_args(self, group):
+        group.add_argument('--pam', choices=['yes', 'no'], default='no',
+                           help='Configure PAM authentication')
+        group.add_argument('--pam-service', action='store', default='remote',
+                           help='PAM service name to use for authentication')
+
+    def configure(self, opts):
+        if opts['pam'] != 'yes':
+            return
+
+        if opts['pam_service'] != 'remote':
+            #TODO: add service_name in the database
+            return

@@ -79,3 +79,18 @@ plugin for actual authentication. """
         self.page.__dict__['negotiate'] = KrbAuth(site, self)
         self.page.__dict__['unauthorized'] = KrbError(site, self)
         return self.page
+
+
+class Installer(object):
+
+    def __init__(self):
+        self.name = 'krb'
+        self.ptype = 'login'
+
+    def install_args(self, group):
+        group.add_argument('--krb', choices=['yes', 'no'], default='no',
+                           help='Configure Kerberos authentication')
+
+    def configure(self, opts):
+        if opts['krb'] != 'yes':
+            return

@@ -20,6 +20,7 @@
 from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginLoader, PluginObject
+from ipsilon.util.plugin import PluginInstaller
 import cherrypy
 
 
@@ -124,3 +125,10 @@ class Logout(Page):
     def root(self, *args, **kwargs):
         UserSession().logout(self.user)
         return self._template('logout.html', title='Logout')
+
+
+class LoginMgrsInstall(object):
+
+    def __init__(self):
+        pi = PluginInstaller(LoginMgrsInstall)
+        self.plugins = pi.get_plugins()

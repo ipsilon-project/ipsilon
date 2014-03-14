@@ -92,6 +92,16 @@ class PluginLoader(object):
         return self._plugins
 
 
+class PluginInstaller(object):
+    def __init__(self, baseobj):
+        (pathname, dummy) = os.path.split(inspect.getfile(baseobj))
+        self._pathname = pathname
+
+    def get_plugins(self):
+        p = Plugins()
+        return p.get_plugins(self._pathname, 'Installer')
+
+
 class PluginObject(object):
 
     def __init__(self):

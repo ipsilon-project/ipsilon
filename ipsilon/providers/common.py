@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.plugin import PluginLoader, PluginObject
+from ipsilon.util.plugin import PluginInstaller
 from ipsilon.util.page import Page
 import cherrypy
 
@@ -99,3 +100,10 @@ class LoadProviders(object):
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
             cherrypy.log(fact)
+
+
+class ProvidersInstall(object):
+
+    def __init__(self):
+        pi = PluginInstaller(ProvidersInstall)
+        self.plugins = pi.get_plugins()

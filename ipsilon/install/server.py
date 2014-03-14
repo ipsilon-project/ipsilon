@@ -17,18 +17,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ipsilon.login.common import LoginMgrsInstall
+from ipsilon.providers.common import ProvidersInstall
 import argparse
+import sys
 
 
-def parse_args():
+def find_plugins():
+    plugins = {
+        'Login Managers': LoginMgrsInstall().plugins,
+        'Auth Providers': ProvidersInstall().plugins
+    }
+    return plugins
+
+
+def parse_args(plugins):
     parser = argparse.ArgumentParser(description='Ipsilon Install Options')
     parser.add_argument('--version',
                         action='version', version='%(prog)s 0.1')
+    parser.add_argument('-o', '--login-managers-order', dest='lm_order',
+                        help='Comma separated list of login managers')
+    parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
+                        help='Detect and use an IPA server for authentication')
+
+    lms = []
+
+    for plugin_group in plugins:
+        group = parser.add_argument_group(plugin_group)
+        for plugin_name in plugins[plugin_group]:
+            plugin = plugins[plugin_group][plugin_name]
+            if plugin.ptype == 'login':
+                lms.append(plugin.name)
+            plugin.install_args(group)
 
     args = vars(parser.parse_args())
+
+    if args['lm_order'] is None:
+        args['lm_order'] = []
+        for name in lms:
+            if args[name] == 'yes':
+                args['lm_order'].append(name)
+    else:
+        args['lm_order'] = args['lm_order'].split(',')
+
+    if len(args['lm_order']) == 0:
+        #force the basic pam provider if nothing else is selected
+        if 'pam' not in args:
+            parser.print_help()
+            sys.exit(-1)
+        args['lm_order'] = ['pam']
+        args['pam'] = 'yes'
 
     return args
 
 if __name__ == '__main__':
-    opts = parse_args()
+    found_plugins = find_plugins()
+    opts = parse_args(found_plugins)
     print opts
