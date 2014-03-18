@@ -24,6 +24,7 @@ import cherrypy
 import logging
 import os
 import shutil
+import socket
 import sys
 import time
 
@@ -126,6 +127,8 @@ def parse_args(plugins):
                         action='version', version='%(prog)s 0.1')
     parser.add_argument('-o', '--login-managers-order', dest='lm_order',
                         help='Comma separated list of login managers')
+    parser.add_argument('--hostname',
+                        help="Machine's fully qualified host name")
     parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
                         help='Detect and use an IPA server for authentication')
     parser.add_argument('--uninstall', action='store_true',
@@ -142,6 +145,12 @@ def parse_args(plugins):
             plugin.install_args(group)
 
     args = vars(parser.parse_args())
+
+    if not args['hostname']:
+        args['hostname'] = socket.getfqdn()
+
+    if len(args['hostname'].split('.')) < 2:
+        raise ConfigurationError('Hostname: %s is not a FQDN')
 
     if args['lm_order'] is None:
         args['lm_order'] = []
