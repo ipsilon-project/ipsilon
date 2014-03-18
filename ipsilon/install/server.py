@@ -20,7 +20,63 @@
 from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.providers.common import ProvidersInstall
 import argparse
+import logging
+import os
+import shutil
 import sys
+import time
+
+
+class ConfigurationError(Exception):
+
+    def __init__(self, message):
+        super(ConfigurationError, self).__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)
+
+
+LOGFILE = '/var/log/ipsilon-install.log'
+logger = logging.getLogger()
+
+
+def openlogs():
+    global logger  # pylint: disable=W0603
+    if os.path.isfile(LOGFILE):
+        try:
+            created = '%s' % time.ctime(os.path.getctime(LOGFILE))
+            shutil.move(LOGFILE, '%s.%s' % (LOGFILE, created))
+        except IOError:
+            pass
+    logger = logging.getLogger()
+    try:
+        lh = logging.FileHandler(LOGFILE)
+    except IOError, e:
+        print >> sys.stderr, 'Unable to open %s (%s)' % (LOGFILE, str(e))
+        lh = logging.StreamHandler(sys.stderr)
+    formatter = logging.Formatter('[%(asctime)s] %(message)s')
+    lh.setFormatter(formatter)
+    logger.addHandler(lh)
+
+
+def install(plugins, args):
+    logger.info('Installation initiated')
+
+    logger.info('Configuring login managers')
+    for plugin_name in args['lm_order']:
+        plugin = plugins['Login Managers'][plugin_name]
+        plugin.configure(args)
+
+    logger.info('Configuring Authentication Providers')
+    for plugin_name in plugins['Auth Providers']:
+        plugin = plugins['Auth Providers'][plugin_name]
+        plugin.configure(args)
+
+
+def uninstall(plugins, args):
+    logger.info('Uninstallation initiated')
+    raise Exception('Not Implemented')
 
 
 def find_plugins():
@@ -39,6 +95,8 @@ def parse_args(plugins):
                         help='Comma separated list of login managers')
     parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
                         help='Detect and use an IPA server for authentication')
+    parser.add_argument('--uninstall', action='store_true',
+                        help="Uninstall the server and all data")
 
     lms = []
 
@@ -71,6 +129,35 @@ def parse_args(plugins):
     return args
 
 if __name__ == '__main__':
-    found_plugins = find_plugins()
-    opts = parse_args(found_plugins)
-    print opts
+    opts = []
+    out = 0
+    openlogs()
+    try:
+        fplugins = find_plugins()
+        opts = parse_args(fplugins)
+
+        logger.setLevel(logging.DEBUG)
+
+        logger.info('Intallation arguments:')
+        for k in sorted(opts.iterkeys()):
+            logger.info('%s: %s', k, opts[k])
+
+        if 'uninstall' in opts and opts['uninstall'] is True:
+            uninstall(fplugins, opts)
+
+        install(fplugins, opts)
+    except Exception, e:  # pylint: disable=broad-except
+        logger.exception(e)
+        if 'uninstall' in opts and opts['uninstall'] is True:
+            print 'Uninstallation aborted.'
+        else:
+            print 'Installation aborted.'
+        print 'See log file %s for details' % LOGFILE
+        out = 1
+    finally:
+        if out == 0:
+            if 'uninstall' in opts and opts['uninstall'] is True:
+                print 'Uninstallation complete.'
+            else:
+                print 'Installation complete.'
+    sys.exit(out)
