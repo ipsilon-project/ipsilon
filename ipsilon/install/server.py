@@ -20,6 +20,7 @@
 from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.providers.common import ProvidersInstall
 import argparse
+import cherrypy
 import logging
 import os
 import shutil
@@ -42,6 +43,10 @@ class ConfigurationError(Exception):
         return repr(self.message)
 
 
+#Silence cherrypy logging to screen
+cherrypy.log.screen = False
+
+# Regular logging
 LOGFILE = '/var/log/ipsilon-install.log'
 logger = logging.getLogger()
 
