@@ -18,10 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderBase, ProviderPageBase
+from ipsilon.providers.common import FACILITY
 from ipsilon.providers.saml2.auth import AuthenticateRequest
+from ipsilon.providers.saml2.certs import Certificate
+from ipsilon.providers.saml2 import metadata
 from ipsilon.util.user import UserSession
+from ipsilon.util.plugin import PluginObject
 import cherrypy
 import lasso
+import pwd
 import os
 
 
@@ -218,3 +223,79 @@ Provides SAML 2.0 authentication infrastructure. """
     def get_tree(self, site):
         self.page = SAML2(site, self)
         return self.page
+
+
+class Installer(object):
+
+    def __init__(self):
+        self.name = 'saml2'
+        self.ptype = 'provider'
+
+    def install_args(self, group):
+        group.add_argument('--saml2', choices=['yes', 'no'], default='yes',
+                           help='Configure SAML2 Provider')
+        group.add_argument('--saml2-storage',
+                           default='/var/lib/ipsilon/saml2',
+                           help='SAML2 Provider storage area')
+
+    def configure(self, opts):
+        if opts['saml2'] != 'yes':
+            return
+
+        # Check storage path is present or create it
+        path = opts['saml2_storage']
+        if not os.path.exists(path):
+            os.makedirs(path, 0700)
+
+        # Use the same cert for signing and ecnryption for now
+        cert = Certificate(path)
+        cert.generate('idp', opts['hostname'])
+
+        # Generate Idp Metadata
+        url = 'https://' + opts['hostname'] + '/idp/saml2'
+        meta = metadata.Metadata(metadata.IDP_ROLE)
+        meta.set_entity_id(url + '/metadata')
+        meta.add_certs(cert, cert)
+        meta.add_service(metadata.SSO_SERVICE,
+                         lasso.SAML2_METADATA_BINDING_POST,
+                         url + '/POST')
+        meta.add_service(metadata.SSO_SERVICE,
+                         lasso.SAML2_METADATA_BINDING_REDIRECT,
+                         url + '/Redirect')
+
+        meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
+        meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT)
+        meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL)
+        if 'krb' in opts and opts['krb'] == 'yes':
+            meta.add_allowed_name_format(
+                lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS)
+
+        meta.output(os.path.join(path, 'metadata.xml'))
+
+        # Add configuration data to database
+        po = PluginObject()
+        po.name = 'saml2'
+        po.wipe_data()
+
+        po.wipe_config_values(FACILITY)
+        config = {'idp storage path': path,
+                  'idp metadata file': 'metadata.xml',
+                  'idp certificate file': cert.cert,
+                  'idp key file': cert.key}
+        po.set_config(config)
+        po.save_plugin_config(FACILITY)
+
+        # Fixup permissions so only the ipsilon user can read these files
+        pw = pwd.getpwnam(opts['system_user'])
+        for root, dirs, files in os.walk(path):
+            for name in dirs:
+                target = os.path.join(root, name)
+                os.chown(target, pw.pw_uid, pw.pw_gid)
+                os.chmod(target, 0700)
+            for name in files:
+                target = os.path.join(root, name)
+                os.chown(target, pw.pw_uid, pw.pw_gid)
+                os.chmod(target, 0600)
