@@ -189,6 +189,25 @@ class Store(object):
             if con:
                 con.close()
 
+    def wipe_plugin_config(self, facility, plugin):
+        # Try to backup old data first, just in case ?
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS " +
+                        facility + " (name TEXT,option TEXT,value TEXT)")
+            cur.execute("DELETE FROM " + facility + " WHERE name=?",
+                        (plugin,))
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to wipe %s config: [%s]" % (plugin, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
     def get_data(self, plugin, idval=None, name=None, value=None):
         con = None
         rows = []
@@ -272,6 +291,24 @@ class Store(object):
             if con:
                 con.rollback()
             cherrypy.log.error("Failed to store %s data: [%s]" % (plugin, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
+    def wipe_data(self, plugin):
+        # Try to backup old data first, just in case
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute("DROP TABLE IF EXISTS " + plugin + "_data")
+            cur.execute("CREATE TABLE " + plugin + "_data"
+                        "(id INTEGER, name TEXT, value TEXT)")
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to wipe %s data: [%s]" % (plugin, e))
             raise
         finally:
             if con:

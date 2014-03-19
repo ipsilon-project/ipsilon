@@ -144,9 +144,18 @@ class PluginObject(object):
             self._config = dict()
         self._config[option] = value
 
+    def save_plugin_config(self, facility):
+        self._data.save_plugin_config(facility, self.name, self._config)
+
     def get_data(self, idval=None, name=None, value=None):
         return self._data.get_data(self.name, idval=idval, name=name,
                                    value=value)
 
     def save_data(self, data):
         self._data.save_data(self.name, data)
+
+    def wipe_config_values(self, facility):
+        self._data.wipe_plugin_config(facility, self.name)
+
+    def wipe_data(self):
+        self._data.wipe_data(self.name)
