@@ -89,7 +89,7 @@ class ServiceProvider(object):
 
     def get_valid_nameid(self, nip):
         self._debug('Requested NameId [%s]' % (nip.format,))
-        if nip.format == None:
+        if nip.format is None:
             return NAMEID_MAP[self.default_nameid]
         elif nip.format == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
             return NAMEID_MAP[self.default_nameid]
