@@ -23,6 +23,7 @@ import argparse
 import cherrypy
 import logging
 import os
+import pwd
 import shutil
 import socket
 import sys
@@ -129,6 +130,8 @@ def parse_args(plugins):
                         help='Comma separated list of login managers')
     parser.add_argument('--hostname',
                         help="Machine's fully qualified host name")
+    parser.add_argument('--system-user', default='ipsilon',
+                        help="User account used to run the server")
     parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
                         help='Detect and use an IPA server for authentication')
     parser.add_argument('--uninstall', action='store_true',
@@ -151,6 +154,11 @@ def parse_args(plugins):
 
     if len(args['hostname'].split('.')) < 2:
         raise ConfigurationError('Hostname: %s is not a FQDN')
+
+    try:
+        pwd.getpwnam(args['system_user'])
+    except KeyError:
+        raise ConfigurationError('User: %s not found on the system')
 
     if args['lm_order'] is None:
         args['lm_order'] = []
