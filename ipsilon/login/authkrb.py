@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginPageBase, LoginManagerBase
-from ipsilon.util.user import UserSession
 import cherrypy
 
 
@@ -36,7 +35,7 @@ class KrbAuth(LoginPageBase):
         # If we can get here, we must be authenticated and remote_user
         # was set. Check the session has a user set already or error.
         if self.user and self.user.name:
-            userdata = { 'krb_principal_name': self.user.name }
+            userdata = {'krb_principal_name': self.user.name}
             return self.lm.auth_successful(self.user.name, userdata)
         else:
             return self.lm.auth_failed()
