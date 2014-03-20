@@ -19,6 +19,7 @@
 
 from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.providers.common import ProvidersInstall
+from ipsilon.util.data import Store
 import argparse
 import cherrypy
 import logging
@@ -98,6 +99,13 @@ def install(plugins, args):
     if os.path.exists(admin_db):
         shutil.move(admin_db, '%s.backup.%s' % (admin_db, now))
 
+    # Rebuild user db
+    users_db = cherrypy.config['user.prefs.db']
+    if os.path.exists(users_db):
+        shutil.move(users_db, '%s.backup.%s' % (users_db, now))
+    db = Store()
+    db.save_user_preferences(args['admin_user'], {'is_admin': 1})
+
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
         plugin = plugins['Login Managers'][plugin_name]
@@ -132,6 +140,8 @@ def parse_args(plugins):
                         help="Machine's fully qualified host name")
     parser.add_argument('--system-user', default='ipsilon',
                         help="User account used to run the server")
+    parser.add_argument('--admin-user', default='admin',
+                        help="User account that is assigned admin privileges")
     parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
                         help='Detect and use an IPA server for authentication')
     parser.add_argument('--uninstall', action='store_true',
