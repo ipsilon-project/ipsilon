@@ -161,6 +161,41 @@ class Store(object):
 
         return (lpo, plco)
 
+    def get_plugin_config(self, facility, plugin):
+        con = None
+        rows = []
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS " +
+                        facility + " (name TEXT,option TEXT,value TEXT)")
+            cur.execute("SELECT option, value FROM " +
+                        facility + " WHERE name=?", (plugin,))
+            rows = cur.fetchall()
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            fpe = (facility, plugin, e)
+            cherrypy.log.error("Failed to get %s/%s config: [%s]" % fpe)
+            raise
+        finally:
+            if con:
+                con.close()
+
+        res = dict()
+        for (option, value) in rows:
+            if option in res:
+                if res[option] is list:
+                    res[option].append(value)
+                else:
+                    v = res[option]
+                    res[option] = [v, value]
+            else:
+                res[option] = value
+
+        return res
+
     def save_plugin_config(self, facility, plugin, options):
         SELECT = "SELECT option, value FROM %s WHERE name=?" % facility
         UPDATE = "UPDATE %s SET value=? WHERE name=? AND option=?" % facility
@@ -169,6 +204,8 @@ class Store(object):
         try:
             con = sqlite3.connect(self._admin_dbname)
             cur = con.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS " +
+                        facility + " (name TEXT,option TEXT,value TEXT)")
             curvals = dict()
             for row in cur.execute(SELECT, (plugin,)):
                 curvals[row[0]] = row[1]

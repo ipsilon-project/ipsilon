@@ -144,6 +144,9 @@ class PluginObject(object):
             self._config = dict()
         self._config[option] = value
 
+    def get_plugin_config(self, facility):
+        return self._data.get_plugin_config(facility, self.name)
+
     def save_plugin_config(self, facility):
         self._data.save_plugin_config(facility, self.name, self._config)
 
