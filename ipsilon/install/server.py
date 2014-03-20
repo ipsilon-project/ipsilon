@@ -79,15 +79,15 @@ def install(plugins, args):
     logger.info('Installing default config files')
     ipsilon_conf = os.path.join(CONFDIR, 'ipsilon.conf')
     idp_conf = os.path.join(CONFDIR, 'idp.conf')
-    httpd_conf = os.path.join(HTTPDCONFD, 'idp.conf')
+    args['httpd_conf'] = os.path.join(HTTPDCONFD, 'idp.conf')
     if os.path.exists(ipsilon_conf):
         shutil.move(ipsilon_conf, '%s.bakcup.%s' % (ipsilon_conf, now))
     if os.path.exists(idp_conf):
         shutil.move(idp_conf, '%s.backup.%s' % (idp_conf, now))
     shutil.copy(os.path.join(TEMPLATES, 'ipsilon.conf'), CONFDIR)
     shutil.copy(os.path.join(TEMPLATES, 'idp.conf'), CONFDIR)
-    if not os.path.exists(httpd_conf):
-        os.symlink(idp_conf, httpd_conf)
+    if not os.path.exists(args['httpd_conf']):
+        os.symlink(idp_conf, args['httpd_conf'])
     # Load the cherrypy config from the newly installed file so
     # that db paths and all is properly set before configuring
     # components

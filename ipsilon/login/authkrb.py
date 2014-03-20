@@ -18,7 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginPageBase, LoginManagerBase
+from ipsilon.login.common import FACILITY
+from ipsilon.util.plugin import PluginObject
+from string import Template
 import cherrypy
+import os
 
 
 class Krb(LoginPageBase):
@@ -81,6 +85,26 @@ plugin for actual authentication. """
         return self.page
 
 
+CONF_TEMPLATE = """
+
+<Location /idp/login/krb/negotiate>
+  AuthType Kerberos
+  AuthName "Kerberos Login"
+  KrbMethodNegotiate on
+  KrbMethodK5Passwd off
+  KrbServiceName HTTP
+  $realms
+  $keytab
+  KrbSaveCredentials off
+  KrbConstrainedDelegation off
+  # KrbLocalUserMapping On
+  Require valid-user
+
+  ErrorDocument 401 /idp/login/krb/unauthorized
+</Location>
+"""
+
+
 class Installer(object):
 
     def __init__(self):
@@ -90,7 +114,49 @@ class Installer(object):
     def install_args(self, group):
         group.add_argument('--krb', choices=['yes', 'no'], default='no',
                            help='Configure Kerberos authentication')
+        group.add_argument('--krb-realms',
+                           help='Allowed Kerberos Auth Realms')
+        group.add_argument('--krb-httpd-keytab',
+                           default='/etc/httpd/conf/http.keytab',
+                           help='Kerberos keytab location for HTTPD')
 
     def configure(self, opts):
         if opts['krb'] != 'yes':
             return
+
+        keytab = '  # Krb5KeyTab - No Keytab provided'
+        if opts['krb_httpd_keytab'] is None:
+            if os.path.exists('/etc/httpd/conf/http.keytab'):
+                keytab = '  Krb5KeyTab /etc/httpd/conf/http.keytab'
+        else:
+            if os.path.exists(opts['krb_httpd_keytab']):
+                keytab = '  Krb5KeyTab %s' % opts['krb_httpd_keytab']
+            else:
+                raise Exception('Keytab not found')
+
+        if opts['krb_realms'] is None:
+            realms = '  # KrbAuthRealms - Any trusted realm is allowed'
+        else:
+            realms = '  KrbAuthRealms %s' % opts['krb_realms']
+
+        tmpl = Template(CONF_TEMPLATE)
+        hunk = tmpl.substitute(keytab=keytab, realms=realms)
+        with open(opts['httpd_conf'], 'a') as httpd_conf:
+            httpd_conf.write(hunk)
+
+        # Add configuration data to database
+        po = PluginObject()
+        po.name = 'krb'
+        po.wipe_data()
+
+        # Update global config, put 'krb' always first
+        po.name = 'global'
+        globalconf = po.get_plugin_config(FACILITY)
+        if 'order' in globalconf:
+            order = globalconf['order'].split(',')
+        else:
+            order = []
+        order.insert(0, 'krb')
+        globalconf['order'] = ','.join(order)
+        po.set_config(globalconf)
+        po.save_plugin_config(FACILITY)
