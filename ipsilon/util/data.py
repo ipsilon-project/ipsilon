@@ -118,6 +118,39 @@ class Store(object):
     def get_user_preferences(self, user):
         return self._load_user_prefs(self._user_dbname, user)
 
+    def save_user_preferences(self, user, options):
+        SELECT = "SELECT option, value FROM users WHERE name=?"
+        UPDATE = "UPDATE users SET value=? WHERE name=? AND option=?"
+        INSERT = "INSERT INTO users VALUES(?,?,?)"
+        con = None
+        try:
+            con = sqlite3.connect(self._user_dbname)
+            cur = con.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users(name TEXT,
+                                                 option TEXT,
+                                                 value TEXT)
+                """)
+            curvals = dict()
+            for row in cur.execute(SELECT, (user,)):
+                curvals[row[0]] = row[1]
+
+            for name in options:
+                if name in curvals:
+                    cur.execute(UPDATE, (options[name], user, name))
+                else:
+                    cur.execute(INSERT, (user, name, options[name]))
+
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to store config: [%s]" % e)
+            raise
+        finally:
+            if con:
+                con.close()
+
     def get_plugins_config(self, facility):
         con = None
         rows = []
