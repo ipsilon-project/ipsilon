@@ -12,6 +12,11 @@ BuildRequires:	python2-devel
 BuildRequires:	python-setuptools
 BuildRequires:	lasso-python
 Requires:	lasso-python
+Requires:	mod_wsgi
+Requires:	mod_auth_kerb
+Requires:       python-cherrypy
+Requires:       python-jinja2
+Requires:       python-pam
 Requires(pre):  shadow-utils
 
 %description
@@ -33,8 +38,11 @@ mkdir -p %{buildroot}%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon/sessions
 ln -s ../..%{python2_sitelib}/ipsilon/idpserver.py \
-    %{buildroot}/%{_sbindir}/ipsilon.py
+    %{buildroot}/%{_sbindir}/ipsilon
 chmod +x %{buildroot}%{python2_sitelib}/ipsilon/idpserver.py
+ln -s ../..%{python2_sitelib}/ipsilon/install/server.py \
+    %{buildroot}/%{_sbindir}/ipsilon-server-install
+chmod +x %{buildroot}%{python2_sitelib}/ipsilon/install/server.py
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 
 %pre
@@ -49,7 +57,8 @@ exit 0
 %{python2_sitelib}/*
 %{_mandir}/man*/ipsilon*
 %{_datadir}/ipsilon/*
-%{_sbindir}/ipsilon.py
+%{_sbindir}/ipsilon
+%{_sbindir}/ipsilon-server-install
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon/sessions
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
