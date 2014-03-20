@@ -27,6 +27,11 @@ import sys
 import time
 
 
+TEMPLATES = '/usr/share/ipsilon/templates/install'
+CONFDIR = '/etc/ipsilon'
+HTTPDCONFD = '/etc/httpd/conf.d'
+
+
 class ConfigurationError(Exception):
 
     def __init__(self, message):
@@ -62,6 +67,29 @@ def openlogs():
 
 def install(plugins, args):
     logger.info('Installation initiated')
+    now = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+
+    logger.info('Installing default config files')
+    ipsilon_conf = os.path.join(CONFDIR, 'ipsilon.conf')
+    idp_conf = os.path.join(CONFDIR, 'idp.conf')
+    httpd_conf = os.path.join(HTTPDCONFD, 'idp.conf')
+    if os.path.exists(ipsilon_conf):
+        shutil.move(ipsilon_conf, '%s.bakcup.%s' % (ipsilon_conf, now))
+    if os.path.exists(idp_conf):
+        shutil.move(idp_conf, '%s.backup.%s' % (idp_conf, now))
+    shutil.copy(os.path.join(TEMPLATES, 'ipsilon.conf'), CONFDIR)
+    shutil.copy(os.path.join(TEMPLATES, 'idp.conf'), CONFDIR)
+    if not os.path.exists(httpd_conf):
+        os.symlink(idp_conf, httpd_conf)
+    # Load the cherrypy config from the newly installed file so
+    # that db paths and all is properly set before configuring
+    # components
+    cherrypy.config.update(ipsilon_conf)
+
+    # Move pre-existing admin db away
+    admin_db = cherrypy.config['admin.config.db']
+    if os.path.exists(admin_db):
+        shutil.move(admin_db, '%s.backup.%s' % (admin_db, now))
 
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
