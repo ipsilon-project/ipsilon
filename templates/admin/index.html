@@ -18,6 +18,9 @@
     {% endfor %}
 
     <h3>Plugins order</h3>
-    <p>[list here and form button to change?]</p>
+    <div class="col-md-3 col-sm-3 col-xs-6">{{ ', '.join(enabled) }}</div>
+    <div class="col-md-3 col-sm-3 col-xs-6">
+        <a class="btn btn-default" href="{{ basepath }}/admin/login/order">configure</a>
+    </div>
 {% endif %}
 {% endblock %}

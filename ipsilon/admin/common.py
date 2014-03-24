@@ -20,6 +20,7 @@
 from ipsilon.util.data import Store
 from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
+from ipsilon.util.plugin import PluginObject
 import cherrypy
 from ipsilon.login.common import FACILITY as LOGIN_FACILITY
 
@@ -105,6 +106,78 @@ class LoginPluginPage(Page):
             return op(*args, **kwargs)
 
 
+class LoginPluginsOrder(Page):
+
+    def __init__(self, site, baseurl):
+        super(LoginPluginsOrder, self).__init__(site)
+        self.url = '%s/order' % baseurl
+
+    @admin_protect
+    def GET(self, *args, **kwargs):
+        return self._template('admin/login_order.html',
+                              title='login plugins order',
+                              name='admin_login_order_form',
+                              action=self.url,
+                              options=self._site[LOGIN_FACILITY]['enabled'])
+
+    @admin_protect
+    def POST(self, *args, **kwargs):
+        message = "Nothing was modified."
+        message_type = "info"
+        valid = self._site[LOGIN_FACILITY]['enabled']
+
+        if 'order' in kwargs:
+            order = kwargs['order'].split(',')
+            if len(order) != 0:
+                new_values = []
+                try:
+                    for v in order:
+                        val = v.strip()
+                        if val not in valid:
+                            error = "Invalid plugin name: %s" % val
+                            raise ValueError(error)
+                        new_values.append(val)
+                    if len(new_values) < len(valid):
+                        for val in valid:
+                            if val not in new_values:
+                                new_values.append(val)
+
+                    po = PluginObject()
+                    po.name = "global"
+                    globalconf = dict()
+                    globalconf['order'] = ','.join(new_values)
+                    po.set_config(globalconf)
+                    po.save_plugin_config(LOGIN_FACILITY)
+
+                    # When all is saved update also live config
+                    self._site[LOGIN_FACILITY]['enabled'] = new_values
+
+                    message = "New configuration saved."
+                    message_type = "success"
+
+                except ValueError, e:
+                    message = str(e)
+                    message_type = "error"
+
+                except Exception, e:  # pylint: disable=broad-except
+                    message = "Failed to save data!"
+                    message_type = "error"
+
+        return self._template('admin/login_order.html',
+                              message=message,
+                              message_type=message_type,
+                              title='login plugins order',
+                              name='admin_login_order_form',
+                              action=self.url,
+                              options=self._site[LOGIN_FACILITY]['enabled'])
+
+    def root(self, *args, **kwargs):
+        cherrypy.log.error("method: %s" % cherrypy.request.method)
+        op = getattr(self, cherrypy.request.method, self.GET)
+        if callable(op):
+            return op(*args, **kwargs)
+
+
 class LoginPlugins(Page):
     def __init__(self, site, baseurl):
         super(LoginPlugins, self).__init__(site)
@@ -114,6 +187,8 @@ class LoginPlugins(Page):
             cherrypy.log.error('Admin login plugin: %s' % plugin)
             obj = self._site[LOGIN_FACILITY]['available'][plugin]
             self.__dict__[plugin] = LoginPluginPage(obj, self._site, self.url)
+
+        self.order = LoginPluginsOrder(self._site, self.url)
 
 
 class Admin(Page):
