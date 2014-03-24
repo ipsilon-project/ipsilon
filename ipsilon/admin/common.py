@@ -19,21 +19,10 @@
 
 from ipsilon.util.data import Store
 from ipsilon.util.page import Page
-from ipsilon.util.user import UserSession
+from ipsilon.util.page import admin_protect
 from ipsilon.util.plugin import PluginObject
 import cherrypy
 from ipsilon.login.common import FACILITY as LOGIN_FACILITY
-
-
-def admin_protect(fn):
-
-    def check(*args, **kwargs):
-        if UserSession().get_user().is_admin:
-            return fn(*args, **kwargs)
-
-        raise cherrypy.HTTPError(403)
-
-    return check
 
 
 class LoginPluginPage(Page):

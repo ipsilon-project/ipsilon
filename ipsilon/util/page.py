@@ -21,6 +21,17 @@ from ipsilon.util.user import UserSession
 import cherrypy
 
 
+def admin_protect(fn):
+
+    def check(*args, **kwargs):
+        if UserSession().get_user().is_admin:
+            return fn(*args, **kwargs)
+
+        raise cherrypy.HTTPError(403)
+
+    return check
+
+
 def protect():
     UserSession().remote_login()
 
