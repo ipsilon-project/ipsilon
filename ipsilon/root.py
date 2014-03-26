@@ -24,6 +24,7 @@ from ipsilon.login.common import Logout
 from ipsilon.admin.common import Admin
 from ipsilon.providers.common import LoadProviders
 from ipsilon.admin.login import LoginPlugins
+from ipsilon.admin.providers import ProviderPlugins
 import cherrypy
 
 sites = dict()
@@ -53,6 +54,7 @@ class Root(Page):
         # after all plugins are setup we can instantiate the admin pages
         self.admin = Admin(self._site, 'admin')
         LoginPlugins(self._site, self.admin)
+        ProviderPlugins(self._site, self.admin)
 
     def root(self):
         return self._template('index.html', title='Ipsilon')
