@@ -68,6 +68,61 @@ class LoginManagerBase(PluginObject):
 
         raise cherrypy.HTTPRedirect(ref)
 
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log(fact)
+
+    def get_tree(self, site):
+        raise NotImplementedError
+
+    def enable(self, site):
+        plugins = site[FACILITY]
+        if self in plugins['enabled']:
+            return
+
+        # configure self
+        if self.name in plugins['config']:
+            self.set_config(plugins['config'][self.name])
+
+        # and add self to the root
+        root = plugins['root']
+        root.add_subtree(self.name, self.get_tree(site))
+
+        # finally add self in login chain
+        prev_obj = None
+        for prev_obj in plugins['enabled']:
+            if prev_obj.next_login:
+                break
+        if prev_obj:
+            while prev_obj.next_login:
+                prev_obj = prev_obj.next_login
+            prev_obj.next_login = self
+        if not root.first_login:
+            root.first_login = self
+
+        plugins['enabled'].append(self)
+        self._debug('Login plugin enabled: %s' % self.name)
+
+    def disable(self, site):
+        plugins = site[FACILITY]
+        if self not in plugins['enabled']:
+            return
+
+        #remove self from chain
+        root = plugins['root']
+        if root.first_login == self:
+            root.first_login = self.next_login
+        elif root.first_login:
+            prev_obj = root.first_login
+            while prev_obj.next_login != self:
+                prev_obj = prev_obj.next_login
+            if prev_obj:
+                prev_obj.next_login = self.next_login
+        self.next_login = None
+
+        plugins['enabled'].remove(self)
+        self._debug('Login plugin disabled: %s' % self.name)
+
 
 class LoginPageBase(Page):
 
@@ -95,22 +150,15 @@ class Login(Page):
         available = plugins['available'].keys()
         self._debug('Available login managers: %s' % str(available))
 
-        prev_obj = None
+        plugins['root'] = self
         for item in plugins['whitelist']:
             self._debug('Login plugin in whitelist: %s' % item)
             if item not in plugins['available']:
                 continue
-            self._debug('Login plugin enabled: %s' % item)
-            plugins['enabled'].append(item)
-            obj = plugins['available'][item]
-            if prev_obj:
-                prev_obj.next_login = obj
-            else:
-                self.first_login = obj
-            prev_obj = obj
-            if item in plugins['config']:
-                obj.set_config(plugins['config'][item])
-            self.__dict__[item] = obj.get_tree(self._site)
+            plugins['available'][item].enable(self._site)
+
+    def add_subtree(self, name, page):
+        self.__dict__[name] = page
 
     def root(self, *args, **kwargs):
         if self.first_login:

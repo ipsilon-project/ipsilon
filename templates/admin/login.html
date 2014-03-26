@@ -2,16 +2,21 @@
 {% block main %}
 {% if user.is_admin %}
     <h2>Login plugins</h2>
+    {% if message %}
+    <div class="alert alert-{{message_type}}">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
 
     {% for p in available %}
         <div class="row">
         <div class="col-md-3 col-sm-3 col-xs-6">{{ p }}</div>
         <div class="col-md-3 col-sm-3 col-xs-6">
         {% if p in enabled %}
-            <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}/disable">Disable</a>
+            <a class="btn btn-default" href="{{ basepath }}/admin/login/disable/{{ p }}">Disable</a>
             <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}">Configure</a>
         {% else %}
-            <a class="btn btn-default" href="{{ basepath }}/admin/login/{{ p }}/enable">Enable</a>
+            <a class="btn btn-default" href="{{ basepath }}/admin/login/enable/{{ p }}">Enable</a>
         {% endif %}
         </div>
         </div>

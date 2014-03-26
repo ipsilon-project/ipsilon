@@ -114,9 +114,43 @@ class LoginPlugins(Page):
 
         self.order = LoginPluginsOrder(self._site, self)
 
-    def root(self, *args, **kwargs):
+    def root_with_msg(self, message=None, message_type=None):
         login_plugins = self._site[FACILITY]
+        ordered = []
+        for p in login_plugins['enabled']:
+            ordered.append(p.name)
         return self._template('admin/login.html', title=self.title,
+                              message=message,
+                              message_type=message_type,
                               available=login_plugins['available'],
-                              enabled=login_plugins['enabled'],
+                              enabled=ordered,
                               menu=self._master.menu)
+
+    def root(self, *args, **kwargs):
+        return self.root_with_msg()
+
+    def enable(self, plugin):
+        msg = None
+        plugins = self._site[FACILITY]
+        if plugin not in plugins['available']:
+            msg = "Unknown plugin %s" % plugin
+            return self.root_with_msg(msg, "error")
+        obj = plugins['available'][plugin]
+        if obj not in plugins['enabled']:
+            obj.enable(self._site)
+            msg = "Plugin %s enabled" % obj.name
+        return self.root_with_msg(msg, "success")
+    enable.exposed = True
+
+    def disable(self, plugin):
+        msg = None
+        plugins = self._site[FACILITY]
+        if plugin not in plugins['available']:
+            msg = "Unknown plugin %s" % plugin
+            return self.root_with_msg(msg, "error")
+        obj = plugins['available'][plugin]
+        if obj in plugins['enabled']:
+            obj.disable(self._site)
+            msg = "Plugin %s disabled" % obj.name
+        return self.root_with_msg(msg, "success")
+    disable.exposed = True
