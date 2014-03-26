@@ -25,11 +25,13 @@ from ipsilon.util.page import admin_protect
 
 class AdminPluginPage(Page):
 
-    def __init__(self, obj, site, baseurl, facility):
+    def __init__(self, obj, site, parent):
         super(AdminPluginPage, self).__init__(site)
         self._obj = obj
-        self.url = '%s/%s' % (baseurl, obj.name)
-        self.facility = facility
+        self.title = '%s plugin' % obj.name
+        self.url = '%s/%s' % (parent.url, obj.name)
+        self.facility = parent.facility
+        self.menu = [parent]
 
         # Get the defaults
         self.plugin_config = obj.get_config_desc()
@@ -42,11 +44,10 @@ class AdminPluginPage(Page):
 
     @admin_protect
     def GET(self, *args, **kwargs):
-        return self._template('admin/plugin_config.html',
-                              title='%s plugin' % self._obj.name,
+        return self._template('admin/plugin_config.html', title=self.title,
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._obj.name),
-                              action=self.url,
+                              menu=self.menu, action=self.url,
                               options=self.plugin_config)
 
     @admin_protect
@@ -80,13 +81,12 @@ class AdminPluginPage(Page):
                 self._obj.set_config_value(name, value)
                 self.plugin_config[name][2] = value
 
-        return self._template('admin/plugin_config.html',
+        return self._template('admin/plugin_config.html', title=self.title,
                               message=message,
                               message_type=message_type,
-                              title='%s plugin' % self._obj.name,
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._obj.name),
-                              action=self.url,
+                              menu=self.menu, action=self.url,
                               options=self.plugin_config)
 
     def root(self, *args, **kwargs):
@@ -101,6 +101,17 @@ class Admin(Page):
     def __init__(self, site, mount):
         super(Admin, self).__init__(site)
         self.url = '%s/%s' % (self.basepath, mount)
+        self.menu = []
 
     def root(self, *args, **kwargs):
-        return self._template('admin/index.html', title='Configuration')
+        return self._template('admin/index.html',
+                              title='Configuration',
+                              menu=self.menu)
+
+    def add_subtree(self, name, page):
+        self.__dict__[name] = page
+        self.menu.append(page)
+
+    def del_subtree(self, name):
+        self.menu.remove(self.__dict__[name])
+        del self.__dict__[name]

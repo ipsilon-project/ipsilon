@@ -41,15 +41,11 @@
           </li>
         </ul>
         <ul class="nav navbar-nav navbar-primary">
+          {% for page in menu %}
           <li>
-            <a href="{{ basepath }}/admin/login">Login plugins</a>
+            <a href="{{ page.url }}">{{ page.title }}</a>
           </li>
-          <li>
-            <a href="{{ basepath }}/admin">Providers</a>
-          </li>
-          <li>
-            <a href="{{ basepath }}/admin">Sites</a>
-          </li>
+          {% endfor %}
         </ul>
       </div>
     </nav>

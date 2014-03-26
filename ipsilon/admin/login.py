@@ -27,16 +27,17 @@ from ipsilon.login.common import FACILITY
 
 class LoginPluginsOrder(Page):
 
-    def __init__(self, site, baseurl):
+    def __init__(self, site, parent):
         super(LoginPluginsOrder, self).__init__(site)
-        self.url = '%s/order' % baseurl
+        self.url = '%s/order' % parent.url
+        self.menu = [parent]
 
     @admin_protect
     def GET(self, *args, **kwargs):
         return self._template('admin/login_order.html',
                               title='login plugins order',
                               name='admin_login_order_form',
-                              action=self.url,
+                              menu=self.menu, action=self.url,
                               options=self._site[FACILITY]['enabled'])
 
     @admin_protect
@@ -87,7 +88,7 @@ class LoginPluginsOrder(Page):
                               message_type=message_type,
                               title='login plugins order',
                               name='admin_login_order_form',
-                              action=self.url,
+                              menu=self.menu, action=self.url,
                               options=self._site[FACILITY]['enabled'])
 
     def root(self, *args, **kwargs):
@@ -100,19 +101,22 @@ class LoginPluginsOrder(Page):
 class LoginPlugins(Page):
     def __init__(self, site, parent):
         super(LoginPlugins, self).__init__(site)
-        parent.login = self
+        self._master = parent
+        self.title = 'Login Plugins'
         self.url = '%s/login' % parent.url
+        self.facility = FACILITY
+        parent.add_subtree('login', self)
 
         for plugin in self._site[FACILITY]['available']:
             cherrypy.log.error('Admin login plugin: %s' % plugin)
             obj = self._site[FACILITY]['available'][plugin]
-            self.__dict__[plugin] = AdminPluginPage(obj, self._site,
-                                                    self.url, FACILITY)
+            self.__dict__[plugin] = AdminPluginPage(obj, self._site, self)
 
-        self.order = LoginPluginsOrder(self._site, self.url)
+        self.order = LoginPluginsOrder(self._site, self)
 
     def root(self, *args, **kwargs):
         login_plugins = self._site[FACILITY]
-        return self._template('admin/login.html', title='Login Plugins',
+        return self._template('admin/login.html', title=self.title,
                               available=login_plugins['available'],
-                              enabled=login_plugins['enabled'])
+                              enabled=login_plugins['enabled'],
+                              menu=self._master.menu)
