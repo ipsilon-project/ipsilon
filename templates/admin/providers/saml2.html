@@ -1,0 +1,23 @@
+{% extends "master-admin.html" %}
+{% block main %}
+{% if user.is_admin %}
+    <h2>Service Providers</h2>
+
+    <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-6">
+            <a href="{{ baseurl }}/new">Add New</a>
+        </div>
+    </div>
+    <hr/>
+    {% for p in providers %}
+        <div class="row">
+            <div class="col-md-3 col-sm-3 col-xs-6">
+                <a href="{{ baseurl }}/{{ p.name }}">{{ p.name }}</a>
+            </div>
+            <div class="col-md-3 col-sm-3 col-xs-6">
+                {{ p.provider_id }}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

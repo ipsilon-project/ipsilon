@@ -41,6 +41,8 @@ setup(
                   (DATA+'templates/login', glob('templates/login/*.html')),
                   (DATA+'templates/saml2', glob('templates/saml2/*.html')),
                   (DATA+'templates/install', glob('templates/install/*.conf')),
+                  (DATA+'templates/admin/providers',
+                   glob('templates/admin/providers/*.html')),
                  ]
 )
 

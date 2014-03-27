@@ -20,6 +20,7 @@
 from ipsilon.providers.common import ProviderBase, ProviderPageBase
 from ipsilon.providers.common import FACILITY
 from ipsilon.providers.saml2.auth import AuthenticateRequest
+from ipsilon.providers.saml2.admin import AdminPage
 from ipsilon.providers.saml2.certs import Certificate
 from ipsilon.providers.saml2 import metadata
 from ipsilon.util.user import UserSession
@@ -222,6 +223,7 @@ Provides SAML 2.0 authentication infrastructure. """
 
     def get_tree(self, site):
         self.page = SAML2(site, self)
+        self.admin = AdminPage(site, self)
         return self.page
 
 
