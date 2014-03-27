@@ -43,6 +43,7 @@ class ProviderBase(PluginObject):
         super(ProviderBase, self).__init__()
         self.name = name
         self.path = path
+        self.admin = None
 
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):

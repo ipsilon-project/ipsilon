@@ -36,7 +36,10 @@ class ProviderPlugins(Page):
         for plugin in self._site[FACILITY]['available']:
             cherrypy.log.error('Admin provider plugin: %s' % plugin)
             obj = self._site[FACILITY]['available'][plugin]
-            self.__dict__[plugin] = AdminPluginPage(obj, self)
+            page = AdminPluginPage(obj, self._site, self)
+            if hasattr(obj, 'admin'):
+                obj.admin.mount(page)
+            self.add_subtree(plugin, page)
 
     def root_with_msg(self, message=None, message_type=None):
         plugins = self._site[FACILITY]
