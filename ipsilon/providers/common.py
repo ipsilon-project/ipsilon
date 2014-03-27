@@ -44,6 +44,41 @@ class ProviderBase(PluginObject):
         self.name = name
         self.path = path
 
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log(fact)
+
+    def get_tree(self, site):
+        raise NotImplementedError
+
+    def enable(self, site):
+        plugins = site[FACILITY]
+        if self in plugins['enabled']:
+            return
+
+        # configure self
+        if self.name in plugins['config']:
+            self.set_config(plugins['config'][self.name])
+
+        # and add self to the root
+        root = plugins['root']
+        root.add_subtree(self.name, self.get_tree(site))
+
+        plugins['enabled'].append(self)
+        self._debug('IdP Provider enabled: %s' % self.name)
+
+    def disable(self, site):
+        plugins = site[FACILITY]
+        if self not in plugins['enabled']:
+            return
+
+        # remove self to the root
+        root = plugins['root']
+        root.del_subtree(self.name)
+
+        plugins['enabled'].remove(self)
+        self._debug('IdP Provider disabled: %s' % self.name)
+
 
 class ProviderPageBase(Page):
 
@@ -86,16 +121,12 @@ class LoadProviders(object):
         available = providers['available'].keys()
         self._debug('Available providers: %s' % str(available))
 
+        providers['root'] = root
         for item in providers['whitelist']:
             self._debug('IdP Provider in whitelist: %s' % item)
             if item not in providers['available']:
                 continue
-            self._debug('IdP Provider enabled: %s' % item)
-            providers['enabled'].append(item)
-            provider = providers['available'][item]
-            if item in providers['config']:
-                provider.set_config(providers['config'][item])
-            root.__dict__[item] = provider.get_tree(site)
+            providers['available'][item].enable(site)
 
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
