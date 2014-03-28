@@ -80,4 +80,10 @@ class Page(object):
     def default(self, *args, **kwargs):
         raise cherrypy.HTTPError(404)
 
+    def add_subtree(self, name, page):
+        self.__dict__[name] = page
+
+    def del_subtree(self, name):
+        del self.__dict__[name]
+
     exposed = True
