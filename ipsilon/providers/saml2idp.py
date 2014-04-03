@@ -126,8 +126,7 @@ class SAML2(ProviderPageBase):
                 name = str(idval)
             try:
                 meta = os.path.join(path, 'metadata.xml')
-                cert = os.path.join(path, 'certificate.pem')
-                self.cfg.idp.addProvider(lasso.PROVIDER_ROLE_SP, meta, cert)
+                self.cfg.idp.addProvider(lasso.PROVIDER_ROLE_SP, meta)
                 self._debug('Added SP %s' % name)
             except Exception, e:  # pylint: disable=broad-except
                 self._debug('Failed to add SP %s: %r' % (name, e))
