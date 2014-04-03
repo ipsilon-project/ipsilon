@@ -22,6 +22,7 @@ from ipsilon.providers.common import FACILITY
 from ipsilon.providers.saml2.auth import AuthenticateRequest
 from ipsilon.providers.saml2.admin import AdminPage
 from ipsilon.providers.saml2.certs import Certificate
+from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.providers.saml2 import metadata
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
@@ -76,7 +77,7 @@ class Continue(AuthenticateRequest):
             raise cherrypy.HTTPError(400)
 
         try:
-            login = lasso.Login.newFromDump(self.cfg.idp, dump)
+            login = self.cfg.idp.get_login_handler(dump)
         except Exception, e:  # pylint: disable=broad-except
             self._debug('Failed to load status from dump: %r' % e)
 
@@ -104,32 +105,23 @@ class SAML2(ProviderPageBase):
 
         # Init IDP data
         try:
-            self.cfg.idp = lasso.Server(self.cfg.idp_metadata_file,
-                                        self.cfg.idp_key_file,
-                                        None,
-                                        self.cfg.idp_certificate_file)
-            self.cfg.idp.role = lasso.PROVIDER_ROLE_IDP
+            self.cfg.idp = IdentityProvider(self.cfg)
         except Exception, e:  # pylint: disable=broad-except
-            self._debug('Failed to enable SAML2 provider: %r' % e)
+            self._debug('Failed to init SAML2 provider: %r' % e)
             return
 
         # Import all known applications
         data = self.cfg.get_data()
         for idval in data:
-            if 'type' not in data[idval] or data[idval]['type'] != 'SP':
-                continue
-            path = os.path.join(self.cfg.idp_storage_path, str(idval))
             sp = data[idval]
-            if 'name' in sp:
-                name = sp['name']
-            else:
-                name = str(idval)
+            if 'type' not in sp or sp['type'] != 'SP':
+                continue
+            if 'name' not in sp or 'metadata' not in sp:
+                continue
             try:
-                meta = os.path.join(path, 'metadata.xml')
-                self.cfg.idp.addProvider(lasso.PROVIDER_ROLE_SP, meta)
-                self._debug('Added SP %s' % name)
+                self.cfg.idp.add_provider(sp)
             except Exception, e:  # pylint: disable=broad-except
-                self._debug('Failed to add SP %s: %r' % (name, e))
+                self._debug('Failed to add SP %s: %r' % (sp['name'], e))
 
         self.SSO = SSO(*args, **kwargs)
 
@@ -139,6 +131,7 @@ class IdpProvider(ProviderBase):
     def __init__(self):
         super(IdpProvider, self).__init__('saml2', 'saml2')
         self.page = None
+        self.idp = None
         self.description = """
 Provides SAML 2.0 authentication infrastructure. """
 

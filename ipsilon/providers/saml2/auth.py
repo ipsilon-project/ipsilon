@@ -59,7 +59,7 @@ class AuthenticateRequest(ProviderPageBase):
 
     def _parse_request(self, message):
 
-        login = lasso.Login(self.cfg.idp)
+        login = self.cfg.idp.get_login_handler()
 
         try:
             login.processAuthnRequestMsg(message)

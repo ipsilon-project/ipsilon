@@ -109,3 +109,62 @@ class ServiceProvider(object):
         if 'strip domain' in self._properties:
             return username.split('@', 1)[0]
         return username
+
+
+class ServiceProviderCreator(object):
+
+    def __init__(self, config):
+        self.cfg = config
+
+    def create_from_buffer(self, name, metabuf):
+        '''Test and add data'''
+
+        test = lasso.Server()
+        test.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP, metabuf)
+        newsps = test.get_providers()
+        if len(newsps) != 1:
+            raise InvalidProviderId("Metadata must contain one Provider")
+
+        spid = newsps.keys()[0]
+        data = self.cfg.get_data(name='id', value=spid)
+        if len(data) != 0:
+            raise InvalidProviderId("Provider Already Exists")
+        datum = {'id': spid, 'name': name, 'type': 'SP', 'metadata': metabuf}
+        self.cfg.new_datum(datum)
+
+        data = self.cfg.get_data(name='id', value=spid)
+        if len(data) != 1:
+            raise InvalidProviderId("Internal Error")
+        idval = data.keys()[0]
+        data = self.cfg.get_data(idval=idval)
+        sp = data[idval]
+        self.cfg.idp.add_provider(sp)
+
+        return ServiceProvider(self.cfg, spid)
+
+
+class IdentityProvider(object):
+    def __init__(self, config):
+        self.server = lasso.Server(config.idp_metadata_file,
+                                   config.idp_key_file,
+                                   None,
+                                   config.idp_certificate_file)
+        self.server.role = lasso.PROVIDER_ROLE_IDP
+
+    def add_provider(self, sp):
+        self.server.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP,
+                                          sp['metadata'])
+        self._debug('Added SP %s' % sp['name'])
+
+    def get_login_handler(self, dump=None):
+        if dump:
+            return lasso.Login.newFromDump(self.server, dump)
+        else:
+            return lasso.Login(self.server)
+
+    def get_providers(self):
+        return self.server.get_providers()
+
+    def _debug(self, fact):
+        if cherrypy.config.get('debug', False):
+            cherrypy.log(fact)
