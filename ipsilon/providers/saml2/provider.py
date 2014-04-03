@@ -64,6 +64,7 @@ class ServiceProvider(object):
         idval = data.keys()[0]
         data = self.cfg.get_data(idval=idval)
         self._properties = data[idval]
+        self._staging = dict()
 
     @property
     def provider_id(self):
@@ -73,12 +74,34 @@ class ServiceProvider(object):
     def name(self):
         return self._properties['name']
 
+    @name.setter
+    def name(self, value):
+        self._staging['name'] = value
+
     @property
-    def allowed_namedids(self):
-        if 'allowed nameid' in self._properties:
-            return self._properties['allowed nameid']
+    def owner(self):
+        if 'owner' in self._properties:
+            return self._properties['owner']
+        else:
+            return ''
+
+    @owner.setter
+    def owner(self, value):
+        self._staging['owner'] = value
+
+    @property
+    def allowed_nameids(self):
+        if 'allowed nameids' in self._properties:
+            allowed = self._properties['allowed nameids']
+            return [x.strip() for x in allowed.split(',')]
         else:
             return self.cfg.default_allowed_nameids
+
+    @allowed_nameids.setter
+    def allowed_nameids(self, value):
+        if type(value) is not list:
+            raise ValueError("Must be a list")
+        self._staging['allowed nameids'] = ','.join(value)
 
     @property
     def default_nameid(self):
@@ -87,6 +110,22 @@ class ServiceProvider(object):
         else:
             return self.cfg.default_nameid
 
+    @default_nameid.setter
+    def default_nameid(self, value):
+        self._staging['default nameid'] = value
+
+    def save_properties(self):
+        data = self.cfg.get_data(name='id', value=self.provider_id)
+        if len(data) != 1:
+            raise InvalidProviderId('Could not find SP data')
+        idval = data.keys()[0]
+        data = dict()
+        data[idval] = self._staging
+        self.cfg.save_data(data)
+        data = self.cfg.get_data(idval=idval)
+        self._properties = data[idval]
+        self._staging = dict()
+
     def get_valid_nameid(self, nip):
         self._debug('Requested NameId [%s]' % (nip.format,))
         if nip.format is None:
@@ -94,7 +133,7 @@ class ServiceProvider(object):
         elif nip.format == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
             return NAMEID_MAP[self.default_nameid]
         else:
-            allowed = self.allowed_namedids
+            allowed = self.allowed_nameids
             self._debug('Allowed NameIds %s' % (repr(allowed)))
             for nameid in allowed:
                 if nip.format == NAMEID_MAP[nameid]:
