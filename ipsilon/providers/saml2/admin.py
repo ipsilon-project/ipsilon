@@ -103,6 +103,7 @@ class SPAdminPage(Page):
 
     def __init__(self, sp, site, parent):
         super(SPAdminPage, self).__init__(site)
+        self.parent = parent
         self.sp = sp
         self.title = sp.name
         self.backurl = parent.url
@@ -192,6 +193,12 @@ class SPAdminPage(Page):
         if callable(op):
             return op(*args, **kwargs)
 
+    def delete(self):
+        self.parent.del_sp(self.sp.name)
+        self.sp.permanently_delete()
+        return self.parent.root()
+    delete.exposed = True
+
 
 class AdminPage(Page):
     def __init__(self, site, config):
@@ -208,6 +215,14 @@ class AdminPage(Page):
         self.sp.add_subtree(name, page)
         self.providers.append(sp)
         return page
+
+    def del_sp(self, name):
+        try:
+            page = getattr(self.sp, name)
+            self.providers.remove(page.sp)
+            self.sp.del_subtree(name)
+        except Exception, e:  # pylint: disable=broad-except
+            self._debug("Failed to remove provider %s: %s" % (name, str(e)))
 
     def mount(self, page):
         self.menu = page.menu

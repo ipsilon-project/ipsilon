@@ -140,6 +140,13 @@ class ServiceProvider(object):
                     return nip.format
         raise NameIdNotAllowed(nip.format)
 
+    def permanently_delete(self):
+        data = self.cfg.get_data(name='id', value=self.provider_id)
+        if len(data) != 1:
+            raise InvalidProviderId('Could not find SP data')
+        idval = data.keys()[0]
+        self.cfg.del_datum(idval)
+
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
             cherrypy.log(fact)

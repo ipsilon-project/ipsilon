@@ -15,6 +15,8 @@
         </div>
         <div class="col-md-3 col-sm-3 col-xs-6">
             {{ p.provider_id }}
+            <!-- TODO: add javascript popup to ask for confirmation ? -->
+            <a class="btn btn-default" href="{{ baseurl }}/sp/{{ p.name }}/delete">Delete</a>
         </div>
     </div>
 {% endfor %}
