@@ -1,0 +1,28 @@
+{% extends "master-admin.html" %}
+{% block main %}
+    <h2>{{ title }}</h2>
+    {% if message %}
+    <div class="alert alert-{{message_type}}">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+    <div id="options">
+        <form role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" name="name" value=""/>
+        </div>
+
+        <div class="form-group">
+            <label for="meta">Metadata file:</label>
+            <input type="file" name="meta" id="file"/>
+        </div>
+
+        <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
+            Save
+        </button>
+        <a href="{{ backurl }}" class="btn btn-default" title="Back">Back</a>
+        </form>
+    </div>
+{% endblock %}
