@@ -20,6 +20,8 @@
 import os
 import sqlite3
 import cherrypy
+from random import randint
+import sys
 
 
 class Store(object):
@@ -356,6 +358,34 @@ class Store(object):
                     else:
                         cur.execute(INSERT, (idval, name, datum[name]))
 
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to store %s data: [%s]" % (plugin, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
+    def new_datum(self, plugin, datum):
+        ID = "(SELECT IFNULL(MAX(id), 0) + 1 FROM %s_data)" % plugin
+        INSERT_NEW = "INSERT INTO %s_data VALUES(%s,?,?)" % (plugin, ID)
+        INSERT = "INSERT INTO %s_data VALUES(?,?,?)" % plugin
+        SELECT = "SELECT id FROM %s_data WHERE name=? AND value=?" % plugin
+        DELETE = "DELETE FROM %s_data WHERE name=? AND value=?" % plugin
+        con = None
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            tmpid = ('new', str(randint(0, sys.maxint)))
+            cur.execute(INSERT_NEW, tmpid)
+            cur.execute(SELECT, tmpid)
+            rows = cur.fetchall()
+            idval = rows[0][0]
+            for name in datum:
+                cur.execute(INSERT, (idval, name, datum[name]))
+            cur.execute(DELETE, tmpid)
             con.commit()
         except sqlite3.Error, e:
             if con:

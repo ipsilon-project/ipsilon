@@ -157,6 +157,9 @@ class PluginObject(object):
     def save_data(self, data):
         self._data.save_data(self.name, data)
 
+    def new_datum(self, datum):
+        self._data.new_datum(self.name, datum)
+
     def wipe_config_values(self, facility):
         self._data.wipe_plugin_config(facility, self.name)
 
