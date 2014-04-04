@@ -125,6 +125,7 @@ class SPAdminPage(Page):
 
         message = "Nothing was modified."
         message_type = "info"
+        rename = None
         save = False
 
         for key, value in kwargs.iteritems():
@@ -134,6 +135,7 @@ class SPAdminPage(Page):
                         self._debug("Replacing %s: %s -> %s" %
                                     (key, self.sp.name, value))
                         self.sp.name = value
+                        rename = [self.sp.name, value]
                         save = True
                     else:
                         message = "Unauthorized to rename object"
@@ -180,6 +182,8 @@ class SPAdminPage(Page):
         if save:
             try:
                 self.sp.save_properties()
+                if rename:
+                    self.parent.rename_sp(rename[0], rename[1])
                 message = "Properties succssfully changed"
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
@@ -215,6 +219,11 @@ class AdminPage(Page):
         self.sp.add_subtree(name, page)
         self.providers.append(sp)
         return page
+
+    def rename_sp(self, oldname, newname):
+        page = getattr(self.sp, oldname)
+        self.sp.del_subtree(oldname)
+        self.sp.add_subtree(newname, page)
 
     def del_sp(self, name):
         try:
