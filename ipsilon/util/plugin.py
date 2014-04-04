@@ -160,6 +160,9 @@ class PluginObject(object):
     def new_datum(self, datum):
         self._data.new_datum(self.name, datum)
 
+    def del_datum(self, idval):
+        self._data.del_datum(self.name, idval)
+
     def wipe_config_values(self, facility):
         self._data.wipe_plugin_config(facility, self.name)
 

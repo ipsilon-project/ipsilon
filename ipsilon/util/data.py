@@ -396,6 +396,23 @@ class Store(object):
             if con:
                 con.close()
 
+    def del_datum(self, plugin, idval):
+        DELETE = "DELETE FROM %s_data WHERE id=?" % plugin
+        con = None
+        try:
+            con = sqlite3.connect(self._admin_dbname)
+            cur = con.cursor()
+            cur.execute(DELETE, (idval,))
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to delete %s data: [%s]" % (plugin, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
     def wipe_data(self, plugin):
         # Try to backup old data first, just in case
         try:
