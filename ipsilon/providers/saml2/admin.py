@@ -17,8 +17,103 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import cherrypy
 from ipsilon.util.page import Page
 from ipsilon.providers.saml2.provider import ServiceProvider
+
+
+class SPAdminPage(Page):
+
+    def __init__(self, sp, site, parent):
+        super(SPAdminPage, self).__init__(site)
+        self.sp = sp
+        self.title = sp.name
+        self.backurl = parent.url
+        self.url = '%s/sp/%s' % (parent.url, sp.name)
+
+    def form_standard(self, message=None, message_type=None):
+        return self._template('admin/providers/saml2_sp.html',
+                              message=message,
+                              message_type=message_type,
+                              title=self.title,
+                              name='saml2_sp_%s_form' % self.sp.name,
+                              backurl=self.backurl, action=self.url,
+                              data=self.sp)
+
+    def GET(self, *args, **kwargs):
+        return self.form_standard()
+
+    def POST(self, *args, **kwargs):
+
+        message = "Nothing was modified."
+        message_type = "info"
+        save = False
+
+        for key, value in kwargs.iteritems():
+            if key == 'name':
+                if value != self.sp.name:
+                    if self.user.is_admin or self.user.name == self.sp.owner:
+                        self._debug("Replacing %s: %s -> %s" %
+                                    (key, self.sp.name, value))
+                        self.sp.name = value
+                        save = True
+                    else:
+                        message = "Unauthorized to rename object"
+                        message_type = "error"
+                        return self.form_standard(message, message_type)
+
+            elif key == 'owner':
+                if value != self.sp.owner:
+                    if self.user.is_admin:
+                        self._debug("Replacing %s: %s -> %s" %
+                                    (key, self.sp.owner, value))
+                        self.sp.owner = value
+                        save = True
+                    else:
+                        message = "Unauthorized to set owner value"
+                        message_type = "error"
+                        return self.form_standard(message, message_type)
+
+            elif key == 'default_nameid':
+                if value != self.sp.default_nameid:
+                    if self.user.is_admin:
+                        self._debug("Replacing %s: %s -> %s" %
+                                    (key, self.sp.default_nameid, value))
+                        self.sp.default_nameid = value
+                        save = True
+                    else:
+                        message = "Unauthorized to set default nameid value"
+                        message_type = "error"
+                        return self.form_standard(message, message_type)
+
+            elif key == 'allowed_nameids':
+                v = set([x.strip() for x in value.split(',')])
+                if v != set(self.sp.allowed_nameids):
+                    if self.user.is_admin:
+                        self._debug("Replacing %s: %s -> %s" %
+                                    (key, self.sp.allowed_nameids, list(v)))
+                        self.sp.allowed_nameids = list(v)
+                        save = True
+                    else:
+                        message = "Unauthorized to set allowed nameids value"
+                        message_type = "error"
+                        return self.form_standard(message, message_type)
+
+        if save:
+            try:
+                self.sp.save_properties()
+                message = "Properties succssfully changed"
+                message_type = "success"
+            except Exception:  # pylint: disable=broad-except
+                message = "Failed to save data!"
+                message_type = "error"
+
+        return self.form_standard(message, message_type)
+
+    def root(self, *args, **kwargs):
+        op = getattr(self, cherrypy.request.method, self.GET)
+        if callable(op):
+            return op(*args, **kwargs)
 
 
 class AdminPage(Page):
@@ -29,6 +124,13 @@ class AdminPage(Page):
         self.providers = []
         self.menu = []
         self.url = None
+        self.sp = Page(self._site)
+
+    def add_sp(self, name, sp):
+        page = SPAdminPage(sp, self._site, self)
+        self.sp.add_subtree(name, page)
+        self.providers.append(sp)
+        return page
 
     def mount(self, page):
         self.menu = page.menu
@@ -36,7 +138,7 @@ class AdminPage(Page):
         for p in self.cfg.idp.get_providers():
             try:
                 sp = ServiceProvider(self.cfg, p)
-                self.providers.append(sp)
+                self.add_sp(sp.name, sp)
             except Exception, e:  # pylint: disable=broad-except
                 self._debug("Failed to find provider %s: %s" % (p, str(e)))
         page.add_subtree(self.name, self)
