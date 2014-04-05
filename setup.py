@@ -36,14 +36,19 @@ setup(
                   (DATA+'ui/css', glob('ui/css/*.css')),
                   (DATA+'ui/img', glob('ui/img/*')),
                   (DATA+'ui/js', glob('ui/js/*.js')),
+                  (DATA+'ui/saml2sp', glob('ui/saml2sp/*.html')),
                   (DATA+'templates', glob('templates/*.html')),
                   (DATA+'templates/admin', glob('templates/admin/*.html')),
                   (DATA+'templates/login', glob('templates/login/*.html')),
                   (DATA+'templates/saml2', glob('templates/saml2/*.html')),
                   (DATA+'templates/install', glob('templates/install/*.conf')),
+                  (DATA+'templates/install/saml2',
+                   glob('templates/install/saml2/*.conf')),
                   (DATA+'templates/admin/providers',
                    glob('templates/admin/providers/*.html')),
                  ],
-    scripts = ['ipsilon/ipsilon', 'ipsilon/install/ipsilon-server-install']
+    scripts = ['ipsilon/ipsilon',
+               'ipsilon/install/ipsilon-server-install',
+               'ipsilon/install/ipsilon-client-install']
 )
 

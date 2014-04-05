@@ -1,0 +1,259 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2014  Simo Sorce <simo@redhat.com>
+#
+# see file 'COPYING' for use and warranty information
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from ipsilon.tools.saml2metadata import Metadata
+from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
+from ipsilon.tools.saml2metadata import SAML2_SERVICE_MAP
+from ipsilon.tools.certs import Certificate
+from string import Template
+import argparse
+import logging
+import os
+import pwd
+import requests
+import shutil
+import socket
+import sys
+
+
+HTTPDCONFD = '/etc/httpd/conf.d'
+SAML2_TEMPLATE = '/usr/share/ipsilon/templates/install/saml2/sp.conf'
+SAML2_CONFFILE = '/etc/httpd/conf.d/ipsilon-saml.conf'
+SAML2_HTTPDIR = '/etc/httpd/saml2'
+SAML2_PROTECTED = '/saml2protected'
+
+#Installation arguments
+args = dict()
+
+# Regular logging
+logger = logging.getLogger()
+
+
+def openlogs():
+    global logger  # pylint: disable=W0603
+    logger = logging.getLogger()
+    lh = logging.StreamHandler(sys.stderr)
+    logger.addHandler(lh)
+
+
+def saml2():
+    logger.info('Installing SAML2 Service Provider')
+
+    if args['saml_idp_metadata'] is None:
+        #TODO: detect via SRV records ?
+        raise ValueError('An IDP metadata file/url is required.')
+
+    idpmeta = None
+
+    try:
+        if os.path.exists(args['saml_idp_metadata']):
+            with open(args['saml_idp_metadata']) as f:
+                idpmeta = f.read()
+        elif args['saml_idp_metadata'].startswith('file://'):
+            with open(args['saml_idp_metadata'][7:]) as f:
+                idpmeta = f.read()
+        else:
+            r = requests.get(args['saml_idp_metadata'])
+            r.raise_for_status()
+            idpmeta = r.content
+    except Exception, e:  # pylint: disable=broad-except
+        logger.error("Failed to retrieve IDP Metadata file!\n" +
+                     "Error: [%s]" % repr(e))
+        raise
+
+    path = None
+    if args['saml_httpd']:
+        path = os.path.join(SAML2_HTTPDIR, args['hostname'])
+        os.makedirs(path, 0750)
+    else:
+        path = os.getcwd()
+
+    url = 'https://' + args['hostname']
+    url_sp = url + args['saml_sp']
+    url_logout = url + args['saml_sp_logout']
+    url_post = url + args['saml_sp_post']
+
+    # Generate metadata
+    m = Metadata('sp')
+    c = Certificate(path)
+    c.generate('certificate', args['hostname'])
+    m.set_entity_id(url_sp)
+    m.add_certs(c)
+    m.add_service(SAML2_SERVICE_MAP['logout-redirect'], url_logout)
+    m.add_service(SAML2_SERVICE_MAP['response-post'], url_post, index="0")
+    sp_metafile = os.path.join(path, 'metadata.xml')
+    m.output(sp_metafile)
+
+    if args['saml_httpd']:
+        idp_metafile = os.path.join(path, 'idp-metadata.xml')
+        with open(idp_metafile, 'w+') as f:
+            f.write(idpmeta)
+
+        saml_protect = 'auth'
+        saml_auth=''
+        if args['saml_base'] != args['saml_auth']:
+            saml_protect = 'info'
+            saml_auth = '<Location %s>\n' \
+                        '    MellonEnable "auth"\n' \
+                        '</Location>\n' % args['saml_auth']
+
+        psp = '# '
+        if args['saml_auth'] == SAML2_PROTECTED:
+            # default location, enable the default page
+            psp = ''
+
+        with open(SAML2_TEMPLATE) as f:
+            template = f.read()
+        t = Template(template)
+        hunk = t.substitute(saml_base=args['saml_base'],
+                            saml_protect=saml_protect,
+                            saml_sp_key=c.key,
+                            saml_sp_cert=c.cert,
+                            saml_sp_meta=sp_metafile,
+                            saml_idp_meta=idp_metafile,
+                            saml_sp=args['saml_sp'],
+                            saml_auth=saml_auth, sp=psp)
+
+        with open(SAML2_CONFFILE, 'w+') as f:
+            f.write(hunk)
+
+        pw = pwd.getpwnam(args['httpd_user'])
+        for root, dirs, files in os.walk(SAML2_HTTPDIR):
+            for name in dirs:
+                target = os.path.join(root, name)
+                os.chown(target, pw.pw_uid, pw.pw_gid)
+                os.chmod(target, 0700)
+            for name in files:
+                target = os.path.join(root, name)
+                os.chown(target, pw.pw_uid, pw.pw_gid)
+                os.chmod(target, 0600)
+
+        logger.info('SAML Service Provider configured.')
+        logger.info('You should be able to restart the HTTPD server and' +
+                    ' then access it at %s%s' % (url, args['saml_auth']))
+    else:
+        logger.info('SAML Service Provider configuration ready.')
+        logger.info('Use the certificate, key and metadata.xml files to' +
+                    ' configure your Service Provider')
+
+
+def install():
+    if args['saml']:
+        saml2()
+
+
+def saml2_uninstall():
+    try:
+        shutil.rmtree(os.path.join(SAML2_HTTPDIR, args['hostname']))
+    except Exception, e:  # pylint: disable=broad-except
+        log_exception(e)
+    try:
+        os.remove(SAML2_CONFFILE)
+    except Exception, e:  # pylint: disable=broad-except
+        log_exception(e)
+
+
+def uninstall():
+    logger.info('Uninstalling Service Provider')
+    #FXIME: ask confirmation
+    saml2_uninstall()
+    logger.info('Uninstalled SAML2 data')
+
+
+def log_exception(e):
+    if 'debug' in args and args['debug']:
+        logger.exception(e)
+    else:
+        logger.error(e)
+
+
+def parse_args():
+    global args
+
+    fc = argparse.ArgumentDefaultsHelpFormatter
+    parser = argparse.ArgumentParser(description='Client Install Options',
+                                     formatter_class=fc)
+    parser.add_argument('--version',
+                        action='version', version='%(prog)s 0.1')
+    parser.add_argument('--hostname', default=socket.getfqdn(),
+                        help="Machine's fully qualified host name")
+    parser.add_argument('--admin-user', default='admin',
+                        help="Account allowed to create a SP")
+    parser.add_argument('--httpd-user', default='apache',
+                        help="Web server account used to read certs")
+    parser.add_argument('--saml', action='store_true', default=False,
+                        help="Whether to install a saml2 SP")
+    parser.add_argument('--saml-idp-metadata', default=None,
+                        help="A URL pointing at the IDP Metadata (FILE or HTTP)")
+    parser.add_argument('--saml-httpd', action='store_true', default=False,
+                        help="Automatically configure httpd")
+    parser.add_argument('--saml-base', default='/',
+                        help="Where saml2 authdata is available")
+    parser.add_argument('--saml-auth', default=SAML2_PROTECTED,
+                        help="Where saml2 authentication is enforced")
+    parser.add_argument('--saml-sp', default='/saml2',
+                        help="Where saml communication happens")
+    parser.add_argument('--saml-sp-logout', default='/saml2/logout',
+                        help="Single Logout URL")
+    parser.add_argument('--saml-sp-post', default='/saml2/postResponse',
+                        help="Post response URL")
+    parser.add_argument('--debug', action='store_true', default=False,
+                        help="Turn on script debugging")
+    parser.add_argument('--uninstall', action='store_true',
+                        help="Uninstall the server and all data")
+
+    args = vars(parser.parse_args())
+
+    if len(args['hostname'].split('.')) < 2:
+        raise ValueError('Hostname: %s is not a FQDN.')
+
+    # At least one on this list needs to be specified or we do nothing
+    sp_list = ['saml']
+    present = False
+    for sp in sp_list:
+        if args[sp]:
+            present = True
+    if not present and not args['uninstall']:
+        raise ValueError('Nothing to install, please select a Service type.')
+
+
+if __name__ == '__main__':
+    out = 0
+    openlogs()
+    try:
+        parse_args()
+
+        if 'uninstall' in args and args['uninstall'] is True:
+            uninstall()
+
+        install()
+    except Exception, e:  # pylint: disable=broad-except
+        log_exception(e)
+        if 'uninstall' in args and args['uninstall'] is True:
+            print 'Uninstallation aborted.'
+        else:
+            print 'Installation aborted.'
+        out = 1
+    finally:
+        if out == 0:
+            if 'uninstall' in args and args['uninstall'] is True:
+                print 'Uninstallation complete.'
+            else:
+                print 'Installation complete.'
+    sys.exit(out)
