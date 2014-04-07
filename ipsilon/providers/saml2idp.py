@@ -98,10 +98,21 @@ class SSO(ProviderPageBase):
         self.Continue = Continue(*args, **kwargs)
 
 
+class Metadata(ProviderPageBase):
+    def GET(self, *args, **kwargs):
+        with open(self.cfg.idp_metadata_file) as m:
+            body = m.read()
+        cherrypy.response.headers["Content-Type"] = "text/xml"
+        cherrypy.response.headers["Content-Disposition"] = \
+            'attachment; filename="metadata.xml"'
+        return body
+
+
 class SAML2(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
         super(SAML2, self).__init__(*args, **kwargs)
+        self.metadata = Metadata(*args, **kwargs)
 
         # Init IDP data
         try:
