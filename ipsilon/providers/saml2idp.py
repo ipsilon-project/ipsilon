@@ -252,10 +252,10 @@ class Installer(object):
         meta.add_certs(cert, cert)
         meta.add_service(metadata.SSO_SERVICE,
                          lasso.SAML2_METADATA_BINDING_POST,
-                         url + '/POST')
+                         url + 'SSO/POST')
         meta.add_service(metadata.SSO_SERVICE,
                          lasso.SAML2_METADATA_BINDING_REDIRECT,
-                         url + '/Redirect')
+                         url + 'SSO/Redirect')
 
         meta.add_allowed_name_format(
             lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
