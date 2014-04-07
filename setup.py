@@ -27,8 +27,7 @@ setup(
     version = '0.1',
     license = 'GPLv3+',
     packages = ['ipsilon', 'ipsilon.admin', 'ipsilon.login', 'ipsilon.util',
-                'ipsilon.providers', 'ipsilon.providers.saml2',
-                'ipsilon.install'],
+                'ipsilon.providers', 'ipsilon.providers.saml2'],
     data_files = [('share/man/man7', ["man/ipsilon.7"]),
                   ('share/doc/ipsilon', ['COPYING']),
                   ('share/doc/ipsilon/examples', ['examples/ipsilon.conf',
@@ -43,6 +42,7 @@ setup(
                   (DATA+'templates/install', glob('templates/install/*.conf')),
                   (DATA+'templates/admin/providers',
                    glob('templates/admin/providers/*.html')),
-                 ]
+                 ],
+    scripts = ['ipsilon/ipsilon', 'ipsilon/install/ipsilon-server-install']
 )
 

@@ -37,12 +37,8 @@ CFLAGS="$RPM_OPT_FLAGS" %{__python} setup.py build
 mkdir -p %{buildroot}%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon/sessions
-ln -s ../..%{python2_sitelib}/ipsilon/idpserver.py \
-    %{buildroot}/%{_sbindir}/ipsilon
-chmod +x %{buildroot}%{python2_sitelib}/ipsilon/idpserver.py
-ln -s ../..%{python2_sitelib}/ipsilon/install/server.py \
-    %{buildroot}/%{_sbindir}/ipsilon-server-install
-chmod +x %{buildroot}%{python2_sitelib}/ipsilon/install/server.py
+mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_sbindir}
+mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 
 %pre
