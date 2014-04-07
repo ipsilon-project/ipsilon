@@ -43,12 +43,17 @@ class ProviderPlugins(Page):
 
     def root_with_msg(self, message=None, message_type=None):
         plugins = self._site[FACILITY]
+        enabled_plugins = []
+        for item in plugins['available']:
+            plugin = plugins['available'][item]
+            if plugin.is_enabled:
+                enabled_plugins.append(item)
         return self._template('admin/providers.html', title=self.title,
                               baseurl=self.url,
                               message=message,
                               message_type=message_type,
                               available=plugins['available'],
-                              enabled=plugins['enabled'],
+                              enabled=enabled_plugins,
                               menu=self._master.menu)
 
     def root(self, *args, **kwargs):
@@ -61,7 +66,7 @@ class ProviderPlugins(Page):
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
         obj = plugins['available'][plugin]
-        if obj not in plugins['enabled']:
+        if not obj.is_enabled:
             obj.enable(self._site)
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
@@ -74,7 +79,7 @@ class ProviderPlugins(Page):
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
         obj = plugins['available'][plugin]
-        if obj in plugins['enabled']:
+        if obj.is_enabled:
             obj.disable(self._site)
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")

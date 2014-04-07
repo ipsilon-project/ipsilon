@@ -43,6 +43,7 @@ class ProviderBase(PluginObject):
         super(ProviderBase, self).__init__()
         self.name = name
         self.path = path
+        self.tree = None
         self.admin = None
 
     def _debug(self, fact):
@@ -52,32 +53,55 @@ class ProviderBase(PluginObject):
     def get_tree(self, site):
         raise NotImplementedError
 
-    def enable(self, site):
-        plugins = site[FACILITY]
-        if self in plugins['enabled']:
+    def register(self, site):
+        if self.tree:
+            # already registered
             return
 
         # configure self
+        plugins = site[FACILITY]
         if self.name in plugins['config']:
             self.set_config(plugins['config'][self.name])
 
-        # and add self to the root
-        root = plugins['root']
-        root.add_subtree(self.name, self.get_tree(site))
+        # init pages and admin interfaces
+        self.tree = self.get_tree(site)
 
-        plugins['enabled'].append(self)
+        self._debug('IdP Provider registered: %s' % self.name)
+
+        if self.get_config_value('enabled') == '1':
+            # and add self to the root
+            root = site[FACILITY]['root']
+            root.add_subtree(self.name, self.tree)
+            self._debug('IdP Provider enabled: %s' % self.name)
+
+    @property
+    def is_enabled(self):
+        if self.get_config_value('enabled') == '1':
+            return True
+        return False
+
+    def enable(self, site):
+        if self.is_enabled:
+            return
+
+        # and add self to the root
+        root = site[FACILITY]['root']
+        root.add_subtree(self.name, self.tree)
+
+        self.set_config_value('enabled', '1')
+        self.save_plugin_config(FACILITY)
         self._debug('IdP Provider enabled: %s' % self.name)
 
     def disable(self, site):
-        plugins = site[FACILITY]
-        if self not in plugins['enabled']:
+        if not self.is_enabled:
             return
 
         # remove self to the root
-        root = plugins['root']
+        root = site[FACILITY]['root']
         root.del_subtree(self.name)
 
-        plugins['enabled'].remove(self)
+        self.set_config_value('enabled', '0')
+        self.save_plugin_config(FACILITY)
         self._debug('IdP Provider disabled: %s' % self.name)
 
 
@@ -123,11 +147,9 @@ class LoadProviders(object):
         self._debug('Available providers: %s' % str(available))
 
         providers['root'] = root
-        for item in providers['whitelist']:
-            self._debug('IdP Provider in whitelist: %s' % item)
-            if item not in providers['available']:
-                continue
-            providers['available'][item].enable(site)
+        for item in providers['available']:
+            plugin = providers['available'][item]
+            plugin.register(site)
 
     def _debug(self, fact):
         if cherrypy.config.get('debug', False):
