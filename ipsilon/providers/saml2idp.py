@@ -268,11 +268,9 @@ class Installer(object):
         meta = metadata.Metadata(metadata.IDP_ROLE)
         meta.set_entity_id(url + '/metadata')
         meta.add_certs(cert, cert)
-        meta.add_service(metadata.SSO_SERVICE,
-                         lasso.SAML2_METADATA_BINDING_POST,
+        meta.add_service(metadata.SAML2_SERVICE_MAP['sso-post'],
                          url + 'SSO/POST')
-        meta.add_service(metadata.SSO_SERVICE,
-                         lasso.SAML2_METADATA_BINDING_REDIRECT,
+        meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
                          url + 'SSO/Redirect')
 
         meta.add_allowed_name_format(

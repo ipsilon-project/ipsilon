@@ -34,6 +34,16 @@ SAML2_NAMEID_MAP = {
     'x509': lasso.SAML2_NAME_IDENTIFIER_FORMAT_X509,
 }
 
+SAML2_SERVICE_MAP = {
+    'sso-post': ('SingleSignOnService',
+                 lasso.SAML2_METADATA_BINDING_POST),
+    'sso-redirect': ('SingleSignOnService',
+                     lasso.SAML2_METADATA_BINDING_REDIRECT),
+    'logout-redirect': ('SingleLogoutService',
+                        lasso.SAML2_METADATA_BINDING_REDIRECT),
+    'response-post': ('AssertionConsumerService',
+                      lasso.SAML2_METADATA_BINDING_POST)
+}
 
 EDESC = '{%s}EntityDescriptor' % lasso.SAML2_METADATA_HREF
 NSMAP = {
@@ -46,10 +56,6 @@ SPDESC = 'SPSSODescriptor'
 
 IDP_ROLE = 'idp'
 SP_ROLE = 'sp'
-
-SSO_SERVICE = 'SingleSignOnService'
-LOGOUT_SERVICE = 'SingleLogoutService'
-ASSERTION_SERVICE = 'AssertionConsumerService'
 
 
 def mdElement(_parent, _tag, **kwargs):
@@ -101,9 +107,9 @@ class Metadata(object):
         if enccert:
             self.add_cert(enccert.get_cert(), 'encryption')
 
-    def add_service(self, svctype, binding, location):
-        svc = mdElement(self.role, svctype)
-        svc.set('Binding', binding)
+    def add_service(self, service, location):
+        svc = mdElement(self.role, service[0])
+        svc.set('Binding', service[1])
         svc.set('Location', location)
 
     def add_allowed_name_format(self, name_format):
@@ -134,9 +140,9 @@ if __name__ == '__main__':
         idp.set_entity_id('https://ipsilon.example.com/idp/metadata')
         idp.set_role(IDP_ROLE)
         idp.add_certs(sign_cert, enc_cert)
-        idp.add_service(SSO_SERVICE, lasso.SAML2_METADATA_BINDING_POST,
+        idp.add_service(SAML2_SERVICE_MAP['sso-post'],
                         'https://ipsilon.example.com/idp/saml2/POST')
-        idp.add_service(SSO_SERVICE, lasso.SAML2_METADATA_BINDING_REDIRECT,
+        idp.add_service(SAML2_SERVICE_MAP['sso-redirect'],
                         'https://ipsilon.example.com/idp/saml2/Redirect')
         for k in SAML2_NAMEID_MAP:
             idp.add_allowed_name_format(SAML2_NAMEID_MAP[k])
@@ -155,9 +161,9 @@ if __name__ == '__main__':
         sp.set_entity_id('https://ipsilon.example.com/samlsp/metadata')
         sp.set_role(SP_ROLE)
         sp.add_certs(sign_cert)
-        sp.add_service(LOGOUT_SERVICE, lasso.SAML2_METADATA_BINDING_REDIRECT,
+        sp.add_service(SAML2_SERVICE_MAP['logout-redirect'],
                        'https://ipsilon.example.com/samlsp/logout')
-        sp.add_service(ASSERTION_SERVICE, lasso.SAML2_METADATA_BINDING_POST,
+        sp.add_service(SAML2_SERVICE_MAP['response-post'],
                        'https://ipsilon.example.com/samlsp/postResponse')
         md_file = os.path.join(tmpdir, 'metadata.xml')
         sp.output(md_file)
