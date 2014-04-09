@@ -26,9 +26,12 @@ class Certificate(object):
 
     def __init__(self, path=None):
         self.subject = None
-        self.path = path
         self.key = None
         self.cert = None
+        if path:
+            self.path = path
+        else:
+            self.path = os.getcwd()
 
     def generate(self, prefix, subject):
         self.key = '%s.key' % prefix
