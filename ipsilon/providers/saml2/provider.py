@@ -18,21 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderException
+from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 import cherrypy
 import lasso
-
-
-NAMEID_MAP = {
-    'email': lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL,
-    'encrypted': lasso.SAML2_NAME_IDENTIFIER_FORMAT_ENCRYPTED,
-    'entity': lasso.SAML2_NAME_IDENTIFIER_FORMAT_ENTITY,
-    'kerberos': lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS,
-    'persistent': lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT,
-    'transient': lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT,
-    'unspecified': lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED,
-    'windows': lasso.SAML2_NAME_IDENTIFIER_FORMAT_WINDOWS,
-    'x509': lasso.SAML2_NAME_IDENTIFIER_FORMAT_X509,
-}
 
 
 class InvalidProviderId(ProviderException):
@@ -129,14 +117,14 @@ class ServiceProvider(object):
     def get_valid_nameid(self, nip):
         self._debug('Requested NameId [%s]' % (nip.format,))
         if nip.format is None:
-            return NAMEID_MAP[self.default_nameid]
+            return SAML2_NAMEID_MAP[self.default_nameid]
         elif nip.format == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
-            return NAMEID_MAP[self.default_nameid]
+            return SAML2_NAMEID_MAP[self.default_nameid]
         else:
             allowed = self.allowed_nameids
             self._debug('Allowed NameIds %s' % (repr(allowed)))
             for nameid in allowed:
-                if nip.format == NAMEID_MAP[nameid]:
+                if nip.format == SAML2_NAMEID_MAP[nameid]:
                     return nip.format
         raise NameIdNotAllowed(nip.format)
 

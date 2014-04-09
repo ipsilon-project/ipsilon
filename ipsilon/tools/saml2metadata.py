@@ -17,9 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.providers.saml2.certs import Certificate
+from ipsilon.tools.certs import Certificate
 from lxml import etree
 import lasso
+
+
+SAML2_NAMEID_MAP = {
+    'email': lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL,
+    'encrypted': lasso.SAML2_NAME_IDENTIFIER_FORMAT_ENCRYPTED,
+    'entity': lasso.SAML2_NAME_IDENTIFIER_FORMAT_ENTITY,
+    'kerberos': lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS,
+    'persistent': lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT,
+    'transient': lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT,
+    'unspecified': lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED,
+    'windows': lasso.SAML2_NAME_IDENTIFIER_FORMAT_WINDOWS,
+    'x509': lasso.SAML2_NAME_IDENTIFIER_FORMAT_X509,
+}
 
 
 EDESC = '{%s}EntityDescriptor' % lasso.SAML2_METADATA_HREF
@@ -105,7 +118,6 @@ class Metadata(object):
 
 
 if __name__ == '__main__':
-    from ipsilon.providers.saml2.provider import NAMEID_MAP
     import tempfile
     import shutil
     import os
@@ -126,8 +138,8 @@ if __name__ == '__main__':
                         'https://ipsilon.example.com/idp/saml2/POST')
         idp.add_service(SSO_SERVICE, lasso.SAML2_METADATA_BINDING_REDIRECT,
                         'https://ipsilon.example.com/idp/saml2/Redirect')
-        for k in NAMEID_MAP:
-            idp.add_allowed_name_format(NAMEID_MAP[k])
+        for k in SAML2_NAMEID_MAP:
+            idp.add_allowed_name_format(SAML2_NAMEID_MAP[k])
         md_file = os.path.join(tmpdir, 'metadata.xml')
         idp.output(md_file)
         with open(md_file) as fd:

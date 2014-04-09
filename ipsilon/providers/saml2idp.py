@@ -21,9 +21,9 @@ from ipsilon.providers.common import ProviderBase, ProviderPageBase
 from ipsilon.providers.common import FACILITY
 from ipsilon.providers.saml2.auth import AuthenticateRequest
 from ipsilon.providers.saml2.admin import AdminPage
-from ipsilon.providers.saml2.certs import Certificate
 from ipsilon.providers.saml2.provider import IdentityProvider
-from ipsilon.providers.saml2 import metadata
+from ipsilon.tools.certs import Certificate
+from ipsilon.tools import saml2metadata as metadata
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
 import cherrypy
