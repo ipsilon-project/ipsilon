@@ -34,21 +34,20 @@ class Certificate(object):
             self.path = os.getcwd()
 
     def generate(self, prefix, subject):
-        self.key = '%s.key' % prefix
-        self.cert = '%s.pem' % prefix
+        self.key = os.path.join(self.path, '%s.key' % prefix)
+        self.cert = os.path.join(self.path, '%s.pem' % prefix)
         self.subject = '/CN=%s' % subject
         command = ['openssl',
                    'req', '-x509', '-batch', '-days', '1825',
                    '-newkey', 'rsa:2048', '-nodes', '-subj', self.subject,
-                   '-keyout', os.path.join(self.path, self.key),
-                   '-out', os.path.join(self.path, self.cert)]
+                   '-keyout', self.key, '-out', self.cert]
         proc = Popen(command)
         proc.wait()
 
     def get_cert(self):
         if not self.cert:
-            raise NameError('Invalid certificate name: %s' % self.cert)
-        with open(os.path.join(self.path, self.cert), 'r') as f:
+            raise ValueError('Certificate unavailable')
+        with open(self.cert, 'r') as f:
             cert = f.readlines()
 
         #poor man stripping of BEGIN/END lines
