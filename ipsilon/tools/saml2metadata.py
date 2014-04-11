@@ -107,10 +107,12 @@ class Metadata(object):
         if enccert:
             self.add_cert(enccert.get_cert(), 'encryption')
 
-    def add_service(self, service, location):
+    def add_service(self, service, location, **kwargs):
         svc = mdElement(self.role, service[0])
         svc.set('Binding', service[1])
         svc.set('Location', location)
+        for key, value in kwargs.iteritems():
+            svc.set(key, value)
 
     def add_allowed_name_format(self, name_format):
         nameidfmt = mdElement(self.role, 'NameIDFormat')
