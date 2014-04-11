@@ -22,6 +22,10 @@ from ipsilon.util.page import Page
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
+import re
+
+
+VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 
 
 class NewSPAdminPage(Page):
@@ -62,6 +66,12 @@ class NewSPAdminPage(Page):
                             cherrypy.request.content_type,))
             for key, value in kwargs.iteritems():
                 if key == 'name':
+                    if re.search(VALID_IN_NAME, value):
+                        message = "Invalid name!" \
+                                  " Use only numbers and letters"
+                        message_type = "error"
+                        return self.form_new(message, message_type)
+
                     name = value
                 elif key == 'meta':
                     if hasattr(value, 'content_type'):
@@ -132,6 +142,12 @@ class SPAdminPage(Page):
             if key == 'name':
                 if value != self.sp.name:
                     if self.user.is_admin or self.user.name == self.sp.owner:
+                        if re.search(VALID_IN_NAME, value):
+                            message = "Invalid name!" \
+                                      " Use only numbers and letters"
+                            message_type = "error"
+                            return self.form_standard(message, message_type)
+
                         self._debug("Replacing %s: %s -> %s" %
                                     (key, self.sp.name, value))
                         self.sp.name = value
