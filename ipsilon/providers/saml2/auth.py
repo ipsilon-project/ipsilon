@@ -42,6 +42,13 @@ class InvalidRequest(ProviderException):
         self._debug(message)
 
 
+class UnknownProvider(ProviderException):
+
+    def __init__(self, message):
+        super(UnknownProvider, self).__init__(message)
+        self._debug(message)
+
+
 class AuthenticateRequest(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
@@ -81,7 +88,7 @@ class AuthenticateRequest(ProviderPageBase):
 
             msg = 'Invalid SP [%s] (%r [%r])' % (login.remoteProviderId,
                                                  e, message)
-            raise InvalidRequest(msg)
+            raise UnknownProvider(msg)
 
         self._debug('SP %s requested authentication' % login.remoteProviderId)
 
@@ -98,6 +105,9 @@ class AuthenticateRequest(ProviderPageBase):
         except InvalidRequest, e:
             self._debug(str(e))
             raise cherrypy.HTTPError(400, 'Invalid SAML request token')
+        except UnknownProvider, e:
+            self._debug(str(e))
+            raise cherrypy.HTTPError(400, 'Unknown Service Provider')
         except Exception, e:  # pylint: disable=broad-except
             self._debug(str(e))
             raise cherrypy.HTTPError(500)
