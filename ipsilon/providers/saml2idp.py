@@ -188,6 +188,13 @@ Provides SAML 2.0 authentication infrastructure. """
                 'example.com'
             ]
         }
+        if cherrypy.config.get('debug', False):
+            import logging
+            import sys
+            logger = logging.getLogger('lasso')
+            lh = logging.StreamHandler(sys.stderr)
+            logger.addHandler(lh)
+            logger.setLevel(logging.DEBUG)
 
     @property
     def allow_self_registration(self):
