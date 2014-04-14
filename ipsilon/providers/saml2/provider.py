@@ -33,8 +33,8 @@ class InvalidProviderId(ProviderException):
 
 class NameIdNotAllowed(Exception):
 
-    def __init__(self):
-        message = 'The specified Name ID is not allowed'
+    def __init__(self, id):
+        message = 'Name ID [%s] is not allowed' % id
         super(NameIdNotAllowed, self).__init__(message)
         self.message = message
 
