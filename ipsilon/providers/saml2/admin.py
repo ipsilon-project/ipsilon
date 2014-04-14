@@ -109,6 +109,14 @@ class NewSPAdminPage(Page):
             return op(*args, **kwargs)
 
 
+class InvalidValueFormat(Exception):
+    pass
+
+
+class UnauthorizedUser(Exception):
+    pass
+
+
 class SPAdminPage(Page):
 
     def __init__(self, sp, site, parent):
@@ -131,74 +139,110 @@ class SPAdminPage(Page):
     def GET(self, *args, **kwargs):
         return self.form_standard()
 
+    def change_name(self, key, value):
+
+        if value == self.sp.name:
+            return False
+
+        if self.user.is_admin or self.user.name == self.sp.owner:
+            if re.search(VALID_IN_NAME, value):
+                err = "Invalid name! Use only numbers and letters"
+                raise InvalidValueFormat(err)
+
+            self._debug("Replacing %s: %s -> %s" % (key, self.sp.name, value))
+            return {'name': value, 'rename': [self.sp.name, value]}
+        else:
+            raise UnauthorizedUser("Unauthorized to rename Service Provider")
+
+    def change_owner(self, key, value):
+        if value == self.sp.owner:
+            return False
+
+        if self.user.is_admin:
+            self._debug("Replacing %s: %s -> %s" % (key, self.sp.owner, value))
+            return {'owner': value}
+        else:
+            raise UnauthorizedUser("Unauthorized to set owner value")
+
+    def change_default_nameid(self, key, value):
+        if value == self.sp.default_nameid:
+            return False
+
+        if self.user.is_admin:
+            self._debug("Replacing %s: %s -> %s" % (key,
+                                                    self.sp.default_nameid,
+                                                    value))
+            return {'default_nameid': value}
+        else:
+            raise UnauthorizedUser("Unauthorized to set default nameid value")
+
+    def change_allowed_nameids(self, key, value):
+        v = set([x.strip() for x in value.split(',')])
+        if v == set(self.sp.allowed_nameids):
+            return False
+
+        if self.user.is_admin:
+            self._debug("Replacing %s: %s -> %s" % (key,
+                                                    self.sp.allowed_nameids,
+                                                    list(v)))
+            return {'allowed_nameids': list(v)}
+        else:
+            raise UnauthorizedUser("Unauthorized to set alowed nameids values")
+
     def POST(self, *args, **kwargs):
 
         message = "Nothing was modified."
         message_type = "info"
-        rename = None
-        save = False
+        results = dict()
 
-        for key, value in kwargs.iteritems():
-            if key == 'name':
-                if value != self.sp.name:
-                    if self.user.is_admin or self.user.name == self.sp.owner:
-                        if re.search(VALID_IN_NAME, value):
-                            message = "Invalid name!" \
-                                      " Use only numbers and letters"
-                            message_type = "error"
-                            return self.form_standard(message, message_type)
+        try:
+            for key, value in kwargs.iteritems():
+                if key == 'name':
+                    r = self.change_name(key, value)
+                    if r:
+                        results.update(r)
+                elif key == 'owner':
+                    r = self.change_owner(key, value)
+                    if r:
+                        results.update(r)
 
-                        self._debug("Replacing %s: %s -> %s" %
-                                    (key, self.sp.name, value))
-                        self.sp.name = value
-                        rename = [self.sp.name, value]
-                        save = True
-                    else:
-                        message = "Unauthorized to rename object"
-                        message_type = "error"
-                        return self.form_standard(message, message_type)
+                elif key == 'default_nameid':
+                    r = self.change_default_nameid(key, value)
+                    if r:
+                        results.update(r)
 
-            elif key == 'owner':
-                if value != self.sp.owner:
-                    if self.user.is_admin:
-                        self._debug("Replacing %s: %s -> %s" %
-                                    (key, self.sp.owner, value))
-                        self.sp.owner = value
-                        save = True
-                    else:
-                        message = "Unauthorized to set owner value"
-                        message_type = "error"
-                        return self.form_standard(message, message_type)
+                elif key == 'allowed_nameids':
+                    r = self.change_allowed_nameids(key, value)
+                    if r:
+                        results.update(r)
 
-            elif key == 'default_nameid':
-                if value != self.sp.default_nameid:
-                    if self.user.is_admin:
-                        self._debug("Replacing %s: %s -> %s" %
-                                    (key, self.sp.default_nameid, value))
-                        self.sp.default_nameid = value
-                        save = True
-                    else:
-                        message = "Unauthorized to set default nameid value"
-                        message_type = "error"
-                        return self.form_standard(message, message_type)
+        except InvalidValueFormat, e:
+            message = str(e)
+            message_type = "warning"
+            return self.form_standard(message, message_type)
+        except UnauthorizedUser, e:
+            message = str(e)
+            message_type = "error"
+            return self.form_standard(message, message_type)
+        except Exception, e:  # pylint: disable=broad-except
+            self._debug("Error: %s" % repr(e))
+            message = "Internal Error"
+            message_type = "error"
+            return self.form_standard(message, message_type)
 
-            elif key == 'allowed_nameids':
-                v = set([x.strip() for x in value.split(',')])
-                if v != set(self.sp.allowed_nameids):
-                    if self.user.is_admin:
-                        self._debug("Replacing %s: %s -> %s" %
-                                    (key, self.sp.allowed_nameids, list(v)))
-                        self.sp.allowed_nameids = list(v)
-                        save = True
-                    else:
-                        message = "Unauthorized to set allowed nameids value"
-                        message_type = "error"
-                        return self.form_standard(message, message_type)
-
-        if save:
+        if len(results) > 0:
             try:
+                if 'name' in results:
+                    self.sp.name = results['name']
+                if 'owner' in results:
+                    self.sp.owner = results['owner']
+                if 'default_nameid' in results:
+                    self.sp.default_nameid = results['default_nameid']
+                if 'allowed_nameids' in results:
+                    self.sp.allowed_nameids = results['allowed_nameids']
                 self.sp.save_properties()
-                if rename:
+                if 'rename' in results:
+                    rename = results['rename']
                     self.parent.rename_sp(rename[0], rename[1])
                 message = "Properties succssfully changed"
                 message_type = "success"
