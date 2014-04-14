@@ -172,6 +172,8 @@ class SPAdminPage(Page):
             self._debug("Replacing %s: %s -> %s" % (key,
                                                     self.sp.default_nameid,
                                                     value))
+            if not self.sp.is_valid_nameid(value):
+                raise InvalidValueFormat('Invalid default nameid value')
             return {'default_nameid': value}
         else:
             raise UnauthorizedUser("Unauthorized to set default nameid value")
@@ -185,6 +187,11 @@ class SPAdminPage(Page):
             self._debug("Replacing %s: %s -> %s" % (key,
                                                     self.sp.allowed_nameids,
                                                     list(v)))
+            for x in v:
+                if not self.sp.is_valid_nameid(x):
+                    l = ', '.join(self.sp.valid_nameids())
+                    err = 'Invalid nameid [%s]. Available [%s].' % (x, l)
+                    raise InvalidValueFormat(err)
             return {'allowed_nameids': list(v)}
         else:
             raise UnauthorizedUser("Unauthorized to set alowed nameids values")

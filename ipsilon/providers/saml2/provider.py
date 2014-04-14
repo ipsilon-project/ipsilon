@@ -144,6 +144,14 @@ class ServiceProvider(object):
             return username.split('@', 1)[0]
         return username
 
+    def is_valid_nameid(self, value):
+        if value in SAML2_NAMEID_MAP:
+            return True
+        return False
+
+    def valid_nameids(self):
+        return SAML2_NAMEID_MAP.keys()
+
 
 class ServiceProviderCreator(object):
 
