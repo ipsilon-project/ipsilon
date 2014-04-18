@@ -24,11 +24,11 @@ from ipsilon.providers.saml2.admin import AdminPage
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
+from ipsilon.tools import files
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
 import cherrypy
 import lasso
-import pwd
 import os
 
 
@@ -299,13 +299,4 @@ class Installer(object):
         po.save_plugin_config(FACILITY)
 
         # Fixup permissions so only the ipsilon user can read these files
-        pw = pwd.getpwnam(opts['system_user'])
-        for root, dirs, files in os.walk(path):
-            for name in dirs:
-                target = os.path.join(root, name)
-                os.chown(target, pw.pw_uid, pw.pw_gid)
-                os.chmod(target, 0700)
-            for name in files:
-                target = os.path.join(root, name)
-                os.chown(target, pw.pw_uid, pw.pw_gid)
-                os.chmod(target, 0600)
+        files.fix_user_dirs(path, opts['system_user'])

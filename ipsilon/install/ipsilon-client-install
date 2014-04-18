@@ -133,16 +133,7 @@ def saml2():
         with open(SAML2_CONFFILE, 'w+') as f:
             f.write(hunk)
 
-        pw = pwd.getpwnam(args['httpd_user'])
-        for root, dirs, files in os.walk(SAML2_HTTPDIR):
-            for name in dirs:
-                target = os.path.join(root, name)
-                os.chown(target, pw.pw_uid, pw.pw_gid)
-                os.chmod(target, 0700)
-            for name in files:
-                target = os.path.join(root, name)
-                os.chown(target, pw.pw_uid, pw.pw_gid)
-                os.chmod(target, 0600)
+        files.fix_user_dirs(SAML2_HTTPDIR, args['httpd_user'])
 
         logger.info('SAML Service Provider configured.')
         logger.info('You should be able to restart the HTTPD server and' +
