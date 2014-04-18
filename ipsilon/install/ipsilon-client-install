@@ -21,7 +21,7 @@ from ipsilon.tools.saml2metadata import Metadata
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 from ipsilon.tools.saml2metadata import SAML2_SERVICE_MAP
 from ipsilon.tools.certs import Certificate
-from string import Template
+from ipsilon.tools import files
 import argparse
 import logging
 import os
@@ -118,20 +118,15 @@ def saml2():
             # default location, enable the default page
             psp = ''
 
-        with open(SAML2_TEMPLATE) as f:
-            template = f.read()
-        t = Template(template)
-        hunk = t.substitute(saml_base=args['saml_base'],
-                            saml_protect=saml_protect,
-                            saml_sp_key=c.key,
-                            saml_sp_cert=c.cert,
-                            saml_sp_meta=sp_metafile,
-                            saml_idp_meta=idp_metafile,
-                            saml_sp=args['saml_sp'],
-                            saml_auth=saml_auth, sp=psp)
-
-        with open(SAML2_CONFFILE, 'w+') as f:
-            f.write(hunk)
+        samlopts = {'saml_base': args['saml_base'],
+                    'saml_protect': saml_protect,
+                    'saml_sp_key': c.key,
+                    'saml_sp_cert': c.cert,
+                    'saml_sp_meta': sp_metafile,
+                    'saml_idp_meta': idp_metafile,
+                    'saml_sp': args['saml_sp'],
+                    'saml_auth': saml_auth, sp=psp}
+        files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
 
         files.fix_user_dirs(SAML2_HTTPDIR, args['httpd_user'])
 
