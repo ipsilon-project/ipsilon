@@ -1,5 +1,5 @@
 Name:		ipsilon
-Version:	0.1
+Version:	0.2
 Release:	1%{?dist}
 Summary:	An Identity Provider Server
 
@@ -65,7 +65,7 @@ exit 0
 
 %files
 %doc COPYING
-%{python2_sitelib}/ipsilon-0.1-py2.7.egg-info
+%{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/admin/*
 %{python2_sitelib}/ipsilon/login/*
 %{python2_sitelib}/ipsilon/providers/*
@@ -88,14 +88,9 @@ exit 0
 
 %files tools
 %doc COPYING
-%{python2_sitelib}/ipsilon-0.1-py2.7.egg-info
+%{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon/tools/*
 %{_datadir}/ipsilon/templates/install/saml2/sp.conf
 %{_datadir}/ipsilon/ui/saml2sp/*
 %{_bindir}/ipsilon-client-install
-
-
-%changelog
-* Wed Jan 01 2014 Simo Sorce <simo@redhat.com> - 0.1
-- Changelog
