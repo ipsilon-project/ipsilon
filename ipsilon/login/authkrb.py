@@ -87,7 +87,7 @@ plugin for actual authentication. """
 
 CONF_TEMPLATE = """
 
-<Location /idp/login/krb/negotiate>
+<Location /${instance}/login/krb/negotiate>
   AuthType Kerberos
   AuthName "Kerberos Login"
   KrbMethodNegotiate on
@@ -100,7 +100,7 @@ CONF_TEMPLATE = """
   # KrbLocalUserMapping On
   Require valid-user
 
-  ErrorDocument 401 /idp/login/krb/unauthorized
+  ErrorDocument 401 /${instance}/login/krb/unauthorized
 </Location>
 """
 
@@ -124,23 +124,20 @@ class Installer(object):
         if opts['krb'] != 'yes':
             return
 
-        keytab = '  # Krb5KeyTab - No Keytab provided'
-        if opts['krb_httpd_keytab'] is None:
-            if os.path.exists('/etc/httpd/conf/http.keytab'):
-                keytab = '  Krb5KeyTab /etc/httpd/conf/http.keytab'
+        confopts = {'instance': opts['instance']}
+
+        if os.path.exists(opts['krb_httpd_keytab']):
+            confopts['keytab'] = '  Krb5KeyTab %s' % opts['krb_httpd_keytab']
         else:
-            if os.path.exists(opts['krb_httpd_keytab']):
-                keytab = '  Krb5KeyTab %s' % opts['krb_httpd_keytab']
-            else:
-                raise Exception('Keytab not found')
+            raise Exception('Keytab not found')
 
         if opts['krb_realms'] is None:
-            realms = '  # KrbAuthRealms - Any trusted realm is allowed'
+            confopts['realms'] = '  # KrbAuthRealms - Any realm is allowed'
         else:
-            realms = '  KrbAuthRealms %s' % opts['krb_realms']
+            confopts['realms'] = '  KrbAuthRealms %s' % opts['krb_realms']
 
         tmpl = Template(CONF_TEMPLATE)
-        hunk = tmpl.substitute(keytab=keytab, realms=realms)
+        hunk = tmpl.substitute(**confopts)  # pylint: disable=star-args
         with open(opts['httpd_conf'], 'a') as httpd_conf:
             httpd_conf.write(hunk)
 

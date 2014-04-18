@@ -20,6 +20,7 @@
 from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.providers.common import ProvidersInstall
 from ipsilon.util.data import Store
+from ipsilon.tools import files
 import argparse
 import cherrypy
 import logging
@@ -33,6 +34,7 @@ import time
 
 TEMPLATES = '/usr/share/ipsilon/templates/install'
 CONFDIR = '/etc/ipsilon'
+DATADIR = '/var/lib/ipsilon'
 HTTPDCONFD = '/etc/httpd/conf.d'
 
 
@@ -76,19 +78,33 @@ def openlogs():
 def install(plugins, args):
     logger.info('Installation initiated')
     now = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+    instance_conf = os.path.join(CONFDIR, args['instance'])
 
     logger.info('Installing default config files')
-    ipsilon_conf = os.path.join(CONFDIR, 'ipsilon.conf')
-    idp_conf = os.path.join(CONFDIR, 'idp.conf')
-    args['httpd_conf'] = os.path.join(HTTPDCONFD, 'idp.conf')
+    ipsilon_conf = os.path.join(instance_conf, 'ipsilon.conf')
+    idp_conf = os.path.join(instance_conf, 'idp.conf')
+    args['httpd_conf'] = os.path.join(HTTPDCONFD,
+                                      'ipsilon-%s.conf' % args['instance'])
+    args['data_dir'] = os.path.join(DATADIR, args['instance'])
     if os.path.exists(ipsilon_conf):
         shutil.move(ipsilon_conf, '%s.bakcup.%s' % (ipsilon_conf, now))
     if os.path.exists(idp_conf):
         shutil.move(idp_conf, '%s.backup.%s' % (idp_conf, now))
-    shutil.copy(os.path.join(TEMPLATES, 'ipsilon.conf'), CONFDIR)
-    shutil.copy(os.path.join(TEMPLATES, 'idp.conf'), CONFDIR)
+    if not os.path.exists(instance_conf):
+        os.makedirs(instance_conf, 0700)
+    confopts = {'instance': args['instance'], 'datadir': args['data_dir']}
+    files.write_from_template(ipsilon_conf,
+                              os.path.join(TEMPLATES, 'ipsilon.conf'),
+                              confopts)
+    files.write_from_template(idp_conf,
+                              os.path.join(TEMPLATES, 'idp.conf'),
+                              confopts)
     if not os.path.exists(args['httpd_conf']):
         os.symlink(idp_conf, args['httpd_conf'])
+    os.makedirs(os.path.join(args['data_dir'], 'sessions'), 0700)
+    data_conf = os.path.join(args['data_dir'], 'ipsilon.conf')
+    if not os.path.exists(data_conf):
+        os.symlink(ipsilon_conf, data_conf)
     # Load the cherrypy config from the newly installed file so
     # that db paths and all is properly set before configuring
     # components
@@ -116,6 +132,9 @@ def install(plugins, args):
         plugin = plugins['Auth Providers'][plugin_name]
         plugin.configure(args)
 
+    # Fixup permissions so only the ipsilon user can read these files
+    files.fix_user_dirs(instance_conf, opts['system_user'], mode=0500)
+    files.fix_user_dirs(args['data_dir'], opts['system_user'])
 
 def uninstall(plugins, args):
     logger.info('Uninstallation initiated')
@@ -138,6 +157,8 @@ def parse_args(plugins):
                         help='Comma separated list of login managers')
     parser.add_argument('--hostname',
                         help="Machine's fully qualified host name")
+    parser.add_argument('--instance', default='idp',
+                        help="IdP instance name, each is a separate idp")
     parser.add_argument('--system-user', default='ipsilon',
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
@@ -185,6 +206,8 @@ def parse_args(plugins):
             sys.exit(-1)
         args['lm_order'] = ['pam']
         args['pam'] = 'yes'
+
+    #FIXME: check instance is only alphanums
 
     return args
 

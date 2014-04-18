@@ -246,16 +246,13 @@ class Installer(object):
     def install_args(self, group):
         group.add_argument('--saml2', choices=['yes', 'no'], default='yes',
                            help='Configure SAML2 Provider')
-        group.add_argument('--saml2-storage',
-                           default='/var/lib/ipsilon/saml2',
-                           help='SAML2 Provider storage area')
 
     def configure(self, opts):
         if opts['saml2'] != 'yes':
             return
 
         # Check storage path is present or create it
-        path = opts['saml2_storage']
+        path = os.path.join(opts['data_dir'], 'saml2')
         if not os.path.exists(path):
             os.makedirs(path, 0700)
 
@@ -264,7 +261,7 @@ class Installer(object):
         cert.generate('idp', opts['hostname'])
 
         # Generate Idp Metadata
-        url = 'https://' + opts['hostname'] + '/idp/saml2'
+        url = 'https://' + opts['hostname'] + '/' + opts['instance'] + '/saml2'
         meta = metadata.Metadata(metadata.IDP_ROLE)
         meta.set_entity_id(url + '/metadata')
         meta.add_certs(cert, cert)
