@@ -37,12 +37,13 @@ def protect():
 
 
 class Page(object):
-    def __init__(self, site):
+    def __init__(self, site, form=False):
         if not 'template_env' in site:
             raise ValueError('Missing template environment')
         self._site = site
         self.basepath = cherrypy.config.get('base.mount', "")
         self.user = None
+        self.form = form
 
     def __call__(self, *args, **kwargs):
         # pylint: disable=star-args
@@ -53,9 +54,23 @@ class Page(object):
             if callable(op) and getattr(self, args[0]+'.exposed', None):
                 return op(*args[1:], **kwargs)
         else:
-            op = getattr(self, 'root', None)
-            if callable(op):
-                return op(*args, **kwargs)
+            if self.form:
+                self._debug("method: %s" % cherrypy.request.method)
+                op = getattr(self, cherrypy.request.method, None)
+                if callable(op):
+                    # Basic CSRF protection
+                    if cherrypy.request.method != 'GET':
+                        if 'referer' not in cherrypy.request.headers:
+                            return cherrypy.HTTPError(403)
+                        referer = cherrypy.request.headers['referer']
+                        url = cherrypy.url(relative=False)
+                        if referer != url:
+                            return cherrypy.HTTPError(403)
+                    return op(*args, **kwargs)
+            else:
+                op = getattr(self, 'root', None)
+                if callable(op):
+                    return op(*args, **kwargs)
 
         return self.default(*args, **kwargs)
 
