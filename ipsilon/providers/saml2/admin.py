@@ -31,7 +31,7 @@ VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 class NewSPAdminPage(Page):
 
     def __init__(self, site, parent):
-        super(NewSPAdminPage, self).__init__(site)
+        super(NewSPAdminPage, self).__init__(site, form=True)
         self.parent = parent
         self.title = 'New Service Provider'
         self.backurl = parent.url
@@ -103,11 +103,6 @@ class NewSPAdminPage(Page):
 
         return self.form_new(message, message_type)
 
-    def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
-
 
 class InvalidValueFormat(Exception):
     pass
@@ -120,7 +115,7 @@ class UnauthorizedUser(Exception):
 class SPAdminPage(Page):
 
     def __init__(self, sp, site, parent):
-        super(SPAdminPage, self).__init__(site)
+        super(SPAdminPage, self).__init__(site, form=True)
         self.parent = parent
         self.sp = sp
         self.title = sp.name
@@ -258,11 +253,6 @@ class SPAdminPage(Page):
                 message_type = "error"
 
         return self.form_standard(message, message_type)
-
-    def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
 
     def delete(self):
         self.parent.del_sp(self.sp.name)

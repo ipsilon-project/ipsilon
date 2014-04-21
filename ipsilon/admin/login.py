@@ -28,7 +28,7 @@ from ipsilon.login.common import FACILITY
 class LoginPluginsOrder(Page):
 
     def __init__(self, site, parent):
-        super(LoginPluginsOrder, self).__init__(site)
+        super(LoginPluginsOrder, self).__init__(site, form=True)
         self.url = '%s/order' % parent.url
         self.menu = [parent]
 
@@ -90,12 +90,6 @@ class LoginPluginsOrder(Page):
                               name='admin_login_order_form',
                               menu=self.menu, action=self.url,
                               options=self._site[FACILITY]['enabled'])
-
-    def root(self, *args, **kwargs):
-        cherrypy.log.error("method: %s" % cherrypy.request.method)
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
 
 
 class LoginPlugins(Page):

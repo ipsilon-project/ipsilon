@@ -26,7 +26,7 @@ from ipsilon.util.page import admin_protect
 class AdminPluginPage(Page):
 
     def __init__(self, obj, site, parent):
-        super(AdminPluginPage, self).__init__(site)
+        super(AdminPluginPage, self).__init__(site, form=True)
         self._obj = obj
         self.title = '%s plugin' % obj.name
         self.url = '%s/%s' % (parent.url, obj.name)
@@ -88,12 +88,6 @@ class AdminPluginPage(Page):
                                                          self._obj.name),
                               menu=self.menu, action=self.url,
                               options=self.plugin_config)
-
-    def root(self, *args, **kwargs):
-        cherrypy.log.error("method: %s" % cherrypy.request.method)
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
 
 
 class Admin(Page):
