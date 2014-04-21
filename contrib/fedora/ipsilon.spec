@@ -51,7 +51,6 @@ CFLAGS="$RPM_OPT_FLAGS" %{__python} setup.py build
 %{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
-install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon/sessions
 mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_sbindir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
@@ -83,7 +82,6 @@ exit 0
 %{_sbindir}/ipsilon
 %{_sbindir}/ipsilon-server-install
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
-%dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon/sessions
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
 
 %files tools
