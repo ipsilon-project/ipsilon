@@ -19,6 +19,7 @@
 
 from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.providers.common import ProvidersInstall
+from ipsilon.helpers.common import EnvHelpersInstall
 from ipsilon.util.data import Store
 from ipsilon.tools import files
 import argparse
@@ -125,6 +126,11 @@ def install(plugins, args):
     db = Store()
     db.save_user_preferences(args['admin_user'], {'is_admin': 1})
 
+    logger.info('Configuring environment helpers')
+    for plugin_name in plugins['Environment Helpers']:
+        plugin = plugins['Environment Helpers'][plugin_name]
+        plugin.configure_server(args)
+
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
         plugin = plugins['Login Managers'][plugin_name]
@@ -150,6 +156,7 @@ def uninstall(plugins, args):
 
 def find_plugins():
     plugins = {
+        'Environment Helpers': EnvHelpersInstall().plugins,
         'Login Managers': LoginMgrsInstall().plugins,
         'Auth Providers': ProvidersInstall().plugins
     }
@@ -170,8 +177,6 @@ def parse_args(plugins):
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
                         help="User account that is assigned admin privileges")
-    parser.add_argument('--ipa', choices=['yes', 'no'], default='yes',
-                        help='Detect and use an IPA server for authentication')
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
 
