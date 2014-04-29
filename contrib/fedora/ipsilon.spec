@@ -98,6 +98,7 @@ semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/de
 %{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon/tools/*
+%{python2_sitelib}/ipsilon/helpers/*
 %{_datadir}/ipsilon/templates/install/saml2/sp.conf
 %{_datadir}/ipsilon/ui/saml2sp/*
 %{_bindir}/ipsilon-client-install
