@@ -19,7 +19,7 @@
 
 import sys
 sys.stdout = sys.stderr
-
+import glob
 import os
 import atexit
 import cherrypy
@@ -27,6 +27,19 @@ from ipsilon.util.data import Store
 from ipsilon.util import page
 from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
+
+
+def nuke_session_locks():
+    if cherrypy.config['tools.sessions.on']:
+        try:
+            sessdir = cherrypy.config['tools.sessions.storage_path']
+            for l in glob.glob(os.path.join(sessdir, '*.lock')):
+                try:
+                    os.remove(l)
+                except Exception:  # pylint: disable=broad-except
+                    pass
+        except Exception:  # pylint: disable=broad-except
+            pass
 
 cfgfile = None
 if (len(sys.argv) > 1):
@@ -39,6 +52,8 @@ else:
     raise IOError("Configuration file not found")
 
 cherrypy.config.update(cfgfile)
+
+nuke_session_locks()
 
 datastore = Store()
 admin_config = datastore.get_admin_config()
