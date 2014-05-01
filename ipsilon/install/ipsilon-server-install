@@ -101,7 +101,9 @@ def install(plugins, args):
                               confopts)
     if not os.path.exists(args['httpd_conf']):
         os.symlink(idp_conf, args['httpd_conf'])
-    os.makedirs(os.path.join(args['data_dir'], 'sessions'), 0700)
+    sessdir = os.path.join(args['data_dir'], 'sessions')
+    if not os.path.exists(sessdir):
+        os.makedirs(sessdir, 0700)
     data_conf = os.path.join(args['data_dir'], 'ipsilon.conf')
     if not os.path.exists(data_conf):
         os.symlink(ipsilon_conf, data_conf)
