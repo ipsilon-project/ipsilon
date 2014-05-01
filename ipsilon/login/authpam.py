@@ -22,6 +22,7 @@ from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 import cherrypy
 import pam
+import subprocess
 
 
 class Pam(LoginPageBase):
@@ -185,3 +186,11 @@ class Installer(object):
         globalconf['order'] = ','.join(order)
         po.set_config(globalconf)
         po.save_plugin_config(FACILITY)
+
+        # for selinux enabled platfroms, ignore if it fails just report
+        try:
+            subprocess.call(['/usr/sbin/setsebool', '-P',
+                             'httpd_mod_auth_pam=on',
+                             'httpd_tmp_t=on'])
+        except Exception:  # pylint: disable=broad-except
+            pass

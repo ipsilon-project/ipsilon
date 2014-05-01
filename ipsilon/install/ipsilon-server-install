@@ -28,6 +28,7 @@ import os
 import pwd
 import shutil
 import socket
+import subprocess
 import sys
 import time
 
@@ -137,6 +138,10 @@ def install(plugins, args):
     # Fixup permissions so only the ipsilon user can read these files
     files.fix_user_dirs(instance_conf, opts['system_user'], mode=0500)
     files.fix_user_dirs(args['data_dir'], opts['system_user'])
+    try:
+        subprocess.call(['/usr/sbin/restorecon', '-R', args['data_dir']])
+    except Exception:  # pylint: disable=broad-except
+        pass
 
 def uninstall(plugins, args):
     logger.info('Uninstallation initiated')

@@ -62,6 +62,15 @@ getent passwd ipsilon >/dev/null || \
     -c "Ipsilon Server" ipsilon
 exit 0
 
+%post
+semanage fcontext -a -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/dev/null || :
+semanage fcontext -a -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' 2>/dev/null || :
+restorecon -R %{_sharedstatedir}/ipsilon || :
+
+%postun
+semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' 2>/dev/null || :
+semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/dev/null || :
+
 %files
 %doc COPYING
 %{python2_sitelib}/ipsilon-*.egg-info
