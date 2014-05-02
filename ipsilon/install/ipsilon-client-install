@@ -125,7 +125,8 @@ def saml2():
                     'saml_sp_meta': sp_metafile,
                     'saml_idp_meta': idp_metafile,
                     'saml_sp': args['saml_sp'],
-                    'saml_auth': saml_auth, sp=psp}
+                    'saml_auth': saml_auth,
+                    'sp': psp}
         files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
 
         files.fix_user_dirs(SAML2_HTTPDIR, args['httpd_user'])
