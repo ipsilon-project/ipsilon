@@ -78,7 +78,7 @@ def saml2():
         raise
 
     path = None
-    if args['saml_httpd']:
+    if not args['saml_no_httpd']:
         path = os.path.join(SAML2_HTTPDIR, args['hostname'])
         os.makedirs(path, 0750)
     else:
@@ -100,7 +100,7 @@ def saml2():
     sp_metafile = os.path.join(path, 'metadata.xml')
     m.output(sp_metafile)
 
-    if args['saml_httpd']:
+    if not args['saml_no_httpd']:
         idp_metafile = os.path.join(path, 'idp-metadata.xml')
         with open(idp_metafile, 'w+') as f:
             f.write(idpmeta)
@@ -184,12 +184,12 @@ def parse_args():
                         help="Account allowed to create a SP")
     parser.add_argument('--httpd-user', default='apache',
                         help="Web server account used to read certs")
-    parser.add_argument('--saml', action='store_true', default=False,
+    parser.add_argument('--saml', action='store_true', default=True,
                         help="Whether to install a saml2 SP")
     parser.add_argument('--saml-idp-metadata', default=None,
                         help="A URL pointing at the IDP Metadata (FILE or HTTP)")
-    parser.add_argument('--saml-httpd', action='store_true', default=False,
-                        help="Automatically configure httpd")
+    parser.add_argument('--saml-no-httpd', action='store_true', default=False,
+                        help="Do not configure httpd")
     parser.add_argument('--saml-base', default='/',
                         help="Where saml2 authdata is available")
     parser.add_argument('--saml-auth', default=SAML2_PROTECTED,

@@ -291,7 +291,8 @@ class Installer(object):
         config = {'idp storage path': path,
                   'idp metadata file': 'metadata.xml',
                   'idp certificate file': cert.cert,
-                  'idp key file': cert.key}
+                  'idp key file': cert.key,
+                  'enabled': '1'}
         po.set_config(config)
         po.save_plugin_config(FACILITY)
 
