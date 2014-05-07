@@ -62,6 +62,8 @@ Instances are configured to be available at https://hostname/instance
 So for a server called ipsilon.example.com, using the default installation
 options the IdP will be available at https://ipsilon.example.com/idp/
 
+The install script expects to find the keytab in /etc/httpd/conf/http.keytab
+
 NOTE: If you are installing Ipsilon in a FreeIPA[4] environment you can use the
 --ipa switch to simplify the deployment. Using the --ipa switch will allow the
 use of your IPA Kerberos administrative credentials to automatically provision

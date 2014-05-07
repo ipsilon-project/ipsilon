@@ -93,12 +93,22 @@ class Installer(object):
 
         # Check if we already have a keytab for HTTP
         if 'krb_httpd_keytab' in opts:
+            msg = "Searching for keytab in: %s" % opts['krb_httpd_keytab']
+            print >> sys.stdout, msg,
             if os.path.exists(opts['krb_httpd_keytab']):
+                print >> sys.stdout, "... Found!"
                 return
+            else:
+                print >> sys.stdout, "... Not found!"
 
+        msg = "Searching for keytab in: %s" % HTTPD_IPA_KEYTAB
+        print >> sys.stdout, msg,
         if os.path.exists(HTTPD_IPA_KEYTAB):
             opts['krb_httpd_keytab'] = HTTPD_IPA_KEYTAB
+            print >> sys.stdout, "... Found!"
             return
+        else:
+            print >> sys.stdout, "... Not found!"
 
         us = socket.gethostname()
         princ = 'HTTP/%s@%s' % (us, self.realm)
@@ -108,11 +118,14 @@ class Installer(object):
         from ipalib import errors as ipaerrors
 
         for srv in self.server:
+            msg = "Testing access to server: %s" % srv
+            print >> sys.stdout, msg,
             try:
                 server = srv
                 c = ipaldap.IPAdmin(host=server)
                 c.do_sasl_gssapi_bind()
                 del c
+                print >> sys.stdout, "... Succeeded!"
                 break
             except ipaerrors.ACIError, e:
                 # usually this error is returned when we have no
@@ -134,6 +147,9 @@ class Installer(object):
             logger.info('Cmd> %s\n%s', e.cmd, e.output)
 
         try:
+            msg = "Trying to fetch keytab[%s] for %s" % (
+                  opts['krb_httpd_keytab'], princ)
+            print >> sys.stdout, msg,
             subprocess.check_output([IPA_GETKEYTAB,
                                      '-s', server, '-p', princ,
                                      '-k', opts['krb_httpd_keytab']],
