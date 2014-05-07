@@ -82,6 +82,7 @@ plugin for actual authentication. """
         self.page = Krb(site, self)
         self.page.__dict__['negotiate'] = KrbAuth(site, self)
         self.page.__dict__['unauthorized'] = KrbError(site, self)
+        self.page.__dict__['failed'] = KrbError(site, self)
         return self.page
 
 
@@ -101,6 +102,7 @@ CONF_TEMPLATE = """
   Require valid-user
 
   ErrorDocument 401 /${instance}/login/krb/unauthorized
+  ErrorDocument 500 /${instance}/login/krb/failed
 </Location>
 """
 
