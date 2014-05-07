@@ -24,7 +24,7 @@ DATA = 'share/ipsilon/'
 
 setup(
     name = 'ipsilon',
-    version = '0.2.2',
+    version = '0.2.3',
     license = 'GPLv3+',
     packages = ['ipsilon', 'ipsilon.admin', 'ipsilon.login', 'ipsilon.util',
                 'ipsilon.providers', 'ipsilon.providers.saml2',
