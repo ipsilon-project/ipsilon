@@ -14,7 +14,8 @@ completely agnostic of what authentication infrastructure is being used.
 Applications can currently use the SAML2[2] protocol to talk to the Ipsilon
 identity provider, an application that uses SAML is called a Service Provider.
 
-Ipsilon uses the LASSO[3] libraries an Python bindings to implement SAML support.
+Ipsilon uses the LASSO[3] libraries and Python bindings to implement SAML
+support.
 
 Ipsilon Server Installation
 ===========================
@@ -67,7 +68,12 @@ The install script expects to find the keytab in /etc/httpd/conf/http.keytab
 NOTE: If you are installing Ipsilon in a FreeIPA[4] environment you can use the
 --ipa switch to simplify the deployment. Using the --ipa switch will allow the
 use of your IPA Kerberos administrative credentials to automatically provision
-a keytab for the HTTP service if one is not available yet.
+a keytab for the HTTP service if one is not available yet.  You will likely
+want to use the --admin-user option to specify the full principal of the user
+who will administer Ipsilon.  For example to use the FreeIPA admin user for
+the EXAMPLE.COM realm, you would use:
+
+ $ ipsilon-server-install --ipa --admin-user admin@EXAMPLE.COM
 
 Once the script has successfully completed the installation, restart the Apache
 HTTPD server to activate it.
