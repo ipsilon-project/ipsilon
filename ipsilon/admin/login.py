@@ -38,39 +38,44 @@ class LoginPluginsOrder(Page):
                               title='login plugins order',
                               name='admin_login_order_form',
                               menu=self.menu, action=self.url,
-                              options=self._site[FACILITY]['enabled'])
+                              options=[p.name for p in self._site[FACILITY]['enabled']])
 
     @admin_protect
     def POST(self, *args, **kwargs):
         message = "Nothing was modified."
         message_type = "info"
-        valid = self._site[FACILITY]['enabled']
+        plugins_by_name = {p.name: p for p in self._site[FACILITY]['enabled']}
 
         if 'order' in kwargs:
             order = kwargs['order'].split(',')
             if len(order) != 0:
-                new_values = []
+                new_names = []
+                new_plugins = []
                 try:
                     for v in order:
                         val = v.strip()
-                        if val not in valid:
+                        if val not in plugins_by_name:
                             error = "Invalid plugin name: %s" % val
                             raise ValueError(error)
-                        new_values.append(val)
-                    if len(new_values) < len(valid):
-                        for val in valid:
-                            if val not in new_values:
-                                new_values.append(val)
+                        new_names.append(val)
+                        new_plugins.append(plugins_by_name[val])
+                    if len(new_names) < len(plugins_by_name):
+                        for val in plugins_by_name:
+                            if val not in new_names:
+                                new_names.append(val)
+                                new_plugins.append(plugins_by_name[val])
 
                     po = PluginObject()
                     po.name = "global"
                     globalconf = dict()
-                    globalconf['order'] = ','.join(new_values)
+                    globalconf['order'] = ','.join(new_names)
                     po.set_config(globalconf)
                     po.save_plugin_config(FACILITY)
 
-                    # When all is saved update also live config
-                    self._site[FACILITY]['enabled'] = new_values
+                    # When all is saved update also live config. The
+                    # live config is a list of the actual plugin
+                    # objects.
+                    self._site[FACILITY]['enabled'] = new_plugins
 
                     message = "New configuration saved."
                     message_type = "success"
@@ -89,7 +94,7 @@ class LoginPluginsOrder(Page):
                               title='login plugins order',
                               name='admin_login_order_form',
                               menu=self.menu, action=self.url,
-                              options=self._site[FACILITY]['enabled'])
+                              options=[p.name for p in self._site[FACILITY]['enabled']])
 
 
 class LoginPlugins(Page):
