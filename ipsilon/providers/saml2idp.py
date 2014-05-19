@@ -266,9 +266,9 @@ class Installer(object):
         meta.set_entity_id(url + '/metadata')
         meta.add_certs(cert, cert)
         meta.add_service(metadata.SAML2_SERVICE_MAP['sso-post'],
-                         url + 'SSO/POST')
+                         url + '/SSO/POST')
         meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
-                         url + 'SSO/Redirect')
+                         url + '/SSO/Redirect')
 
         meta.add_allowed_name_format(
             lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
