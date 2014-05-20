@@ -174,10 +174,10 @@ class AuthenticateRequest(ProviderPageBase):
 
         nameid = None
         if nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
-            ## TODO map to something else ?
+            # TODO map to something else ?
             nameid = provider.normalize_username(user.name)
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
-            ## TODO map to something else ?
+            # TODO map to something else ?
             nameid = provider.normalize_username(user.name)
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
             nameid = us.get_data('user', 'krb_principal_name')

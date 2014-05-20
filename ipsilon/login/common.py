@@ -108,7 +108,7 @@ class LoginManagerBase(PluginObject):
         if self not in plugins['enabled']:
             return
 
-        #remove self from chain
+        # remove self from chain
         root = plugins['root']
         if root.first_login == self:
             root.first_login = self.next_login

@@ -36,7 +36,7 @@ class Plugins(object):
         try:
             if ext.lower() == '.py':
                 mod = imp.load_source(name, file_name)
-            #elif ext.lower() == '.pyc':
+            # elif ext.lower() == '.pyc':
             #    mod = imp.load_compiled(name, file_name)
             else:
                 return

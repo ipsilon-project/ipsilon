@@ -94,7 +94,7 @@ class User(object):
 
     @sites.setter
     def sites(self):
-        #TODO: implement setting sites via the user object ?
+        # TODO: implement setting sites via the user object ?
         raise AttributeError
 
 

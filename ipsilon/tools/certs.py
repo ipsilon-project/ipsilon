@@ -50,7 +50,7 @@ class Certificate(object):
         with open(self.cert, 'r') as f:
             cert = f.readlines()
 
-        #poor man stripping of BEGIN/END lines
+        # poor man stripping of BEGIN/END lines
         if cert[0] == '-----BEGIN CERTIFICATE-----\n':
             cert = cert[1:]
         if cert[-1] == '-----END CERTIFICATE-----\n':

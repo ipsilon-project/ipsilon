@@ -51,8 +51,8 @@ class NewSPAdminPage(Page):
     def POST(self, *args, **kwargs):
 
         if self.user.is_admin:
-            #TODO: allow authenticated user to create SPs on their own
-            #      set the owner in that case
+            # TODO: allow authenticated user to create SPs on their own
+            #       set the owner in that case
             name = None
             meta = None
             if 'content-type' not in cherrypy.request.headers:
