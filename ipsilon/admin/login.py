@@ -34,11 +34,12 @@ class LoginPluginsOrder(Page):
 
     @admin_protect
     def GET(self, *args, **kwargs):
+        opts = [p.name for p in self._site[FACILITY]['enabled']]
         return self._template('admin/login_order.html',
                               title='login plugins order',
                               name='admin_login_order_form',
                               menu=self.menu, action=self.url,
-                              options=[p.name for p in self._site[FACILITY]['enabled']])
+                              options=opts)
 
     @admin_protect
     def POST(self, *args, **kwargs):
@@ -88,13 +89,14 @@ class LoginPluginsOrder(Page):
                     message = "Failed to save data!"
                     message_type = "error"
 
+        opts = [p.name for p in self._site[FACILITY]['enabled']]
         return self._template('admin/login_order.html',
                               message=message,
                               message_type=message_type,
                               title='login plugins order',
                               name='admin_login_order_form',
                               menu=self.menu, action=self.url,
-                              options=[p.name for p in self._site[FACILITY]['enabled']])
+                              options=opts)
 
 
 class LoginPlugins(Page):
