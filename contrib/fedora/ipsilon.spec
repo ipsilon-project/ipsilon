@@ -1,6 +1,6 @@
 Name:		ipsilon
 Version:	0.2.4
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	An Identity Provider Server
 
 Group:		System Environment/Base
@@ -54,6 +54,8 @@ install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_sbindir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
+mkdir -p %{buildroot}%{_defaultdocdir}
+mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
 
 %pre
 getent group ipsilon >/dev/null || groupadd -r ipsilon
@@ -72,7 +74,7 @@ semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' 2>/de
 semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/dev/null || :
 
 %files
-%doc COPYING
+%{_defaultdocdir}/%{name}-%{version}
 %{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/admin/*
 %{python2_sitelib}/ipsilon/login/*
