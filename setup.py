@@ -30,7 +30,7 @@ setup(
                 'ipsilon.providers', 'ipsilon.providers.saml2',
                 'ipsilon.tools', 'ipsilon.helpers'],
     data_files = [('share/man/man7', ["man/ipsilon.7"]),
-                  ('share/doc/ipsilon', ['COPYING']),
+                  ('share/doc/ipsilon', ['COPYING', 'README']),
                   ('share/doc/ipsilon/examples', ['examples/ipsilon.conf',
                                                   'examples/apache.conf']),
                   (DATA+'ui/css', glob('ui/css/*.css')),

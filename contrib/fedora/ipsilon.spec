@@ -94,7 +94,7 @@ semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/de
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
 
 %files tools
-%doc COPYING
+%doc COPYING README
 %{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon/tools/*
