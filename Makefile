@@ -1,3 +1,5 @@
+RPMBUILD = $(PWD)/dist/rpmbuild
+
 all: lint pep8
 
 lint:
@@ -26,3 +28,27 @@ ui-node: less/ipsilon.less less/admin.less
 	# Create and minify CSS
 	lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
 	lessc --clean-css less/admin.less ui/css/admin.css
+
+sdist:
+	python setup.py sdist
+
+rpmroot:
+	rm -rf $(RPMBUILD)
+	mkdir -p $(RPMBUILD)/BUILD
+	mkdir -p $(RPMBUILD)/RPMS
+	mkdir -p $(RPMBUILD)/SOURCES
+	mkdir -p $(RPMBUILD)/SPECS
+	mkdir -p $(RPMBUILD)/SRPMS
+
+rpmdistdir:
+	mkdir -p dist/rpms
+	mkdir -p dist/srpms
+
+rpms: rpmroot rpmdistdir sdist
+	cp dist/ipsilon*.tar.gz $(RPMBUILD)/SOURCES/
+	rpmbuild --define "_topdir $(RPMBUILD)" -ba contrib/fedora/ipsilon.spec
+	mv $(RPMBUILD)/RPMS/*/ipsilon-*.rpm dist/rpms/
+	mv $(RPMBUILD)/SRPMS/ipsilon-*.src.rpm dist/srpms/
+	rm -rf $(RPMBUILD)
+
+rpms: sdist
