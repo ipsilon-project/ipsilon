@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.user import UserSession
+from urllib import unquote
 import cherrypy
 
 
@@ -45,6 +46,13 @@ class Page(object):
         self.user = None
         self.form = form
 
+    def _compare_urls(self, url1, url2):
+        u1 = unquote(url1)
+        u2 = unquote(url2)
+        if u1 == u2:
+            return True
+        return False
+
     def __call__(self, *args, **kwargs):
         # pylint: disable=star-args
         self.user = UserSession().get_user()
@@ -60,12 +68,16 @@ class Page(object):
                 if callable(op):
                     # Basic CSRF protection
                     if cherrypy.request.method != 'GET':
-                        if 'referer' not in cherrypy.request.headers:
-                            return cherrypy.HTTPError(403)
-                        referer = cherrypy.request.headers['referer']
                         url = cherrypy.url(relative=False)
-                        if referer != url:
-                            return cherrypy.HTTPError(403)
+                        if 'referer' not in cherrypy.request.headers:
+                            self._debug("Missing referer in %s request to %s"
+                                        % (cherrypy.request.method, url))
+                            raise cherrypy.HTTPError(403)
+                        referer = cherrypy.request.headers['referer']
+                        if not self._compare_urls(referer, url):
+                            self._debug("Wrong referer %s in request to %s"
+                                        % (referer, url))
+                            raise cherrypy.HTTPError(403)
                     return op(*args, **kwargs)
             else:
                 op = getattr(self, 'root', None)
