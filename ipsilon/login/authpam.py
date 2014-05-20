@@ -191,6 +191,6 @@ class Installer(object):
         try:
             subprocess.call(['/usr/sbin/setsebool', '-P',
                              'httpd_mod_auth_pam=on',
-                             'httpd_tmp_t=on'])
+                             'httpd_tmp_exec=on'])
         except Exception:  # pylint: disable=broad-except
             pass
