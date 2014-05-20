@@ -38,7 +38,7 @@ def protect():
 
 class Page(object):
     def __init__(self, site, form=False):
-        if not 'template_env' in site:
+        if 'template_env' not in site:
             raise ValueError('Missing template environment')
         self._site = site
         self.basepath = cherrypy.config.get('base.mount', "")

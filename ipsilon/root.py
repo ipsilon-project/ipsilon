@@ -33,7 +33,7 @@ sites = dict()
 class Root(Page):
 
     def __init__(self, site, template_env):
-        if not site in sites:
+        if site not in sites:
             sites[site] = dict()
         if template_env:
             sites[site]['template_env'] = template_env

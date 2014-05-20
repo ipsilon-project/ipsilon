@@ -176,7 +176,7 @@ class Installer(object):
         self.get_keytab(opts)
 
         # Forcibly use krb then pam modules
-        if not 'lm_order' in opts:
+        if 'lm_order' not in opts:
             opts['lm_order'] = []
         opts['krb'] = 'yes'
         if 'krb' not in opts['lm_order']:

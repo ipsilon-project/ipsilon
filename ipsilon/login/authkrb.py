@@ -52,7 +52,7 @@ class KrbError(LoginPageBase):
         # If we have no negotiate header return whatever mod_auth_kerb
         # generated and wait for the next request
 
-        if not 'WWW-Authenticate' in cherrypy.request.headers:
+        if 'WWW-Authenticate' not in cherrypy.request.headers:
             cherrypy.response.status = 401
 
             if self.lm.next_login:
