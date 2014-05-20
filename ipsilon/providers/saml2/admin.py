@@ -122,14 +122,14 @@ class SPAdminPage(Page):
         self.backurl = parent.url
         self.url = '%s/sp/%s' % (parent.url, sp.name)
 
-    def form_standard(self, message=None, message_type=None):
+    def form_standard(self, message=None, message_type=None, newurl=None):
         return self._template('admin/providers/saml2_sp.html',
                               message=message,
                               message_type=message_type,
                               title=self.title,
                               name='saml2_sp_%s_form' % self.sp.name,
                               backurl=self.backurl, action=self.url,
-                              data=self.sp)
+                              data=self.sp, newurl=newurl)
 
     def GET(self, *args, **kwargs):
         return self.form_standard()
@@ -245,14 +245,15 @@ class SPAdminPage(Page):
                 self.sp.save_properties()
                 if 'rename' in results:
                     rename = results['rename']
+                    self.url = '%s/sp/%s' % (self.parent.url, rename[1])
                     self.parent.rename_sp(rename[0], rename[1])
-                message = "Properties succssfully changed"
+                message = "Properties successfully changed"
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
                 message = "Failed to save data!"
                 message_type = "error"
 
-        return self.form_standard(message, message_type)
+        return self.form_standard(message, message_type, self.url)
 
     def delete(self):
         self.parent.del_sp(self.sp.name)
