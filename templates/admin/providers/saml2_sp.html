@@ -52,10 +52,12 @@
             </div>
         {% endif %}
 
-        <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
-            Save
-        </button>
-        <a href="{{ backurl }}" class="btn btn-default" title="Back">Back</a>
+        {% if user.name == data.owner or user.is_admin %}
+            <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
+                Save
+            </button>
+        {% endif %}
+            <a href="{{ backurl }}" class="btn btn-default" title="Back">Back</a>
         </form>
     </div>
 {% endblock %}
