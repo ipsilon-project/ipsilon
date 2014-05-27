@@ -187,7 +187,7 @@ class Installer(object):
         po.set_config(globalconf)
         po.save_plugin_config(FACILITY)
 
-        # for selinux enabled platfroms, ignore if it fails just report
+        # for selinux enabled platforms, ignore if it fails just report
         try:
             subprocess.call(['/usr/sbin/setsebool', '-P',
                              'httpd_mod_auth_pam=on',
