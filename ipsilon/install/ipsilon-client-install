@@ -23,6 +23,7 @@ from ipsilon.tools.saml2metadata import SAML2_SERVICE_MAP
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import files
 import argparse
+import ConfigParser
 import logging
 import os
 import pwd
@@ -178,6 +179,42 @@ def log_exception(e):
         logger.error(e)
 
 
+def parse_config_profile(args):
+    config = ConfigParser.ConfigParser()
+    files = config.read(args['config_profile'])
+    if len(files) == 0:
+        raise ConfigurationError('Config Profile file %s not found!' %
+                                 args['config_profile'])
+
+    if 'globals' in config.sections():
+        G = config.options('globals')
+        for g in G:
+            val = config.get('globals', g)
+            if val == 'False':
+                val = False
+            elif val == 'True':
+                val = True
+            if g in globals():
+                globals()[g] = val
+            else:
+                for k in globals().keys():
+                    if k.lower() == g.lower():
+                        globals()[k] = val
+                        break
+
+    if 'arguments' in config.sections():
+        A = config.options('arguments')
+        for a in A:
+            val = config.get('arguments', a)
+            if val == 'False':
+                val = False
+            elif val == 'True':
+                val = True
+            args[a] = val
+
+    return args
+
+
 def parse_args():
     global args
 
@@ -212,10 +249,15 @@ def parse_args():
                         default=True, help="Turn on all security checks")
     parser.add_argument('--debug', action='store_true', default=False,
                         help="Turn on script debugging")
+    parser.add_argument('--config-profile', default=None,
+                        help="File containing install options")
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
 
     args = vars(parser.parse_args())
+
+    if args['config_profile']:
+        args = parse_config_profile(args)
 
     if len(args['hostname'].split('.')) < 2:
         raise ValueError('Hostname: %s is not a FQDN.')

@@ -22,6 +22,7 @@ from ipsilon.providers.common import ProvidersInstall
 from ipsilon.helpers.common import EnvHelpersInstall
 from ipsilon.util.data import Store
 from ipsilon.tools import files
+import ConfigParser
 import argparse
 import cherrypy
 import logging
@@ -163,6 +164,33 @@ def find_plugins():
     return plugins
 
 
+def parse_config_profile(args):
+    config = ConfigParser.ConfigParser()
+    files = config.read(args['config_profile'])
+    if len(files) == 0:
+        raise ConfigurationError('Config Profile file %s not found!' %
+                                 args['config_profile'])
+
+    if 'globals' in config.sections():
+        G = config.options('globals')
+        for g in G:
+            val = config.get('globals', g)
+            if g in globals():
+                globals()[g] = val
+            else:
+                for k in globals().keys():
+                    if k.lower() == g.lower():
+                        globals()[k] = val
+                        break
+
+    if 'arguments' in config.sections():
+        A = config.options('arguments')
+        for a in A:
+            args[a] = config.get('arguments', a)
+
+    return args
+
+
 def parse_args(plugins):
     parser = argparse.ArgumentParser(description='Ipsilon Install Options')
     parser.add_argument('--version',
@@ -177,6 +205,8 @@ def parse_args(plugins):
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
                         help="User account that is assigned admin privileges")
+    parser.add_argument('--config-profile', default=None,
+                        help="File containing install options")
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
 
@@ -191,6 +221,9 @@ def parse_args(plugins):
             plugin.install_args(group)
 
     args = vars(parser.parse_args())
+
+    if args['config_profile']:
+        args = parse_config_profile(args)
 
     if not args['hostname']:
         args['hostname'] = socket.getfqdn()
