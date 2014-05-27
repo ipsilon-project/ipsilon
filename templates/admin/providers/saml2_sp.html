@@ -17,7 +17,8 @@
         <div class="form-group">
             <label for="name">Name:</label>
             {% if user.name == data.owner or user.is_admin %}
-                <input type="text" class="form-control" name="name" value="{{ data.name }}"/>
+                <input type="text" class="form-control" name="name" value="{{ data.name }}"
+                       title="A nickname used to easily identify the Service Provider. Only alphanumeric characters [A-Z,a-z,0-9] and spaces are accepted"/>
             {% else %}
                 {{ data.name }}
             {% endif %}
@@ -26,7 +27,9 @@
         <div class="form-group">
             <label for="default_nameid">Default NameID:</label>
             {% if user.is_admin -%}
-                <input type="text" class="form-control" name="default_nameid" value="
+                <input type="text" class="form-control" name="default_nameid"
+                       title="The default nameid type returned to the Service Provider"
+                       value="
             {%- endif -%}
                 {{ data.default_nameid }}
             {%- if user.is_admin -%}
@@ -37,7 +40,9 @@
         <div class="form-group">
             <label for="allowed_nameids">Allowed NameIDs:</label>
             {% if user.is_admin -%}
-                <input type="text" class="form-control" name="allowed_nameids" value="
+                <input type="text" class="form-control" name="allowed_nameids"
+                       title="The allowed nameid types that can be returned to a Service Provider"
+                       value="
             {%- endif -%}
                 {{ data.allowed_nameids|join(', ') }}
             {%- if user.is_admin -%}
@@ -48,7 +53,8 @@
         {% if user.is_admin %}
             <div class="form-group">
                 <label for="owner">User Owner:</label>
-                <input type="text" class="form-control" name="owner" value="{{ data.owner }}"/>
+                <input type="text" class="form-control" name="owner" value="{{ data.owner }}"
+                       title="The user that owns the Service Provider"/>
             </div>
         {% endif %}
 
