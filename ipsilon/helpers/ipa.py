@@ -168,6 +168,8 @@ class Installer(object):
     def configure_server(self, opts):
         if opts['ipa'] != 'yes' and opts['ipa'] != 'auto':
             return
+        if opts['ipa'] != 'yes' and opts['krb'] == 'no':
+            return
 
         self.logger = logging.getLogger()
 
