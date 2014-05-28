@@ -143,7 +143,7 @@ def install(plugins, args):
         plugin.configure(args)
 
     # Fixup permissions so only the ipsilon user can read these files
-    files.fix_user_dirs(instance_conf, opts['system_user'], mode=0500)
+    files.fix_user_dirs(instance_conf, opts['system_user'])
     files.fix_user_dirs(args['data_dir'], opts['system_user'])
     try:
         subprocess.call(['/usr/sbin/restorecon', '-R', args['data_dir']])
