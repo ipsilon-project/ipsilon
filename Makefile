@@ -29,6 +29,19 @@ ui-node: less/ipsilon.less less/admin.less
 	lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
 	lessc --clean-css less/admin.less ui/css/admin.css
 
+clean:
+	rm -fr testdir
+
+lp-test:
+	pylint -d c,r,i,W0613 -r n -f colorized \
+		   --notes= \
+		   --ignored-classes=cherrypy \
+		   ./tests
+	pep8 tests
+
+test: lp-test
+	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
+
 sdist:
 	python setup.py sdist
 
