@@ -39,6 +39,8 @@ TEMPLATES = '/usr/share/ipsilon/templates/install'
 CONFDIR = '/etc/ipsilon'
 DATADIR = '/var/lib/ipsilon'
 HTTPDCONFD = '/etc/httpd/conf.d'
+BINDIR = '/usr/sbin'
+STATICDIR = '/usr/share/ipsilon'
 
 
 class ConfigurationError(Exception):
@@ -95,7 +97,11 @@ def install(plugins, args):
         shutil.move(idp_conf, '%s.backup.%s' % (idp_conf, now))
     if not os.path.exists(instance_conf):
         os.makedirs(instance_conf, 0700)
-    confopts = {'instance': args['instance'], 'datadir': args['data_dir']}
+    confopts = {'instance': args['instance'],
+                'datadir': args['data_dir'],
+                'sysuser': args['system_user'],
+                'ipsilondir': BINDIR,
+                'staticdir': STATICDIR}
     files.write_from_template(ipsilon_conf,
                               os.path.join(TEMPLATES, 'ipsilon.conf'),
                               confopts)
