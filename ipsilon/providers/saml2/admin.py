@@ -23,6 +23,7 @@ from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
 import re
+import requests
 
 
 VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
@@ -73,11 +74,25 @@ class NewSPAdminPage(Page):
                         return self.form_new(message, message_type)
 
                     name = value
-                elif key == 'meta':
+                elif key == 'metatext':
+                    if len(value) > 0:
+                        meta = value
+                elif key == 'metafile':
                     if hasattr(value, 'content_type'):
                         meta = value.fullvalue()
                     else:
                         self._debug("Invalid format for 'meta'")
+                elif key == 'metaurl':
+                    if len(value) > 0:
+                        try:
+                            r = requests.get(value)
+                            r.raise_for_status()
+                            meta = r.content
+                        except Exception, e:  # pylint: disable=broad-except
+                            self._debug("Failed to fetch metadata: " + repr(e))
+                            message = "Failed to fetch metadata: " + repr(e)
+                            message_type = "error"
+                            return self.form_new(message, message_type)
 
             if name and meta:
                 try:
