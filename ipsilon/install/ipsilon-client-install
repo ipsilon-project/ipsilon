@@ -84,7 +84,10 @@ def saml2():
     else:
         path = os.getcwd()
 
-    url = 'https://' + args['hostname']
+    proto = 'https'
+    if not args['saml_secure_setup']:
+        proto = 'http'
+    url = '%s://%s' % (proto, args['hostname'])
     url_sp = url + args['saml_sp']
     url_logout = url + args['saml_sp_logout']
     url_post = url + args['saml_sp_post']
@@ -118,6 +121,10 @@ def saml2():
             # default location, enable the default page
             psp = ''
 
+        saml_secure = 'Off'
+        if args['saml_secure_setup']:
+            saml_secure = 'On'
+
         samlopts = {'saml_base': args['saml_base'],
                     'saml_protect': saml_protect,
                     'saml_sp_key': c.key,
@@ -125,6 +132,7 @@ def saml2():
                     'saml_sp_meta': sp_metafile,
                     'saml_idp_meta': idp_metafile,
                     'saml_sp': args['saml_sp'],
+                    'saml_secure_on': saml_secure,
                     'saml_auth': saml_auth,
                     'sp': psp}
         files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
@@ -200,6 +208,8 @@ def parse_args():
                         help="Single Logout URL")
     parser.add_argument('--saml-sp-post', default='/saml2/postResponse',
                         help="Post response URL")
+    parser.add_argument('--saml-secure-setup', action='store_true',
+                        default=True, help="Turn on all security checks")
     parser.add_argument('--debug', action='store_true', default=False,
                         help="Turn on script debugging")
     parser.add_argument('--uninstall', action='store_true',
