@@ -41,6 +41,7 @@ lp-test:
 
 test: lp-test
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
+	./tests/tests.py --test=test1
 
 sdist:
 	python setup.py sdist
