@@ -39,6 +39,9 @@ def parse_args():
                         help="Directory in which tests are run")
     parser.add_argument('--test', default='test1',
                         help="The test to run")
+    parser.add_argument('--wrappers', default='auto',
+                        choices=['yes', 'no', 'auto'],
+                        help="Run the tests with socket wrappers")
 
     return vars(parser.parse_args())
 
@@ -167,6 +170,28 @@ Alias /sp ${HTTPDIR}/sp
     with open(httpdir + '/sp/index.html', 'w') as f:
         f.write(index)
 
+
+def try_wrappers(base, wrappers):
+    if wrappers == 'no':
+        return {}
+
+    pkgcfg = subprocess.Popen(['pkg-config', '--exists', 'socket_wrapper'])
+    pkgcfg.wait()
+    if pkgcfg.returncode != 0:
+        if wrappers == 'auto':
+            return {}
+        else:
+            raise ValueError('Socket Wrappers not available')
+
+    wrapdir = os.path.join(base, 'wrapdir')
+    os.mkdir(wrapdir)
+
+    wenv = {'LD_PRELOAD': 'libsocket_wrapper.so',
+            'SOCKET_WRAPPER_DIR': wrapdir,
+            'SOCKET_WRAPPER_DEFAULT_IFACE': '9'}
+
+    return wenv
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -178,7 +203,9 @@ if __name__ == '__main__':
     options = setup_test(args['path'], args['test'])
     basedir = options['basedir']
 
-    env={'PYTHONPATH':'./'}
+    env = try_wrappers(basedir, args['wrappers'])
+    env['PYTHONPATH'] = './'
+
     srvs = []
     try:
         for h in options['servers'].split(','):
