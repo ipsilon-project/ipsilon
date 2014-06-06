@@ -20,6 +20,8 @@ Requires:       python-jinja2
 Requires:       python-lxml
 Requires:       python-pam
 Requires(pre):  shadow-utils
+Requires(post): %_sbindir/semanage, %_sbindir/restorecon
+Requires(postun): %_sbindir/semanage
 
 %description
 Ipsilon is a multi-protocol Identiy Provider service. Its function is to
