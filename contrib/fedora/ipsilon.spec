@@ -65,13 +65,13 @@ getent passwd ipsilon >/dev/null || \
 exit 0
 
 %post
-semanage fcontext -a -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/dev/null || :
-semanage fcontext -a -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' 2>/dev/null || :
+semanage fcontext -a -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' || :
+semanage fcontext -a -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' || :
 restorecon -R %{_sharedstatedir}/ipsilon || :
 
 %postun
-semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' 2>/dev/null || :
-semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' 2>/dev/null || :
+semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' || :
+semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' || :
 
 %files
 %{_defaultdocdir}/%{name}-%{version}
