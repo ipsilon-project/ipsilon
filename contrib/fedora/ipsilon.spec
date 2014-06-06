@@ -72,8 +72,11 @@ semanage fcontext -a -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' || :
 restorecon -R %{_sharedstatedir}/ipsilon || :
 
 %postun
-semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' || :
-semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' || :
+# Clean up after package removal
+if [ $1 -eq 0 ]; then
+    semanage fcontext -d -t var_lib_t '%{_sharedstatedir}/ipsilon(/.*)/*.conf' || :
+    semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' || :
+fi
 
 %files
 %{_defaultdocdir}/%{name}-%{version}
