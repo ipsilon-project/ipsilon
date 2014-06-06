@@ -213,6 +213,7 @@ if __name__ == '__main__':
             basehttpdir = '%s/%s' % (basedir, sname)
             setup_http(basehttpdir, saddr, sport)
 
+            print "Installing IDP server %s" % sname
             sprofile = generate_profile('%s/profile.cfg' % basedir, sname)
             p = subprocess.Popen(['./ipsilon/install/ipsilon-server-install',
                                   '--config-profile=%s' % sprofile], env=env,
@@ -238,6 +239,7 @@ if __name__ == '__main__':
             basehttpdir = '%s/%s' % (basedir, sname)
             setup_http(basehttpdir, saddr, sport)
 
+            print "Installing SP server %s" % sname
             sprofile = generate_profile('%s/profile.cfg' % basedir, sname)
             p = subprocess.Popen(['./ipsilon/install/ipsilon-client-install',
                                   '--config-profile=%s' % sprofile], env=env,
@@ -257,6 +259,7 @@ if __name__ == '__main__':
                                    env=env, preexec_fn=os.setsid)
             srvs.append(srv)
 
+        print "Testing installation"
         if os.path.exists('tests/%s.py' % args['test']):
             code = subprocess.call(['./tests/%s.py' % args['test'], basedir],
                                    env=env)
