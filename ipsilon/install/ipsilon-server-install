@@ -102,7 +102,8 @@ def install(plugins, args):
                 'datadir': args['data_dir'],
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
-                'staticdir': STATICDIR}
+                'staticdir': STATICDIR,
+                'debugging': "True" if args['server_debugging'] else "False"}
     if WSGI_SOCKET_PREFIX:
         confopts['wsgi_socket'] = 'WSGISocketPrefix %s' % WSGI_SOCKET_PREFIX
     files.write_from_template(ipsilon_conf,
@@ -216,6 +217,8 @@ def parse_args(plugins):
                         help="User account that is assigned admin privileges")
     parser.add_argument('--config-profile', default=None,
                         help="File containing install options")
+    parser.add_argument('--server-debugging', action='store_true',
+                        help="Uninstall the server and all data")
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
 
