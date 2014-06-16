@@ -58,6 +58,7 @@ mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 mkdir -p %{buildroot}%{_defaultdocdir}
 mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
+rm -fr %{buildroot}%{python2_sitelib}/tests
 
 %pre
 getent group ipsilon >/dev/null || groupadd -r ipsilon
