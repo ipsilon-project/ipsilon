@@ -193,7 +193,29 @@ class AuthenticateRequest(ProviderPageBase):
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
-        # TODO: add user attributes as policy requires from 'usersession'
+        # TODO: filter user attributes as policy requires from 'usersession'
+        if not login.assertion.attributeStatement:
+            attrstat = lasso.Saml2AttributeStatement()
+            login.assertion.attributeStatement = [attrstat]
+        else:
+            attrstat = login.assertion.attributeStatement[0]
+        if not attrstat.attribute:
+            attrstat.attribute = ()
+
+        attributes = us.get_user_attrs()
+        for key in attributes:
+            attr = lasso.Saml2Attribute()
+            attr.name = key
+            attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
+            value = str(attributes[key]).encode('utf-8')
+            node = lasso.MiscTextNode.newWithString(value)
+            node.textChild = True
+            attrvalue = lasso.Saml2AttributeValue()
+            attrvalue.any = [node]
+            attr.attributeValue = [attrvalue]
+            attrstat.attribute = attrstat.attribute + (attr,)
+
+        self.debug('Assertion: %s' % login.assertion.dump())
 
     def saml2error(self, login, code, message):
         status = lasso.Samlp2Status()

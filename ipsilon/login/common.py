@@ -22,6 +22,7 @@ from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
+from ipsilon.info.common import Info
 import cherrypy
 
 
@@ -34,6 +35,7 @@ class LoginManagerBase(PluginObject, Log):
         super(LoginManagerBase, self).__init__()
         self.path = '/'
         self.next_login = None
+        self.info = None
 
     def redirect_to_path(self, path):
         base = cherrypy.config.get('base.mount', "")
@@ -46,6 +48,14 @@ class LoginManagerBase(PluginObject, Log):
         ref = session.get_data('login', 'Return')
         if not ref:
             ref = cherrypy.config.get('base.mount', "") + '/'
+
+        if self.info:
+            userattrs = self.info.get_user_attrs(username)
+            if userdata:
+                userdata.update(userattrs or {})
+            else:
+                userdata = userattrs
+            self.debug("User %s attributes: %s" % (username, repr(userdata)))
 
         if auth_type:
             if userdata:
@@ -113,6 +123,9 @@ class LoginManagerBase(PluginObject, Log):
 
         plugins['enabled'].append(self)
         self._debug('Login plugin enabled: %s' % self.name)
+
+        # Get handle of the info plugin
+        self.info = root.info
 
     def disable(self, site):
         plugins = site[FACILITY]
@@ -193,6 +206,7 @@ class Login(Page):
     def __init__(self, *args, **kwargs):
         super(Login, self).__init__(*args, **kwargs)
         self.first_login = None
+        self.info = Info()
 
         loader = PluginLoader(Login, FACILITY, 'LoginManager')
         self._site[FACILITY] = loader.get_plugin_data()
