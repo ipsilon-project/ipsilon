@@ -39,9 +39,18 @@ lp-test:
 		   ./tests
 	pep8 tests
 
-test: lp-test
+wrappers:
+	#rm -fr wrapdir
+	#mkdir wrapdir
+	#LD_PRELOAD=libsocket_wrapper.so
+	#SOCKET_WRAPPER_DIR=wrapdir
+	#SOCKET_WRAPPER_DEFAULT_IFACE=9
+
+tests: wrappers
+	PYTHONPATH=./ ./tests/tests.py --test=test1
+
+test: lp-test tests
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
-	./tests/tests.py --test=test1
 
 sdist:
 	python setup.py sdist
