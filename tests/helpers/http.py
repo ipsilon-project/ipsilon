@@ -37,7 +37,7 @@ class PageTree(object):
 
     @property
     def tree(self):
-        if not self._tree:
+        if self._tree is None:
             self._tree = html.fromstring(self.text)
         return self._tree
 
