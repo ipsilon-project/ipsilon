@@ -15,6 +15,7 @@ Requires:       ipsilon-tools = %{version}-%{release}
 Requires:	lasso-python
 Requires:	mod_wsgi
 Requires:	mod_auth_kerb
+Requires:       mod_intercept_form_submit
 Requires:       python-cherrypy
 Requires:       python-jinja2
 Requires:       python-lxml

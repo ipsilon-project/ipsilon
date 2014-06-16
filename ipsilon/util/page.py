@@ -40,7 +40,7 @@ class Page(object):
         self._site = site
         self.basepath = cherrypy.config.get('base.mount', "")
         self.user = None
-        self.form = form
+        self._is_form_page = form
 
     def _compare_urls(self, url1, url2):
         u1 = unquote(url1)
@@ -58,7 +58,7 @@ class Page(object):
             if callable(op) and getattr(self, args[0]+'.exposed', None):
                 return op(*args[1:], **kwargs)
         else:
-            if self.form:
+            if self._is_form_page:
                 self._debug("method: %s" % cherrypy.request.method)
                 op = getattr(self, cherrypy.request.method, None)
                 if callable(op):
