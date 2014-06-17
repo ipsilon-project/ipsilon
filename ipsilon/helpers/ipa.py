@@ -183,6 +183,6 @@ class Installer(object):
         opts['krb'] = 'yes'
         if 'krb' not in opts['lm_order']:
             opts['lm_order'].insert(0, 'krb')
-        opts['pam'] = 'yes'
-        if 'pam' not in opts['lm_order']:
-            opts['lm_order'].append('pam')
+        opts['form'] = 'yes'
+        if not any(lm in opts['lm_order'] for lm in ('form', 'pam')):
+            opts['lm_order'].append('form')
