@@ -106,6 +106,8 @@ def install(plugins, args):
                 'debugging': "True" if args['server_debugging'] else "False"}
     if WSGI_SOCKET_PREFIX:
         confopts['wsgi_socket'] = 'WSGISocketPrefix %s' % WSGI_SOCKET_PREFIX
+    else:
+        confopts['wsgi_socket'] = ''
     files.write_from_template(ipsilon_conf,
                               os.path.join(TEMPLATES, 'ipsilon.conf'),
                               confopts)
