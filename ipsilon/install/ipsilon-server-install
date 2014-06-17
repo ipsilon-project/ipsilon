@@ -103,7 +103,14 @@ def install(plugins, args):
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
+                'secure': "False" if args['secure'] == "no" else "True",
                 'debugging': "True" if args['server_debugging'] else "False"}
+    if args['secure'] == 'no':
+        confopts['secure'] = "False"
+        confopts['sslrequiressl'] = ""
+    else:
+        confopts['secure'] = "True"
+        confopts['sslrequiressl'] = "   SSLRequireSSL"
     if WSGI_SOCKET_PREFIX:
         confopts['wsgi_socket'] = 'WSGISocketPrefix %s' % WSGI_SOCKET_PREFIX
     else:
@@ -217,6 +224,8 @@ def parse_args(plugins):
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
                         help="User account that is assigned admin privileges")
+    parser.add_argument('--secure', choices=['yes', 'no'], default='yes',
+                        help="Turn on all security checks")
     parser.add_argument('--config-profile', default=None,
                         help="File containing install options")
     parser.add_argument('--server-debugging', action='store_true',

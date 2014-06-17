@@ -246,9 +246,6 @@ class Installer(object):
     def install_args(self, group):
         group.add_argument('--saml2', choices=['yes', 'no'], default='yes',
                            help='Configure SAML2 Provider')
-        group.add_argument('--saml2-secure',
-                           choices=['yes', 'no'], default='yes',
-                           help='Configure SAML2 Provider')
 
     def configure(self, opts):
         if opts['saml2'] != 'yes':
@@ -265,7 +262,7 @@ class Installer(object):
 
         # Generate Idp Metadata
         proto = 'https'
-        if opts['saml2_secure'].lower() == 'no':
+        if opts['secure'].lower() == 'no':
             proto = 'http'
         url = '%s://%s/%s/saml2' % (proto, opts['hostname'], opts['instance'])
         meta = metadata.Metadata(metadata.IDP_ROLE)
