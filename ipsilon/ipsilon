@@ -60,8 +60,6 @@ admin_config = datastore.get_admin_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
 
-cherrypy.tools.protect = cherrypy.Tool('before_handler', page.protect)
-
 templates = os.path.join(cherrypy.config['base.dir'], 'templates')
 template_env = Environment(loader=FileSystemLoader(templates))
 

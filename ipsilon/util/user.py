@@ -111,7 +111,9 @@ class UserSession(object):
 
     def remote_login(self):
         if cherrypy.request.login:
-            return self.login(cherrypy.request.login)
+            self.login(cherrypy.request.login)
+        else:
+            self.nuke_data('user')
 
     def login(self, username):
         if self.user == username:
@@ -120,8 +122,9 @@ class UserSession(object):
         # REMOTE_USER changed, replace user
         self.nuke_data('user')
         self.save_data('user', 'name', username)
+        self.user = username
 
-        cherrypy.log('LOGIN SUCCESSFUL: %s', username)
+        cherrypy.log('LOGIN SUCCESSFUL: %s' % username)
 
     def logout(self, user):
         if user is not None:

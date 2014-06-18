@@ -33,10 +33,6 @@ def admin_protect(fn):
     return check
 
 
-def protect():
-    UserSession().remote_login()
-
-
 class Page(object):
     def __init__(self, site, form=False):
         if 'template_env' not in site:
