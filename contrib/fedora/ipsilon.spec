@@ -85,6 +85,7 @@ fi
 %{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/admin/*
 %{python2_sitelib}/ipsilon/login/*
+%{python2_sitelib}/ipsilon/info/*
 %{python2_sitelib}/ipsilon/providers/*
 %{python2_sitelib}/ipsilon/root.py*
 %{python2_sitelib}/ipsilon/util/*

@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginMgrsInstall
+from ipsilon.info.common import InfoProviderInstall
 from ipsilon.providers.common import ProvidersInstall
 from ipsilon.helpers.common import EnvHelpersInstall
 from ipsilon.util.data import Store
@@ -156,6 +157,11 @@ def install(plugins, args):
         plugin = plugins['Login Managers'][plugin_name]
         plugin.configure(args)
 
+    logger.info('Configuring Info provider')
+    for plugin_name in plugins['Info Provider']:
+        plugin = plugins['Info Provider'][plugin_name]
+        plugin.configure(args)
+
     logger.info('Configuring Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
@@ -178,6 +184,7 @@ def find_plugins():
     plugins = {
         'Environment Helpers': EnvHelpersInstall().plugins,
         'Login Managers': LoginMgrsInstall().plugins,
+        'Info Provider': InfoProviderInstall().plugins,
         'Auth Providers': ProvidersInstall().plugins
     }
     return plugins
