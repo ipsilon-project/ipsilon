@@ -44,12 +44,7 @@ class LoginManagerBase(PluginObject, Log):
         if not ref:
             ref = cherrypy.config.get('base.mount', "") + '/'
 
-        session.login(username)
-
-        # Save additional data provided by the login manager
-        if userdata:
-            for key in userdata:
-                session.save_data('user', key, userdata[key])
+        session.login(username, userdata)
 
         raise cherrypy.HTTPRedirect(ref)
 

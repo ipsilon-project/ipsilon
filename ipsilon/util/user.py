@@ -102,6 +102,7 @@ class User(object):
 class UserSession(Log):
     def __init__(self):
         self.user = self.get_data('user', 'name')
+        self.userattrs = self.get_user_attrs()
 
     def get_user(self):
         return User(self.user)
@@ -112,7 +113,7 @@ class UserSession(Log):
         else:
             self.nuke_data('user')
 
-    def login(self, username):
+    def login(self, username, userattrs=None):
         if self.user == username:
             return
 
@@ -120,6 +121,11 @@ class UserSession(Log):
         self.nuke_data('user')
         self.save_data('user', 'name', username)
         self.user = username
+
+        # Save additional data provided by the login manager
+        self.nuke_data('userattrs')
+        if userattrs:
+            self.save_user_attrs(userattrs)
 
         cherrypy.log('LOGIN SUCCESSFUL: %s' % username)
 
@@ -133,6 +139,18 @@ class UserSession(Log):
 
         # Destroy current session in all cases
         cherrypy.lib.sessions.expire()
+
+    def get_user_attrs(self):
+        userattrs = dict()
+        if 'userattrs' in cherrypy.session:
+            userattrs = cherrypy.session['userattrs']
+        return userattrs
+
+    def save_user_attrs(self, userattrs):
+        cherrypy.session['userattrs'] = userattrs
+        cherrypy.session.save()
+        self._debug('Saved user attrs')
+        self.userattrs = userattrs
 
     def save_data(self, facility, name, data):
         """ Save named data in the session so it can be retrieved later """
