@@ -19,7 +19,7 @@
 
 from ipsilon.providers.common import ProviderException
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
-import cherrypy
+from ipsilon.util.log import Log
 import lasso
 
 
@@ -42,7 +42,7 @@ class NameIdNotAllowed(Exception):
         return repr(self.message)
 
 
-class ServiceProvider(object):
+class ServiceProvider(Log):
 
     def __init__(self, config, provider_id):
         self.cfg = config
@@ -135,10 +135,6 @@ class ServiceProvider(object):
         idval = data.keys()[0]
         self.cfg.del_datum(idval)
 
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
-
     def normalize_username(self, username):
         if 'strip domain' in self._properties:
             return username.split('@', 1)[0]
@@ -185,7 +181,7 @@ class ServiceProviderCreator(object):
         return ServiceProvider(self.cfg, spid)
 
 
-class IdentityProvider(object):
+class IdentityProvider(Log):
     def __init__(self, config):
         self.server = lasso.Server(config.idp_metadata_file,
                                    config.idp_key_file,
@@ -206,7 +202,3 @@ class IdentityProvider(object):
 
     def get_providers(self):
         return self.server.get_providers()
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)

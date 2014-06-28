@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.data import Store
+from ipsilon.util.log import Log
 import cherrypy
 
 
@@ -98,13 +99,9 @@ class User(object):
         raise AttributeError
 
 
-class UserSession(object):
+class UserSession(Log):
     def __init__(self):
         self.user = self.get_data('user', 'name')
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
     def get_user(self):
         return User(self.user)

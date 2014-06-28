@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ipsilon.util.log import Log
 from ipsilon.util.user import UserSession
 from urllib import unquote
 import cherrypy
@@ -33,7 +34,7 @@ def admin_protect(fn):
     return check
 
 
-class Page(object):
+class Page(Log):
     def __init__(self, site, form=False):
         if 'template_env' not in site:
             raise ValueError('Missing template environment')
@@ -95,10 +96,6 @@ class Page(object):
         m = self._template_model()
         m.update(kwargs)
         return t.render(**m)
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
     def default(self, *args, **kwargs):
         raise cherrypy.HTTPError(404)

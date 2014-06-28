@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ipsilon.util.log import Log
 from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginLoader, PluginObject
@@ -24,7 +25,7 @@ from ipsilon.util.plugin import PluginInstaller
 import cherrypy
 
 
-class LoginManagerBase(PluginObject):
+class LoginManagerBase(PluginObject, Log):
 
     def __init__(self):
         super(LoginManagerBase, self).__init__()
@@ -67,10 +68,6 @@ class LoginManagerBase(PluginObject):
             raise cherrypy.HTTPError(401)
 
         raise cherrypy.HTTPRedirect(ref)
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
     def get_tree(self, site):
         raise NotImplementedError

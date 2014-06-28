@@ -22,6 +22,7 @@ import imp
 import cherrypy
 import inspect
 from ipsilon.util.data import Store
+from ipsilon.util.log import Log
 
 
 class Plugins(object):
@@ -102,7 +103,7 @@ class PluginInstaller(object):
         return p.get_plugins(self._pathname, 'Installer')
 
 
-class PluginObject(object):
+class PluginObject(Log):
 
     def __init__(self):
         self.name = None

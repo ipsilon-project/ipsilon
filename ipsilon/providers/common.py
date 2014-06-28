@@ -17,13 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ipsilon.util.log import Log
 from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
 from ipsilon.util.page import Page
 import cherrypy
 
 
-class ProviderException(Exception):
+class ProviderException(Exception, Log):
 
     def __init__(self, message):
         super(ProviderException, self).__init__(message)
@@ -31,10 +32,6 @@ class ProviderException(Exception):
 
     def __str__(self):
         return repr(self.message)
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log('%s: %s' % (self.__class__.__name__, fact))
 
 
 class ProviderBase(PluginObject):
@@ -45,10 +42,6 @@ class ProviderBase(PluginObject):
         self.path = path
         self.tree = None
         self.admin = None
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
     def get_tree(self, site):
         raise NotImplementedError
@@ -136,7 +129,7 @@ class ProviderPageBase(Page):
 FACILITY = 'provider_config'
 
 
-class LoadProviders(object):
+class LoadProviders(Log):
 
     def __init__(self, root, site):
         loader = PluginLoader(LoadProviders, FACILITY, 'IdpProvider')
@@ -150,10 +143,6 @@ class LoadProviders(object):
         for item in providers['available']:
             plugin = providers['available'][item]
             plugin.register(site)
-
-    def _debug(self, fact):
-        if cherrypy.config.get('debug', False):
-            cherrypy.log(fact)
 
 
 class ProvidersInstall(object):
