@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.login.common import LoginPageBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.user import UserSession
@@ -26,12 +26,7 @@ import cherrypy
 import subprocess
 
 
-class Form(LoginPageBase):
-
-    def GET(self, *args, **kwargs):
-        context = self.create_tmpl_context()
-        # pylint: disable=star-args
-        return self._template('login/form.html', **context)
+class Form(LoginFormBase):
 
     def POST(self, *args, **kwargs):
         us = UserSession()
@@ -46,28 +41,6 @@ class Form(LoginPageBase):
                 error = "Unknown error using external authentication"
                 cherrypy.log.error("Error: %s" % error)
             return self.lm.auth_failed()
-
-    def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
-
-    def create_tmpl_context(self, **kwargs):
-        next_url = None
-        if self.lm.next_login is not None:
-            next_url = self.lm.next_login.path
-
-        context = {
-            "title": 'Login',
-            "action": '%s/login/form' % self.basepath,
-            "service_name": self.lm.service_name,
-            "username_text": self.lm.username_text,
-            "password_text": self.lm.password_text,
-            "description": self.lm.help_text,
-            "next_url": next_url,
-        }
-        context.update(kwargs)
-        return context
 
 
 class LoginManager(LoginManagerBase):
@@ -120,7 +93,7 @@ Form based login Manager. Relies on mod_intercept_form_submit plugin for
         return self.get_config_value('password text')
 
     def get_tree(self, site):
-        self.page = Form(site, self)
+        self.page = Form(site, self, 'login/form')
         return self.page
 
 

@@ -17,18 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.login.common import LoginPageBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 import cherrypy
 
 
-class TestAuth(LoginPageBase):
-
-    def GET(self, *args, **kwargs):
-        context = self.create_tmpl_context()
-        # pylint: disable=star-args
-        return self._template('login/form.html', **context)
+class TestAuth(LoginFormBase):
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -55,33 +50,13 @@ class TestAuth(LoginPageBase):
         # pylint: disable=star-args
         return self._template('login/form.html', **context)
 
-    def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
-
-    def create_tmpl_context(self, **kwargs):
-        next_url = None
-        if self.lm.next_login is not None:
-            next_url = self.lm.next_login.path
-
-        context = {
-            "title": 'TEST Login',
-            "action": '%s/login/testauth' % self.basepath,
-            "username_text": self.lm.username_text,
-            "password_text": self.lm.password_text,
-            "description": self.lm.help_text,
-            "next_url": next_url,
-        }
-        context.update(kwargs)
-        return context
-
 
 class LoginManager(LoginManagerBase):
 
     def __init__(self, *args, **kwargs):
         super(LoginManager, self).__init__(*args, **kwargs)
         self.name = 'testauth'
+        self.service_name = 'testauth'
         self.path = 'testauth'
         self.page = None
         self.description = """
@@ -117,7 +92,7 @@ Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
         return self.get_config_value('password text')
 
     def get_tree(self, site):
-        self.page = TestAuth(site, self)
+        self.page = TestAuth(site, self, 'login/testauth')
         return self.page
 
 

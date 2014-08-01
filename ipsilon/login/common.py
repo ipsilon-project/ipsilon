@@ -126,6 +126,41 @@ class LoginPageBase(Page):
         raise cherrypy.HTTPError(500)
 
 
+class LoginFormBase(LoginPageBase):
+
+    def __init__(self, site, mgr, page, template=None):
+        super(LoginFormBase, self).__init__(site, mgr)
+        self.formpage = page
+        self.formtemplate = template or 'login/form.html'
+
+    def GET(self, *args, **kwargs):
+        context = self.create_tmpl_context()
+        # pylint: disable=star-args
+        return self._template(self.formtemplate, **context)
+
+    def root(self, *args, **kwargs):
+        op = getattr(self, cherrypy.request.method, self.GET)
+        if callable(op):
+            return op(*args, **kwargs)
+
+    def create_tmpl_context(self, **kwargs):
+        next_url = None
+        if self.lm.next_login is not None:
+            next_url = self.lm.next_login.path
+
+        context = {
+            "title": 'Login',
+            "action": '%s/%s' % (self.basepath, self.formpage),
+            "service_name": self.lm.service_name,
+            "username_text": self.lm.username_text,
+            "password_text": self.lm.password_text,
+            "description": self.lm.help_text,
+            "next_url": next_url,
+        }
+        context.update(kwargs)
+        return context
+
+
 FACILITY = 'login_config'
 
 

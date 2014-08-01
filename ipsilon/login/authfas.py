@@ -3,7 +3,7 @@
 # Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
 
 
-from ipsilon.login.common import LoginPageBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 import cherrypy
@@ -12,12 +12,7 @@ from fedora.client.fasproxy import FasProxyClient
 from fedora.client import AuthError
 
 
-class FAS(LoginPageBase):
-
-    def GET(self, *args, **kwargs):
-        context = self.create_tmpl_context()
-        # pylint: disable=star-args
-        return self._template('login/fas.html', **context)
+class FAS(LoginFormBase):
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -49,28 +44,7 @@ class FAS(LoginPageBase):
             error_username=not username
         )
         # pylint: disable=star-args
-        return self._template('login/fas.html', **context)
-
-    def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
-        if callable(op):
-            return op(*args, **kwargs)
-
-    def create_tmpl_context(self, **kwargs):
-        next_url = None
-        if self.lm.next_login is not None:
-            next_url = self.lm.next_login.path
-
-        context = {
-            "title": 'Login',
-            "action": '%s/login/fas' % self.basepath,
-            "username_text": self.lm.username_text,
-            "password_text": self.lm.password_text,
-            "description": self.lm.help_text,
-            "next_url": next_url,
-        }
-        context.update(kwargs)
-        return context
+        return self._template(self.formtemplate, **context)
 
 
 class LoginManager(LoginManagerBase):
@@ -79,6 +53,7 @@ class LoginManager(LoginManagerBase):
         super(LoginManager, self).__init__(*args, **kwargs)
         self.name = 'fas'
         self.path = 'fas'
+        self.service_name = 'fas'
         self.page = None
         self.fpc = None
         self.description = """
@@ -145,7 +120,7 @@ Form based login Manager that uses the Fedora Authentication Server
         self.fpc = FasProxyClient(base_url=self.fas_url,
                                   useragent=self.user_agent,
                                   insecure=(self.insecure == 'YES'))
-        self.page = FAS(site, self)
+        self.page = FAS(site, self, 'login/fas', 'login/fas.html')
         return self.page
 
 
