@@ -43,7 +43,7 @@ class Pam(LoginPageBase):
     def GET(self, *args, **kwargs):
         context = self.create_tmpl_context()
         # pylint: disable=star-args
-        return self._template('login/pam.html', **context)
+        return self._template('login/form.html', **context)
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -69,7 +69,7 @@ class Pam(LoginPageBase):
             error_username=not username
         )
         # pylint: disable=star-args
-        return self._template('login/pam.html', **context)
+        return self._template('login/form.html', **context)
 
     def root(self, *args, **kwargs):
         op = getattr(self, cherrypy.request.method, self.GET)

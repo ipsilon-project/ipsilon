@@ -31,7 +31,7 @@ class Form(LoginPageBase):
     def GET(self, *args, **kwargs):
         context = self.create_tmpl_context()
         # pylint: disable=star-args
-        return self._template('login/pam.html', **context)
+        return self._template('login/form.html', **context)
 
     def POST(self, *args, **kwargs):
         us = UserSession()
