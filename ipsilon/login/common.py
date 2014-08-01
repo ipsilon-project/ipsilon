@@ -25,6 +25,9 @@ from ipsilon.util.plugin import PluginInstaller
 import cherrypy
 
 
+USERNAME_COOKIE = 'ipsilon_default_username'
+
+
 class LoginManagerBase(PluginObject, Log):
 
     def __init__(self):
@@ -36,7 +39,7 @@ class LoginManagerBase(PluginObject, Log):
         base = cherrypy.config.get('base.mount', "")
         raise cherrypy.HTTPRedirect('%s/login/%s' % (base, path))
 
-    def auth_successful(self, username, userdata=None):
+    def auth_successful(self, username, auth_type=None, userdata=None):
         # save ref before calling UserSession login() as it
         # may regenerate the session
         session = UserSession()
@@ -44,7 +47,23 @@ class LoginManagerBase(PluginObject, Log):
         if not ref:
             ref = cherrypy.config.get('base.mount', "") + '/'
 
+        if auth_type:
+            if userdata:
+                userdata.update({'auth_type': auth_type})
+            else:
+                userdata = {'auth_type': auth_type}
+
         session.login(username, userdata)
+
+        # save username into a cookie if parent was form base auth
+        if auth_type == 'password':
+            cherrypy.response.cookie[USERNAME_COOKIE] = username
+            cherrypy.response.cookie[USERNAME_COOKIE]['path'] = \
+                cherrypy.config.get('base.mount', '/')
+            cherrypy.response.cookie[USERNAME_COOKIE]['secure'] = True
+            cherrypy.response.cookie[USERNAME_COOKIE]['httponly'] = True
+            # 15 days
+            cherrypy.response.cookie[USERNAME_COOKIE]['max-age'] = 1296000
 
         raise cherrypy.HTTPRedirect(ref)
 
@@ -148,6 +167,10 @@ class LoginFormBase(LoginPageBase):
         if self.lm.next_login is not None:
             next_url = self.lm.next_login.path
 
+        username = ''
+        if USERNAME_COOKIE in cherrypy.request.cookie:
+            username = cherrypy.request.cookie[USERNAME_COOKIE].value
+
         context = {
             "title": 'Login',
             "action": '%s/%s' % (self.basepath, self.formpage),
@@ -156,6 +179,7 @@ class LoginFormBase(LoginPageBase):
             "password_text": self.lm.password_text,
             "description": self.lm.help_text,
             "next_url": next_url,
+            "username": username,
         }
         context.update(kwargs)
         return context

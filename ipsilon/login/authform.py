@@ -33,7 +33,7 @@ class Form(LoginFormBase):
         us.remote_login()
         user = us.get_user()
         if not user.is_anonymous:
-            return self.lm.auth_successful(user.name)
+            return self.lm.auth_successful(user.name, 'password')
         else:
             try:
                 error = cherrypy.request.headers['EXTERNAL_AUTH_ERROR']

@@ -49,7 +49,7 @@ class Pam(LoginFormBase):
         if username and password:
             user = self._authenticate(username, password)
             if user:
-                return self.lm.auth_successful(user)
+                return self.lm.auth_successful(user, 'password')
             else:
                 error = "Authentication failed"
                 cherrypy.log.error(error)

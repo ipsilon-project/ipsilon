@@ -40,7 +40,7 @@ class KrbAuth(LoginPageBase):
         # was set. Check the session has a user set already or error.
         if self.user and self.user.name:
             userdata = {'krb_principal_name': self.user.name}
-            return self.lm.auth_successful(self.user.name, userdata)
+            return self.lm.auth_successful(self.user.name, 'krb', userdata)
         else:
             return self.lm.auth_failed()
 
