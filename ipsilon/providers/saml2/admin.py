@@ -309,12 +309,13 @@ class AdminPage(Page):
     def mount(self, page):
         self.menu = page.menu
         self.url = '%s/%s' % (page.url, self.name)
-        for p in self.cfg.idp.get_providers():
-            try:
-                sp = ServiceProvider(self.cfg, p)
-                self.add_sp(sp.name, sp)
-            except Exception, e:  # pylint: disable=broad-except
-                self._debug("Failed to find provider %s: %s" % (p, str(e)))
+        if self.cfg.idp:
+            for p in self.cfg.idp.get_providers():
+                try:
+                    sp = ServiceProvider(self.cfg, p)
+                    self.add_sp(sp.name, sp)
+                except Exception, e:  # pylint: disable=broad-except
+                    self._debug("Failed to find provider %s: %s" % (p, str(e)))
         self.add_subtree('new', NewSPAdminPage(self._site, self))
         page.add_subtree(self.name, self)
 
