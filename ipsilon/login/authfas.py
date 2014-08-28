@@ -64,7 +64,6 @@ class FAS(LoginPageBase):
         context = {
             "title": 'Login',
             "action": '%s/login/fas' % self.basepath,
-            "service_name": self.lm.service_name,
             "username_text": self.lm.username_text,
             "password_text": self.lm.password_text,
             "description": self.lm.help_text,
@@ -86,11 +85,6 @@ class LoginManager(LoginManagerBase):
 Form based login Manager that uses the Fedora Authentication Server
 """
         self._options = {
-            'service name': [
-                """ The name of the PAM service used to authenticate. """,
-                'string',
-                'remote'
-            ],
             'help text': [
                 """ The text shown to guide the user at login time. """,
                 'string',
@@ -122,10 +116,6 @@ Form based login Manager that uses the Fedora Authentication Server
                 ''
             ],
         }
-
-    @property
-    def service_name(self):
-        return self.get_config_value('service name')
 
     @property
     def help_text(self):
