@@ -9,7 +9,7 @@
     <div id="options">
         <form role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
 
-        {% for o in options %}
+        {% for o in options_order %}
             <div class="form-group">
             <label for="{{ o }}">{{ o }}:</label>
                 <input type="text" class="form-control" name="{{ o }}" value="{{ options[o][2] }}">

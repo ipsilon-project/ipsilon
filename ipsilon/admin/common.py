@@ -36,11 +36,25 @@ class AdminPluginPage(Page):
         # Get the defaults
         self.plugin_config = obj.get_config_desc()
         if not self.plugin_config:
-            self.plugin_config = []
+            self.plugin_config = dict()
 
         # Now overlay the actual config
         for option in self.plugin_config:
             self.plugin_config[option][2] = obj.get_config_value(option)
+
+        self.options_order = []
+        if hasattr(obj, 'conf_opt_order'):
+            self.options_order = obj.conf_opt_order
+
+        # append any undefined options
+        add = []
+        for k in self.plugin_config.keys():
+            if k not in self.options_order:
+                add.append(k)
+        if len(add):
+            add.sort()
+            for k in add:
+                self.options_order.append(k)
 
     @admin_protect
     def GET(self, *args, **kwargs):
@@ -48,6 +62,7 @@ class AdminPluginPage(Page):
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._obj.name),
                               menu=self.menu, action=self.url,
+                              options_order=self.options_order,
                               options=self.plugin_config)
 
     @admin_protect
