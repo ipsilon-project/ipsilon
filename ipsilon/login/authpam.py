@@ -99,6 +99,8 @@ for authentication. """
                 'Password'
             ],
         }
+        self.conf_opt_order = ['service name', 'username text',
+                               'password text', 'help text']
 
     @property
     def service_name(self):

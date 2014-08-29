@@ -91,6 +91,9 @@ Form based login Manager that uses the Fedora Authentication Server
                 ''
             ],
         }
+        self.conf_opt_order = ['FAS url', 'FAS Proxy client user Agent',
+                               'FAS Insecure Auth', 'username text',
+                               'password text', 'help text']
 
     @property
     def help_text(self):

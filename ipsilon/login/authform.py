@@ -71,6 +71,7 @@ Form based login Manager. Relies on mod_intercept_form_submit plugin for
                 'Password'
             ],
         }
+        self.conf_opt_order = ['username text', 'password text', 'help text']
 
     @property
     def help_text(self):
