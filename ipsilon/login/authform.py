@@ -50,15 +50,11 @@ class LoginManager(LoginManagerBase):
         self.name = 'form'
         self.path = 'form'
         self.page = None
+        self.service_name = 'form'
         self.description = """
 Form based login Manager. Relies on mod_intercept_form_submit plugin for
  actual authentication. """
         self._options = {
-            'service name': [
-                """ The name of the PAM service used to authenticate. """,
-                'string',
-                'remote'
-            ],
             'help text': [
                 """ The text shown to guide the user at login time. """,
                 'string',
@@ -75,10 +71,6 @@ Form based login Manager. Relies on mod_intercept_form_submit plugin for
                 'Password'
             ],
         }
-
-    @property
-    def service_name(self):
-        return self.get_config_value('service name')
 
     @property
     def help_text(self):
