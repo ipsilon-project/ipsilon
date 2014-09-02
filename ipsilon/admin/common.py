@@ -32,6 +32,7 @@ class AdminPluginPage(Page):
         self.url = '%s/%s' % (parent.url, obj.name)
         self.facility = parent.facility
         self.menu = [parent]
+        self.back = parent.url
 
         # Get the defaults
         self.plugin_config = obj.get_config_desc()
@@ -61,7 +62,7 @@ class AdminPluginPage(Page):
         return self._template('admin/plugin_config.html', title=self.title,
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._obj.name),
-                              menu=self.menu, action=self.url,
+                              menu=self.menu, action=self.url, back=self.back,
                               options_order=self.options_order,
                               options=self.plugin_config)
 

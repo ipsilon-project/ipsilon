@@ -9,18 +9,17 @@
     <div id="options">
         <form role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
 
-        {% for o in options_order %}
-            <div class="form-group">
-            <label for="{{ o }}">{{ o }}:</label>
-                <input type="text" class="form-control" name="{{ o }}" value="{{ options[o][2] }}">
-            </div>
-            <span class="help-block">{{ options[o][0] }}</span>
-        {% endfor %}
+        <div class="form-group">
+        <label for="order">Info plugins order:</label>
+            <input type="text" class="form-control" name="order" value="{{ ', '.join(options) }}" />
+        </div>
+        <span class="help-block">Plugins order</span>
 
         <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
             Save
         </button>
-        <a href="{{ back }}" class="btn btn-default" title="Back">Back</a>
+        <a href="{{ basepath }}/admin/info" class="btn btn-default" title="Back">Back</a>
         </form>
     </div>
 {% endblock %}
+

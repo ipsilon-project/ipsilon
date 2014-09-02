@@ -206,7 +206,7 @@ class Login(Page):
     def __init__(self, *args, **kwargs):
         super(Login, self).__init__(*args, **kwargs)
         self.first_login = None
-        self.info = Info()
+        self.info = Info(self._site)
 
         loader = PluginLoader(Login, FACILITY, 'LoginManager')
         self._site[FACILITY] = loader.get_plugin_data()

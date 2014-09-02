@@ -9,7 +9,7 @@ from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
 
 
-class InfoProviderBase(PluginObject):
+class InfoProviderBase(PluginObject, Log):
 
     def __init__(self):
         super(InfoProviderBase, self).__init__()
@@ -17,17 +17,39 @@ class InfoProviderBase(PluginObject):
     def get_user_attrs(self, user):
         raise NotImplementedError
 
+    def enable(self, site):
+        plugins = site[FACILITY]
+        if self in plugins['enabled']:
+            return
+
+        # configure self
+        if self.name in plugins['config']:
+            self.set_config(plugins['config'][self.name])
+
+        plugins['enabled'].append(self)
+        self.debug('Info plugin enabled: %s' % self.name)
+
+    def disable(self, site):
+        plugins = site[FACILITY]
+        if self not in plugins['enabled']:
+            return
+
+        plugins['enabled'].remove(self)
+        self.debug('Info plugin disabled: %s' % self.name)
+
 
 FACILITY = 'info_config'
 
 
 class Info(Log):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, site):
+        self._site = site
         self.providers = []
 
         loader = PluginLoader(Info, FACILITY, 'InfoProvider')
-        plugins = loader.get_plugin_data()
+        self._site[FACILITY] = loader.get_plugin_data()
+        plugins = self._site[FACILITY]
 
         available = plugins['available'].keys()
         self.debug('Available info providers: %s' % str(available))
