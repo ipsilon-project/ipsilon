@@ -41,7 +41,6 @@ class ProviderBase(PluginObject):
         self.name = name
         self.path = path
         self.tree = None
-        self.admin = None
 
     def get_tree(self, site):
         raise NotImplementedError
