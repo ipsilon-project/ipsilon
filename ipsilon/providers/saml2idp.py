@@ -141,6 +141,7 @@ class IdpProvider(ProviderBase):
 
     def __init__(self):
         super(IdpProvider, self).__init__('saml2', 'saml2')
+        self.admin = None
         self.page = None
         self.idp = None
         self.description = """
