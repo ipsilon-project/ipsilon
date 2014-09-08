@@ -29,7 +29,7 @@ logger = None
 def parse_args():
     parser = argparse.ArgumentParser(description=\
         'Run a test Ipsilon instance from the checkout directory')
-    parser.add_argument('--workdir', default=os.path.join(os.getcwd(), 'tmp'),
+    parser.add_argument('--workdir', default=os.path.join(os.getcwd(), 'qrun'),
                         help="Directory in which db/session files are stored")
     return vars(parser.parse_args())
 
@@ -60,6 +60,32 @@ CREATE TABLE users(name TEXT, option TEXT, value TEXT);
 INSERT INTO users VALUES('admin', 'is_admin', '1');
 '''
 
+def config(workdir):
+    os.makedirs(workdir)
+    os.makedirs(os.path.join(workdir, 'sessions'))
+
+    admin_db = os.path.join(workdir, 'adminconfig.sqlite')
+    sql = os.path.join(workdir, 'admin.sql')
+    with open(sql, 'w+') as f:
+        f.write(ADMIN_TEMPLATE)
+    subprocess.call(['sqlite3', '-init', sql, admin_db, '.quit'])
+
+    users_db = os.path.join(workdir, 'users.sqlite')
+    sql = os.path.join(workdir, 'users.sql')
+    with open(sql, 'w+') as f:
+        f.write(USERS_TEMPLATE)
+    subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
+
+    t = Template(CONF_TEMPLATE)
+    text = t.substitute({'BASEDIR': os.getcwd(),
+                         'WORKDIR': workdir,
+                         'ADMINDB': admin_db,
+                         'USERSDB': users_db})
+    conf = os.path.join(workdir, 'ipsilon.conf')
+    with open(conf, 'w+') as f:
+        f.write(text)
+    return conf
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -69,30 +95,9 @@ if __name__ == '__main__':
     penv['PYTHONPATH'] = './'
 
     if not os.path.exists(args['workdir']):
-        os.makedirs(args['workdir'])
-        os.makedirs(os.path.join(args['workdir'], 'sessions'))
-
-    admin_db = os.path.join(args['workdir'], 'adminconfig.sqlite')
-    sql = os.path.join(args['workdir'], 'admin.sql')
-    with open(sql, 'w+') as f:
-        f.write(ADMIN_TEMPLATE)
-    subprocess.call(['sqlite3', '-init', sql, admin_db, '.quit'])
-
-    users_db = os.path.join(args['workdir'], 'users.sqlite')
-    sql = os.path.join(args['workdir'], 'users.sql')
-    with open(sql, 'w+') as f:
-        f.write(USERS_TEMPLATE)
-    subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
-
-    t = Template(CONF_TEMPLATE)
-    text = t.substitute({'BASEDIR': os.getcwd(),
-                         'WORKDIR': args['workdir'],
-                         'ADMINDB': admin_db,
-                         'USERSDB': users_db})
-    conf = os.path.join(args['workdir'], 'ipsilon.conf')
-    with open(conf, 'w+') as f:
-        f.write(text)
-
+        conf = config(args['workdir'])
+    else:
+        conf = os.path.join(args['workdir'], 'ipsilon.conf')
 
     p = subprocess.Popen(['./ipsilon/ipsilon', conf], env=penv)
     p.wait()
