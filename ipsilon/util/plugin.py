@@ -21,7 +21,7 @@ import os
 import imp
 import cherrypy
 import inspect
-from ipsilon.util.data import Store
+from ipsilon.util.data import AdminStore
 from ipsilon.util.log import Log
 
 
@@ -72,11 +72,15 @@ class Plugins(object):
 class PluginLoader(object):
 
     def __init__(self, baseobj, facility, plugin_type):
-        (whitelist, config) = Store().get_plugins_config(facility)
+        config = AdminStore().load_options(facility)
+        cherrypy.log('LOAD: %s\n' % repr(config))
+        whitelist = []
+        if 'global' in config:
+            sec = config['global']
+            if 'order' in sec:
+                whitelist = sec['order'].split(',')
         if cherrypy.config.get('debug', False):
             cherrypy.log('[%s] %s: %s' % (facility, whitelist, config))
-        if whitelist is None:
-            whitelist = []
         if config is None:
             config = dict()
 
@@ -109,7 +113,7 @@ class PluginObject(Log):
         self.name = None
         self._config = None
         self._options = None
-        self._data = Store()
+        self._data = AdminStore()
 
     def get_config_desc(self):
         """ The configuration description is a dictionary that provides
@@ -146,10 +150,12 @@ class PluginObject(Log):
         self._config[option] = value
 
     def get_plugin_config(self, facility):
-        return self._data.get_plugin_config(facility, self.name)
+        return self._data.load_options(facility, self.name)
 
-    def save_plugin_config(self, facility):
-        self._data.save_plugin_config(facility, self.name, self._config)
+    def save_plugin_config(self, facility, config=None):
+        if config is None:
+            config = self._config
+        self._data.save_options(facility, self.name, config)
 
     def get_data(self, idval=None, name=None, value=None):
         return self._data.get_data(self.name, idval=idval, name=name,
@@ -165,7 +171,7 @@ class PluginObject(Log):
         self._data.del_datum(self.name, idval)
 
     def wipe_config_values(self, facility):
-        self._data.wipe_plugin_config(facility, self.name)
+        self._data.delete_options(facility, self.name, None)
 
     def wipe_data(self):
         self._data.wipe_data(self.name)

@@ -23,7 +23,7 @@ import glob
 import os
 import atexit
 import cherrypy
-from ipsilon.util.data import Store
+from ipsilon.util.data import AdminStore
 from ipsilon.util import page
 from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
@@ -55,8 +55,8 @@ cherrypy.config.update(cfgfile)
 
 nuke_session_locks()
 
-datastore = Store()
-admin_config = datastore.get_admin_config()
+datastore = AdminStore()
+admin_config = datastore.load_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
 

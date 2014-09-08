@@ -20,407 +20,307 @@
 import os
 import sqlite3
 import cherrypy
-from random import randint
-import sys
+from ipsilon.util.log import Log
+import uuid
 
 
-class Store(object):
+OPTIONS_COLUMNS = ['name', 'option', 'value']
+UNIQUE_DATA_COLUMNS = ['uuid', 'name', 'value']
+
+
+class Store(Log):
+
+    def __init__(self, name):
+        self._dbname = name
+
+    def _build_where(self, kvfilter, kvout):
+        where = ""
+        sep = "WHERE"
+        for k in kvfilter:
+            mk = "where_%s" % k
+            kvout[mk] = kvfilter[k]
+            where += "%s %s=:%s" % (sep, k, mk)
+            sep = " AND"
+        return where
+
+    def _build_select(self, table, kvfilter=None, kvout=None, columns=None):
+        SELECT = "SELECT %(cols)s FROM %(table)s %(where)s"
+        cols = "*"
+        if columns:
+            cols = ",".join(columns)
+        where = ""
+        if kvfilter is not None:
+            where = self._build_where(kvfilter, kvout)
+        return SELECT % {'table': table, 'cols': cols, 'where': where}
+
+    def _select(self, cursor, table, kvfilter=None, columns=None):
+        kv = dict()
+        select = self._build_select(table, kvfilter, kv, columns)
+        cursor.execute(select, kv)
+        return cursor.fetchall()
+
+    def _create(self, cursor, table, columns):
+        CREATE = "CREATE TABLE IF NOT EXISTS %(table)s(%(cols)s)"
+        cols = ",".join(columns)
+        create = CREATE % {'table': table, 'cols': cols}
+        cursor.execute(create)
+
+    def _update(self, cursor, table, values, kvfilter):
+        UPDATE = "UPDATE %(table)s SET %(setval)s %(where)s"
+        kv = dict()
+
+        setval = ""
+        sep = ""
+        for k in values:
+            mk = "setval_%s" % k
+            kv[mk] = values[k]
+            setval += "%s%s=:%s" % (sep, k, mk)
+            sep = " , "
+
+        where = self._build_where(kvfilter, kv)
+
+        update = UPDATE % {'table': table, 'setval': setval, 'where': where}
+        cursor.execute(update, kv)
+
+    def _insert(self, cursor, table, values):
+        INSERT = "INSERT INTO %(table)s VALUES(%(values)s)"
+        vals = ""
+        sep = ""
+        for _ in values:
+            vals += "%s?" % sep
+            sep = ","
+        insert = INSERT % {'table': table, 'values': vals}
+        cursor.execute(insert, values)
+
+    def _delete(self, cursor, table, kvfilter):
+        DELETE = "DELETE FROM %(table)s %(where)s"
+        kv = dict()
+        where = self._build_where(kvfilter, kv)
+        delete = DELETE % {'table': table, 'where': where}
+        cursor.execute(delete, kv)
+
+    def _row_to_dict_tree(self, data, row):
+        name = row[0]
+        if len(row) > 2:
+            if name not in data:
+                data[name] = dict()
+            d2 = data[name]
+            self._row_to_dict_tree(d2, row[1:])
+        else:
+            value = row[1]
+            if name in data:
+                if data[name] is list:
+                    data[name].append(value)
+                else:
+                    v = data[name]
+                    data[name] = [v, value]
+            else:
+                data[name] = value
+
+    def _rows_to_dict_tree(self, rows):
+        data = dict()
+        for r in rows:
+            self._row_to_dict_tree(data, r)
+        return data
+
+    def _load_data(self, table, columns, kvfilter=None):
+        con = None
+        rows = []
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._create(cur, table, columns)
+            rows = self._select(cur, table, kvfilter)
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            self.error("Failed to load data for table %s: [%s]" % (table, e))
+        finally:
+            if con:
+                con.close()
+
+        return self._rows_to_dict_tree(rows)
+
+    def load_config(self):
+        table = 'config'
+        columns = ['name', 'value']
+        return self._load_data(table, columns)
+
+    def load_options(self, table, name=None):
+        kvfilter = dict()
+        if name:
+            kvfilter['name'] = name
+        options = self._load_data(table, OPTIONS_COLUMNS, kvfilter)
+        if name and name in options:
+            return options[name]
+        return options
+
+    def save_options(self, table, name, options):
+        curvals = dict()
+        con = None
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._create(cur, table, OPTIONS_COLUMNS)
+            rows = self._select(cur, table, {'name': name},
+                                ['option', 'value'])
+            for row in rows:
+                curvals[row[0]] = row[1]
+
+            for opt in options:
+                if opt in curvals:
+                    self._update(cur, table,
+                                 {'value': options[opt]},
+                                 {'name': name, 'option': opt})
+                else:
+                    self._insert(cur, table, (name, opt, options[opt]))
+
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            self.error("Failed to store config: [%s]" % e)
+            raise
+        finally:
+            if con:
+                con.close()
+
+    def delete_options(self, table, name, options=None):
+        kvfilter = {'name': name}
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._create(cur, table, OPTIONS_COLUMNS)
+            if options is None:
+                self._delete(cur, table, kvfilter)
+            else:
+                for opt in options:
+                    kvfilter['option'] = opt
+                    self._delete(cur, table, kvfilter)
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            self.error("Failed to delete from %s: [%s]" % (table, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
+    def new_unique_data(self, table, data):
+        con = None
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._create(cur, table, UNIQUE_DATA_COLUMNS)
+            newid = str(uuid.uuid4())
+            for name in data:
+                self._insert(cur, table, (newid, name, data[name]))
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            cherrypy.log.error("Failed to store %s data: [%s]" % (table, e))
+            raise
+        finally:
+            if con:
+                con.close()
+        return newid
+
+    def get_unique_data(self, table, uuidval=None, name=None, value=None):
+        kvfilter = dict()
+        if uuidval:
+            kvfilter['uuid'] = uuidval
+        if name:
+            kvfilter['name'] = name
+        if value:
+            kvfilter['value'] = value
+        return self._load_data(table, UNIQUE_DATA_COLUMNS, kvfilter)
+
+    def save_unique_data(self, table, data):
+        curvals = dict()
+        con = None
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._create(cur, table, UNIQUE_DATA_COLUMNS)
+            for uid in data:
+                curvals = dict()
+                rows = self._select(cur, table, {'uuid': uid},
+                                    ['name', 'value'])
+                for r in rows:
+                    curvals[r[0]] = r[1]
+
+                datum = data[uid]
+                for name in datum:
+                    if name in curvals:
+                        self._update(cur, table,
+                                     {'value': datum[name]},
+                                     {'uuid': uid, 'name': name})
+                    else:
+                        self._insert(cur, table, (uid, name, datum[name]))
+
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            self.error("Failed to store data in %s: [%s]" % (table, e))
+            raise
+        finally:
+            if con:
+                con.close()
+
+    def del_unique_data(self, table, uuidval):
+        kvfilter = {'uuid': uuidval}
+        con = None
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._delete(cur, table, kvfilter)
+        except sqlite3.Error, e:
+            self.error("Failed to delete data from %s: [%s]" % (table, e))
+        finally:
+            if con:
+                con.close()
+
+
+class AdminStore(Store):
 
     def __init__(self, path=None):
         if path is None:
             self._path = os.getcwd()
         else:
             self._path = path
-        self._admin_dbname = self._get_admin_dbname()
-        self._user_dbname = self._get_userprefs_dbname()
-
-    def _get_admin_dbname(self):
-        path = None
+        self._name = None
         if 'admin.config.db' in cherrypy.config:
-            path = cherrypy.config['admin.config.db']
-        if not path:
-            path = os.path.join(self._path, 'adminconfig.sqlite')
-        return path
-
-    def _get_userprefs_dbname(self):
-        path = None
-        if 'user.prefs.db' in cherrypy.config:
-            path = cherrypy.config['user.prefs.db']
-        if not path:
-            path = os.path.join(self._path, 'userprefs.sqlite')
-        return path
-
-    def _load_config(self, dbname):
-        con = None
-        rows = []
-        try:
-            con = sqlite3.connect(dbname)
-            cur = con.cursor()
-            cur.executescript("""
-                CREATE TABLE IF NOT EXISTS config(name TEXT, value TEXT)
-                """)
-            cur.execute("SELECT * FROM config")
-            rows = cur.fetchall()
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to load config: [%s]" % e)
-        finally:
-            if con:
-                con.close()
-
-        conf = {}
-        for row in rows:
-            if row[0] in conf:
-                # multivalued
-                if conf[row[0]] is list:
-                    conf[row[0]].append(row[1])
-                else:
-                    v = conf[row[0]]
-                    conf[row[0]] = [v, row[1]]
-            else:
-                conf[row[0]] = row[1]
-
-        return conf
-
-    def get_admin_config(self):
-        return self._load_config(self._admin_dbname)
-
-    def _load_user_prefs(self, dbname, user):
-        con = None
-        rows = []
-        try:
-            con = sqlite3.connect(dbname)
-            cur = con.cursor()
-            cur.executescript("""
-                CREATE TABLE IF NOT EXISTS users(name TEXT,
-                                                 option TEXT,
-                                                 value TEXT)
-                """)
-            cur.execute("SELECT option, value FROM users "
-                        "where name = '%s'" % user)
-            rows = cur.fetchall()
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to load %s's prefs from "
-                               "%s: [%s]" % (user, dbname, e))
-        finally:
-            if con:
-                con.close()
-
-        conf = {}
-        for row in rows:
-            conf[row[0]] = row[1]
-
-        return conf
-
-    def get_user_preferences(self, user):
-        return self._load_user_prefs(self._user_dbname, user)
-
-    def save_user_preferences(self, user, options):
-        SELECT = "SELECT option, value FROM users WHERE name=?"
-        UPDATE = "UPDATE users SET value=? WHERE name=? AND option=?"
-        INSERT = "INSERT INTO users VALUES(?,?,?)"
-        con = None
-        try:
-            con = sqlite3.connect(self._user_dbname)
-            cur = con.cursor()
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS users(name TEXT,
-                                                 option TEXT,
-                                                 value TEXT)
-                """)
-            curvals = dict()
-            for row in cur.execute(SELECT, (user,)):
-                curvals[row[0]] = row[1]
-
-            for name in options:
-                if name in curvals:
-                    cur.execute(UPDATE, (options[name], user, name))
-                else:
-                    cur.execute(INSERT, (user, name, options[name]))
-
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to store config: [%s]" % e)
-            raise
-        finally:
-            if con:
-                con.close()
-
-    def get_plugins_config(self, facility):
-        con = None
-        rows = []
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS " +
-                        facility + " (name TEXT,option TEXT,value TEXT)")
-            cur.execute("SELECT * FROM " + facility)
-            rows = cur.fetchall()
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to load %s config: [%s]" % (facility,
-                                                                   e))
-        finally:
-            if con:
-                con.close()
-
-        lpo = []
-        plco = dict()
-        for row in rows:
-            if row[0] == 'global':
-                if row[1] == 'order':
-                    lpo = row[2].split(',')
-                continue
-            if row[0] not in plco:
-                # one dict per provider
-                plco[row[0]] = dict()
-
-            conf = plco[row[0]]
-            if row[1] in conf:
-                if conf[row[1]] is list:
-                    conf[row[1]].append(row[2])
-                else:
-                    v = conf[row[1]]
-                    conf[row[1]] = [v, row[2]]
-            else:
-                conf[row[1]] = row[2]
-
-        return (lpo, plco)
-
-    def get_plugin_config(self, facility, plugin):
-        con = None
-        rows = []
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS " +
-                        facility + " (name TEXT,option TEXT,value TEXT)")
-            cur.execute("SELECT option, value FROM " +
-                        facility + " WHERE name=?", (plugin,))
-            rows = cur.fetchall()
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            fpe = (facility, plugin, e)
-            cherrypy.log.error("Failed to get %s/%s config: [%s]" % fpe)
-            raise
-        finally:
-            if con:
-                con.close()
-
-        res = dict()
-        for (option, value) in rows:
-            if option in res:
-                if res[option] is list:
-                    res[option].append(value)
-                else:
-                    v = res[option]
-                    res[option] = [v, value]
-            else:
-                res[option] = value
-
-        return res
-
-    def save_plugin_config(self, facility, plugin, options):
-        SELECT = "SELECT option, value FROM %s WHERE name=?" % facility
-        UPDATE = "UPDATE %s SET value=? WHERE name=? AND option=?" % facility
-        INSERT = "INSERT INTO %s VALUES(?,?,?)" % facility
-        con = None
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS " +
-                        facility + " (name TEXT,option TEXT,value TEXT)")
-            curvals = dict()
-            for row in cur.execute(SELECT, (plugin,)):
-                curvals[row[0]] = row[1]
-
-            for name in options:
-                if name in curvals:
-                    cur.execute(UPDATE, (options[name], plugin, name))
-                else:
-                    cur.execute(INSERT, (plugin, name, options[name]))
-
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to store config: [%s]" % e)
-            raise
-        finally:
-            if con:
-                con.close()
-
-    def wipe_plugin_config(self, facility, plugin):
-        # Try to backup old data first, just in case ?
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS " +
-                        facility + " (name TEXT,option TEXT,value TEXT)")
-            cur.execute("DELETE FROM " + facility + " WHERE name=?",
-                        (plugin,))
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to wipe %s config: [%s]" % (plugin, e))
-            raise
-        finally:
-            if con:
-                con.close()
+            self._name = cherrypy.config['admin.config.db']
+        if not self._name:
+            self._name = os.path.join(self._path, 'adminconfig.sqlite')
+        super(AdminStore, self).__init__(self._name)
 
     def get_data(self, plugin, idval=None, name=None, value=None):
-        con = None
-        rows = []
-        names = None
-        values = ()
-        if idval or name or value:
-            names = ""
-            if idval:
-                names += " id=?"
-                values = values + (idval,)
-            if name:
-                if len(names) != 0:
-                    names += " AND"
-                names += " name=?"
-                values = values + (name,)
-            if value:
-                if len(names) != 0:
-                    names += " AND"
-                names += " value=?"
-                values = values + (value,)
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS " +
-                        plugin + "_data (id INTEGER, name TEXT, value TEXT)")
-            if not names:
-                cur.execute("SELECT * FROM " + plugin + "_data")
-            else:
-                cur.execute("SELECT * FROM " + plugin + "_data WHERE" +
-                            names, values)
-            rows = cur.fetchall()
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to load %s data: [%s]" % (plugin, e))
-            cherrypy.log.error(repr([names, values]))
-        finally:
-            if con:
-                con.close()
-
-        data = dict()
-        for row in rows:
-            if row[0] not in data:
-                data[row[0]] = dict()
-
-            item = data[row[0]]
-            if row[1] in item:
-                if item[row[1]] is list:
-                    item[row[1]].append(row[2])
-                else:
-                    v = item[row[1]]
-                    item[row[1]] = [v, row[2]]
-            else:
-                item[row[1]] = row[2]
-
-        return data
+        return self.get_unique_data(plugin+"_data", idval, name, value)
 
     def save_data(self, plugin, data):
-        SELECT = "SELECT name, value FROM %s_data WHERE id=?" % plugin
-        UPDATE = "UPDATE %s_data SET value=? WHERE id=? AND name=?" % plugin
-        INSERT = "INSERT INTO %s_data VALUES(?,?,?)" % plugin
-        con = None
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            for idval in data:
-                curvals = dict()
-                for row in cur.execute(SELECT, (idval,)):
-                    curvals[row[0]] = row[1]
-
-                datum = data[idval]
-                for name in datum:
-                    if name in curvals:
-                        cur.execute(UPDATE, (datum[name], idval, name))
-                    else:
-                        cur.execute(INSERT, (idval, name, datum[name]))
-
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to store %s data: [%s]" % (plugin, e))
-            raise
-        finally:
-            if con:
-                con.close()
+        return self.save_unique_data(plugin+"_data", data)
 
     def new_datum(self, plugin, datum):
-        ID = "(SELECT IFNULL(MAX(id), 0) + 1 FROM %s_data)" % plugin
-        INSERT_NEW = "INSERT INTO %s_data VALUES(%s,?,?)" % (plugin, ID)
-        INSERT = "INSERT INTO %s_data VALUES(?,?,?)" % plugin
-        SELECT = "SELECT id FROM %s_data WHERE name=? AND value=?" % plugin
-        DELETE = "DELETE FROM %s_data WHERE name=? AND value=?" % plugin
-        con = None
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            tmpid = ('new', str(randint(0, sys.maxint)))
-            cur.execute(INSERT_NEW, tmpid)
-            cur.execute(SELECT, tmpid)
-            rows = cur.fetchall()
-            idval = rows[0][0]
-            for name in datum:
-                cur.execute(INSERT, (idval, name, datum[name]))
-            cur.execute(DELETE, tmpid)
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to store %s data: [%s]" % (plugin, e))
-            raise
-        finally:
-            if con:
-                con.close()
+        table = plugin+"_data"
+        return self.new_unique_data(table, datum)
 
     def del_datum(self, plugin, idval):
-        DELETE = "DELETE FROM %s_data WHERE id=?" % plugin
-        con = None
-        try:
-            con = sqlite3.connect(self._admin_dbname)
-            cur = con.cursor()
-            cur.execute(DELETE, (idval,))
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to delete %s data: [%s]" % (plugin, e))
-            raise
-        finally:
-            if con:
-                con.close()
+        table = plugin+"_data"
+        return self.del_unique_data(table, idval)
 
     def wipe_data(self, plugin):
+        table = plugin+"_data"
         # Try to backup old data first, just in case
         try:
-            con = sqlite3.connect(self._admin_dbname)
+            con = sqlite3.connect(self._dbname)
             cur = con.cursor()
-            cur.execute("DROP TABLE IF EXISTS " + plugin + "_data")
-            cur.execute("CREATE TABLE " + plugin + "_data"
-                        "(id INTEGER, name TEXT, value TEXT)")
+            cur.execute("DROP TABLE IF EXISTS " + table)
+            self._create(cur, table, UNIQUE_DATA_COLUMNS)
             con.commit()
         except sqlite3.Error, e:
             if con:
@@ -430,3 +330,21 @@ class Store(object):
         finally:
             if con:
                 con.close()
+
+
+class UserStore(Store):
+
+    def __init__(self, path=None):
+        if path is None:
+            self._path = os.getcwd()
+        else:
+            self._path = path
+        self._name = None
+        if 'user.prefs.db' in cherrypy.config:
+            self._name = cherrypy.config['user.prefs.db']
+        if not self._name:
+            self._name = os.path.join(self._path, 'userprefs.sqlite')
+        super(UserStore, self).__init__(self._name)
+
+    def save_user_preferences(self, user, options):
+        return self.save_options('users', user, options)

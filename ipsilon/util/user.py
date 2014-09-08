@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.util.data import Store
+from ipsilon.util.data import UserStore
 from ipsilon.util.log import Log
 import cherrypy
 
@@ -39,8 +39,8 @@ class User(object):
             self.name = username
 
     def _get_user_data(self, username):
-        store = Store()
-        return store.get_user_preferences(username)
+        store = UserStore()
+        return store.load_options('users', username)
 
     def reset(self):
         self.name = None

@@ -21,7 +21,7 @@ from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.info.common import InfoProviderInstall
 from ipsilon.providers.common import ProvidersInstall
 from ipsilon.helpers.common import EnvHelpersInstall
-from ipsilon.util.data import Store
+from ipsilon.util.data import UserStore
 from ipsilon.tools import files
 import ConfigParser
 import argparse
@@ -144,7 +144,7 @@ def install(plugins, args):
     users_db = cherrypy.config['user.prefs.db']
     if os.path.exists(users_db):
         shutil.move(users_db, '%s.backup.%s' % (users_db, now))
-    db = Store()
+    db = UserStore()
     db.save_user_preferences(args['admin_user'], {'is_admin': 1})
 
     logger.info('Configuring environment helpers')

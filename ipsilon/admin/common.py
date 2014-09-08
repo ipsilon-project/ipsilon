@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
-from ipsilon.util.data import Store
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
 
@@ -83,9 +82,7 @@ class AdminPluginPage(Page):
         if len(new_values) != 0:
             # First we try to save in the database
             try:
-                store = Store()
-                store.save_plugin_config(self.facility,
-                                         self._obj.name, new_values)
+                self._obj.save_plugin_config(self.facility, new_values)
                 message = "New configuration saved."
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
