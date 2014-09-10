@@ -60,8 +60,8 @@ class Continue(AuthenticateRequest):
 
         session = UserSession()
         user = session.get_user()
-        session.nuke_data('login', 'Return')
-        self.stage = session.get_data('saml2', 'stage')
+        transdata = self.trans.retrieve()
+        self.stage = transdata['saml2_stage']
 
         if user.is_anonymous:
             self._debug("User is marked anonymous?!")
@@ -70,11 +70,11 @@ class Continue(AuthenticateRequest):
 
         self._debug('Continue auth for %s' % user.name)
 
-        dump = session.get_data('saml2', 'Request')
-        if not dump:
+        if 'saml2_request' not in transdata:
             self._debug("Couldn't find Request dump?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(400)
+        dump = transdata['saml2_request']
 
         try:
             login = self.cfg.idp.get_login_handler(dump)

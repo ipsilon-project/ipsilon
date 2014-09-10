@@ -22,6 +22,7 @@ from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
 from ipsilon.util.user import UserSession
+from ipsilon.util.trans import Transaction
 import cherrypy
 import datetime
 import lasso
@@ -53,9 +54,25 @@ class AuthenticateRequest(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
         super(AuthenticateRequest, self).__init__(*args, **kwargs)
-        self.STAGE_INIT = 0
-        self.STAGE_AUTH = 1
-        self.stage = self.STAGE_INIT
+        self.stage = 'init'
+        self.trans = None
+
+    def _preop(self, *args, **kwargs):
+        try:
+            # generate a new id or get current one
+            self.trans = Transaction('saml2', **kwargs)
+            if self.trans.cookie.value != self.trans.provider:
+                self.debug('Invalid transaction, %s != %s' % (
+                           self.trans.cookie.value, self.trans.provider))
+        except Exception, e:  # pylint: disable=broad-except
+            self.debug('Transaction initialization failed: %s' % repr(e))
+            raise cherrypy.HTTPError(400, 'Invalid transaction id')
+
+    def pre_GET(self, *args, **kwargs):
+        self._preop(*args, **kwargs)
+
+    def pre_POST(self, *args, **kwargs):
+        self._preop(*args, **kwargs)
 
     def auth(self, login):
         try:
@@ -116,20 +133,27 @@ class AuthenticateRequest(ProviderPageBase):
 
     def saml2checks(self, login):
 
-        session = UserSession()
-        user = session.get_user()
+        us = UserSession()
+        user = us.get_user()
         if user.is_anonymous:
-            if self.stage < self.STAGE_AUTH:
-                session.save_data('saml2', 'stage', self.STAGE_AUTH)
-                session.save_data('saml2', 'Request', login.dump())
-                session.save_data('login', 'Return',
-                                  '%s/saml2/SSO/Continue' % self.basepath)
-                raise cherrypy.HTTPRedirect('%s/login' % self.basepath)
+            if self.stage == 'init':
+                returl = '%s/saml2/SSO/Continue?%s' % (
+                    self.basepath, self.trans.get_GET_arg())
+                data = {'saml2_stage': 'auth',
+                        'saml2_request': login.dump(),
+                        'login_return': returl}
+                self.trans.store(data)
+                redirect = '%s/login?%s' % (self.basepath,
+                                            self.trans.get_GET_arg())
+                raise cherrypy.HTTPRedirect(redirect)
             else:
                 raise AuthenticationError(
                     "Unknown user", lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
         self._audit("Logged in user: %s [%s]" % (user.name, user.fullname))
+
+        # We can wipe the transaction now, as this is the last step
+        self.trans.wipe()
 
         # TODO: check if this is the first time this user access this SP
         # If required by user prefs, ask user for consent once and then
@@ -156,9 +180,6 @@ class AuthenticateRequest(ProviderPageBase):
         skew = datetime.timedelta(0, 60)
         authtime_notbefore = authtime - skew
         authtime_notafter = authtime + skew
-
-        us = UserSession()
-        user = us.get_user()
 
         # TODO: get authentication type fnd name format from session
         # need to save which login manager authenticated and map it to a
@@ -190,6 +211,7 @@ class AuthenticateRequest(ProviderPageBase):
             login.assertion.subject.nameId.format = nameidfmt
             login.assertion.subject.nameId.content = nameid
         else:
+            self.trans.wipe()
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 

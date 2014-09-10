@@ -20,6 +20,7 @@
 from ipsilon.login.common import LoginPageBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util.trans import Transaction
 from string import Template
 import cherrypy
 import os
@@ -36,13 +37,15 @@ class Krb(LoginPageBase):
 class KrbAuth(LoginPageBase):
 
     def root(self, *args, **kwargs):
+        trans = Transaction('login', **kwargs)
         # If we can get here, we must be authenticated and remote_user
         # was set. Check the session has a user set already or error.
         if self.user and self.user.name:
             userdata = {'krb_principal_name': self.user.name}
-            return self.lm.auth_successful(self.user.name, 'krb', userdata)
+            return self.lm.auth_successful(trans, self.user.name,
+                                           'krb', userdata)
         else:
-            return self.lm.auth_failed()
+            return self.lm.auth_failed(trans)
 
 
 class KrbError(LoginPageBase):
@@ -64,7 +67,7 @@ class KrbError(LoginPageBase):
                                   cont=conturl)
 
         # If we get here, negotiate failed
-        return self.lm.auth_failed()
+        return self.lm.auth_failed(Transaction('login', **kwargs))
 
 
 class LoginManager(LoginManagerBase):

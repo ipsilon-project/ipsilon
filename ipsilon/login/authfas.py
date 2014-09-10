@@ -28,7 +28,8 @@ class FAS(LoginFormBase):
             except Exception, e:  # pylint: disable=broad-except
                 cherrypy.log.error("Unknown Error [%s]" % str(e))
             if data and data.user:
-                return self.lm.auth_successful(data.user['username'],
+                return self.lm.auth_successful(self.trans,
+                                               data.user['username'],
                                                userdata={'fas': data.user})
             else:
                 error = "Authentication failed"

@@ -24,6 +24,7 @@ from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
 from ipsilon.info.common import Info
 from ipsilon.util.cookies import SecureCookie
+from ipsilon.util.trans import Transaction
 import cherrypy
 
 
@@ -42,13 +43,9 @@ class LoginManagerBase(PluginObject, Log):
         base = cherrypy.config.get('base.mount', "")
         raise cherrypy.HTTPRedirect('%s/login/%s' % (base, path))
 
-    def auth_successful(self, username, auth_type=None, userdata=None):
-        # save ref before calling UserSession login() as it
-        # may regenerate the session
+    def auth_successful(self, trans, username, auth_type=None, userdata=None):
         session = UserSession()
-        ref = session.get_data('login', 'Return')
-        if not ref:
-            ref = cherrypy.config.get('base.mount', "") + '/'
+        session.login(username, userdata)
 
         if self.info:
             userattrs = self.info.get_user_attrs(username)
@@ -64,8 +61,6 @@ class LoginManagerBase(PluginObject, Log):
             else:
                 userdata = {'auth_type': auth_type}
 
-        session.login(username, userdata)
-
         # save username into a cookie if parent was form base auth
         if auth_type == 'password':
             cookie = SecureCookie(USERNAME_COOKIE, username)
@@ -73,23 +68,39 @@ class LoginManagerBase(PluginObject, Log):
             cookie.maxage = 1296000
             cookie.send()
 
-        raise cherrypy.HTTPRedirect(ref)
+        transdata = trans.retrieve()
+        self.debug(transdata)
+        redirect = transdata.get('login_return',
+                                 cherrypy.config.get('base.mount', "") + '/')
+        self.debug('Redirecting back to: %s' % redirect)
 
-    def auth_failed(self):
+        # on direct login the UI (ie not redirected by a provider) we ned to
+        # remove the transaction cookie as it won't be needed anymore
+        if trans.provider == 'login':
+            trans.wipe()
+        raise cherrypy.HTTPRedirect(redirect)
+
+    def auth_failed(self, trans):
         # try with next module
         if self.next_login:
             return self.redirect_to_path(self.next_login.path)
 
         # return to the caller if any
         session = UserSession()
-        ref = session.get_data('login', 'Return')
 
-        # otherwise destroy session and return error
-        if not ref:
+        transdata = trans.retrieve()
+
+        # on direct login the UI (ie not redirected by a provider) we ned to
+        # remove the transaction cookie as it won't be needed anymore
+        if trans.provider == 'login':
+            trans.wipe()
+
+        # destroy session and return error
+        if 'login_return' not in transdata:
             session.logout(None)
             raise cherrypy.HTTPError(401)
 
-        raise cherrypy.HTTPRedirect(ref)
+        raise cherrypy.HTTPRedirect(transdata['login_return'])
 
     def get_tree(self, site):
         raise NotImplementedError
@@ -151,6 +162,7 @@ class LoginPageBase(Page):
     def __init__(self, site, mgr):
         super(LoginPageBase, self).__init__(site)
         self.lm = mgr
+        self._Transaction = None
 
     def root(self, *args, **kwargs):
         raise cherrypy.HTTPError(500)
@@ -162,6 +174,7 @@ class LoginFormBase(LoginPageBase):
         super(LoginFormBase, self).__init__(site, mgr)
         self.formpage = page
         self.formtemplate = template or 'login/form.html'
+        self.trans = None
 
     def GET(self, *args, **kwargs):
         context = self.create_tmpl_context()
@@ -169,6 +182,7 @@ class LoginFormBase(LoginPageBase):
         return self._template(self.formtemplate, **context)
 
     def root(self, *args, **kwargs):
+        self.trans = Transaction('login', **kwargs)
         op = getattr(self, cherrypy.request.method, self.GET)
         if callable(op):
             return op(*args, **kwargs)
@@ -176,13 +190,19 @@ class LoginFormBase(LoginPageBase):
     def create_tmpl_context(self, **kwargs):
         next_url = None
         if self.lm.next_login is not None:
-            next_url = self.lm.next_login.path
+            next_url = '%s?%s' % (self.lm.next_login.path,
+                                  self.trans.get_GET_arg())
 
         cookie = SecureCookie(USERNAME_COOKIE)
         cookie.receive()
         username = cookie.value
         if username is None:
             username = ''
+
+        if self.trans is not None:
+            tid = self.trans.transaction_id
+        if tid is None:
+            tid = ''
 
         context = {
             "title": 'Login',
@@ -195,6 +215,10 @@ class LoginFormBase(LoginPageBase):
             "username": username,
         }
         context.update(kwargs)
+        if self.trans is not None:
+            t = self.trans.get_POST_tuple()
+            context.update({t[0]: t[1]})
+
         return context
 
 
@@ -227,9 +251,11 @@ class Login(Page):
 
     def root(self, *args, **kwargs):
         if self.first_login:
-            raise cherrypy.HTTPRedirect('%s/login/%s' %
-                                        (self.basepath,
-                                         self.first_login.path))
+            trans = Transaction('login', **kwargs)
+            redirect = '%s/login/%s?%s' % (self.basepath,
+                                           self.first_login.path,
+                                           trans.get_GET_arg())
+            raise cherrypy.HTTPRedirect(redirect)
         return self._template('login/index.html', title='Login')
 
 

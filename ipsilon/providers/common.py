@@ -118,7 +118,13 @@ class ProviderPageBase(Page):
         raise cherrypy.HTTPError(501)
 
     def root(self, *args, **kwargs):
-        op = getattr(self, cherrypy.request.method, self.GET)
+        method = cherrypy.request.method
+
+        preop = getattr(self, 'pre_%s' % method, None)
+        if preop and callable(preop):
+            preop(*args, **kwargs)
+
+        op = getattr(self, method, self.GET)
         if callable(op):
             return op(*args, **kwargs)
         else:

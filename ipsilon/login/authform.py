@@ -33,14 +33,14 @@ class Form(LoginFormBase):
         us.remote_login()
         user = us.get_user()
         if not user.is_anonymous:
-            return self.lm.auth_successful(user.name, 'password')
+            return self.lm.auth_successful(self.trans, user.name, 'password')
         else:
             try:
                 error = cherrypy.request.headers['EXTERNAL_AUTH_ERROR']
             except KeyError:
                 error = "Unknown error using external authentication"
                 cherrypy.log.error("Error: %s" % error)
-            return self.lm.auth_failed()
+            return self.lm.auth_failed(self.trans)
 
 
 class LoginManager(LoginManagerBase):
