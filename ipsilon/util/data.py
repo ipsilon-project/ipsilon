@@ -348,3 +348,18 @@ class UserStore(Store):
 
     def save_user_preferences(self, user, options):
         return self.save_options('users', user, options)
+
+
+class TranStore(Store):
+
+    def __init__(self, path=None):
+        if path is None:
+            self._path = os.getcwd()
+        else:
+            self._path = path
+        self._name = None
+        if 'transactions.db' in cherrypy.config:
+            self._name = cherrypy.config['transactions.db']
+        if not self._name:
+            self._name = os.path.join(self._path, 'transactions.sqlite')
+        super(TranStore, self).__init__(self._name)
