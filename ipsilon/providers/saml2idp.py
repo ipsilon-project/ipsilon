@@ -113,27 +113,6 @@ class SAML2(ProviderPageBase):
     def __init__(self, *args, **kwargs):
         super(SAML2, self).__init__(*args, **kwargs)
         self.metadata = Metadata(*args, **kwargs)
-
-        # Init IDP data
-        try:
-            self.cfg.idp = IdentityProvider(self.cfg)
-        except Exception, e:  # pylint: disable=broad-except
-            self._debug('Failed to init SAML2 provider: %r' % e)
-            return
-
-        # Import all known applications
-        data = self.cfg.get_data()
-        for idval in data:
-            sp = data[idval]
-            if 'type' not in sp or sp['type'] != 'SP':
-                continue
-            if 'name' not in sp or 'metadata' not in sp:
-                continue
-            try:
-                self.cfg.idp.add_provider(sp)
-            except Exception, e:  # pylint: disable=broad-except
-                self._debug('Failed to add SP %s: %r' % (sp['name'], e))
-
         self.SSO = SSO(*args, **kwargs)
 
 
@@ -233,9 +212,40 @@ Provides SAML 2.0 authentication infrastructure. """
         return self.get_config_value('default email domain')
 
     def get_tree(self, site):
+        self.idp = self.init_idp()
         self.page = SAML2(site, self)
         self.admin = AdminPage(site, self)
         return self.page
+
+    def init_idp(self):
+        idp = None
+        # Init IDP data
+        try:
+            idp = IdentityProvider(self)
+        except Exception, e:  # pylint: disable=broad-except
+            self._debug('Failed to init SAML2 provider: %r' % e)
+            return None
+
+        # Import all known applications
+        data = self.get_data()
+        for idval in data:
+            sp = data[idval]
+            if 'type' not in sp or sp['type'] != 'SP':
+                continue
+            if 'name' not in sp or 'metadata' not in sp:
+                continue
+            try:
+                idp.add_provider(sp)
+            except Exception, e:  # pylint: disable=broad-except
+                self._debug('Failed to add SP %s: %r' % (sp['name'], e))
+
+        return idp
+
+    def on_enable(self):
+        self.init_idp()
+        if hasattr(self, 'admin'):
+            if self.admin:
+                self.admin.add_sps()
 
 
 class Installer(object):

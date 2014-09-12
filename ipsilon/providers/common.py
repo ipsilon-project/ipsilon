@@ -42,6 +42,11 @@ class ProviderBase(PluginObject):
         self.path = path
         self.tree = None
 
+    def on_enable(self):
+        # this one does nothing
+        # derived classes can override with custom behavior
+        return
+
     def get_tree(self, site):
         raise NotImplementedError
 
@@ -82,6 +87,8 @@ class ProviderBase(PluginObject):
 
         self.set_config_value('enabled', '1')
         self.save_plugin_config(FACILITY)
+
+        self.on_enable()
         self._debug('IdP Provider enabled: %s' % self.name)
 
     def disable(self, site):

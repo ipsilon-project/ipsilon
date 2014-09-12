@@ -306,16 +306,20 @@ class AdminPage(Page):
         except Exception, e:  # pylint: disable=broad-except
             self._debug("Failed to remove provider %s: %s" % (name, str(e)))
 
-    def mount(self, page):
-        self.menu = page.menu
-        self.url = '%s/%s' % (page.url, self.name)
+    def add_sps(self):
         if self.cfg.idp:
             for p in self.cfg.idp.get_providers():
                 try:
                     sp = ServiceProvider(self.cfg, p)
+                    self.del_sp(sp.name)
                     self.add_sp(sp.name, sp)
                 except Exception, e:  # pylint: disable=broad-except
                     self._debug("Failed to find provider %s: %s" % (p, str(e)))
+
+    def mount(self, page):
+        self.menu = page.menu
+        self.url = '%s/%s' % (page.url, self.name)
+        self.add_sps()
         self.add_subtree('new', NewSPAdminPage(self._site, self))
         page.add_subtree(self.name, self)
 
