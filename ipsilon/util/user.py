@@ -55,7 +55,7 @@ class User(object):
     @property
     def is_admin(self):
         if 'is_admin' in self._userdata:
-            if self._userdata['is_admin'] == '1':
+            if str(self._userdata['is_admin']) == '1':
                 return True
         return False
 
