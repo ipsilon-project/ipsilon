@@ -48,6 +48,8 @@ tools.sessions.on = True
 tools.sessions.storage_type = "file"
 tools.sessions.storage_path = "${WORKDIR}/sessions"
 tools.sessions.timeout = 60
+tools.sessions.secure = False
+tools.sessions.httponly = False
 '''
 
 ADMIN_TEMPLATE='''

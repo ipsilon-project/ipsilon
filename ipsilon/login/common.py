@@ -23,6 +23,7 @@ from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
 from ipsilon.info.common import Info
+from ipsilon.util.cookies import SecureCookie
 import cherrypy
 
 
@@ -67,13 +68,10 @@ class LoginManagerBase(PluginObject, Log):
 
         # save username into a cookie if parent was form base auth
         if auth_type == 'password':
-            cherrypy.response.cookie[USERNAME_COOKIE] = username
-            cherrypy.response.cookie[USERNAME_COOKIE]['path'] = \
-                cherrypy.config.get('base.mount', '/')
-            cherrypy.response.cookie[USERNAME_COOKIE]['secure'] = True
-            cherrypy.response.cookie[USERNAME_COOKIE]['httponly'] = True
+            cookie = SecureCookie(USERNAME_COOKIE, username)
             # 15 days
-            cherrypy.response.cookie[USERNAME_COOKIE]['max-age'] = 1296000
+            cookie.maxage = 1296000
+            cookie.send()
 
         raise cherrypy.HTTPRedirect(ref)
 
@@ -180,9 +178,11 @@ class LoginFormBase(LoginPageBase):
         if self.lm.next_login is not None:
             next_url = self.lm.next_login.path
 
-        username = ''
-        if USERNAME_COOKIE in cherrypy.request.cookie:
-            username = cherrypy.request.cookie[USERNAME_COOKIE].value
+        cookie = SecureCookie(USERNAME_COOKIE)
+        cookie.receive()
+        username = cookie.value
+        if username is None:
+            username = ''
 
         context = {
             "title": 'Login',
