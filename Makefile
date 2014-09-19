@@ -49,6 +49,7 @@ wrappers:
 tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=test1
 	PYTHONPATH=./ ./tests/tests.py --test=attrs
+	PYTHONPATH=./ ./tests/tests.py --test=trans
 
 test: lp-test tests
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
