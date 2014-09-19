@@ -129,9 +129,11 @@ class HttpSessions(object):
         srv = self.servers[idp]
 
         try:
-            results = self.get_form_data(page, "login_form", [])
+            results = self.get_form_data(page, "login_form", ["name", "value"])
             action_url = results[0]
             method = results[1]
+            names = results[2]
+            values = results[3]
             if action_url is None:
                 raise Exception
         except Exception:  # pylint: disable=broad-except
@@ -139,8 +141,13 @@ class HttpSessions(object):
 
         referer = page.make_referer()
         headers = {'referer': referer}
-        payload = {'login_name': srv['user'],
-                   'login_password': srv['pwd']}
+        payload = {}
+        for i in range(0, len(names)):
+            payload[names[i]] = values[i]
+
+        # replace known values
+        payload['login_name'] = srv['user']
+        payload['login_password'] = srv['pwd']
 
         return [method, self.new_url(referer, action_url),
                 {'headers': headers, 'data': payload}]
