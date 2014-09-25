@@ -19,6 +19,7 @@
 
 import argparse
 import os
+import shutil
 import subprocess
 from string import Template
 
@@ -31,6 +32,8 @@ def parse_args():
         'Run a test Ipsilon instance from the checkout directory')
     parser.add_argument('--workdir', default=os.path.join(os.getcwd(), 'qrun'),
                         help="Directory in which db/session files are stored")
+    parser.add_argument('--cleanup', '-c', action='store_true', default=False,
+                        help="Wipe workdir before starting")
     return vars(parser.parse_args())
 
 
@@ -82,6 +85,10 @@ if __name__ == '__main__':
     penv = dict()
     penv.update(os.environ)
     penv['PYTHONPATH'] = './'
+
+
+    if args['cleanup']:
+        shutil.rmtree(args['workdir'])
 
     if not os.path.exists(args['workdir']):
         conf = config(args['workdir'])
