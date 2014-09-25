@@ -30,7 +30,10 @@ ui-node: less/ipsilon.less less/admin.less
 	lessc --clean-css less/admin.less ui/css/admin.css
 
 clean:
-	rm -fr testdir
+	rm -fr testdir cscope.out
+
+cscope:
+	git ls-files | xargs pycscope -i .filelist
 
 lp-test:
 	pylint -d c,r,i,W0613 -r n -f colorized \
