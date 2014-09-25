@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sqlite3
 import cherrypy
 from ipsilon.util.log import Log
@@ -30,8 +29,10 @@ UNIQUE_DATA_COLUMNS = ['uuid', 'name', 'value']
 
 class Store(Log):
 
-    def __init__(self, name):
-        self._dbname = name
+    def __init__(self, config_name):
+        if config_name not in cherrypy.config:
+            raise NameError('Unknown database type %s' % config_name)
+        self._dbname = cherrypy.config[config_name]
 
     def _build_where(self, kvfilter, kvout):
         where = ""
@@ -287,17 +288,8 @@ class Store(Log):
 
 class AdminStore(Store):
 
-    def __init__(self, path=None):
-        if path is None:
-            self._path = os.getcwd()
-        else:
-            self._path = path
-        self._name = None
-        if 'admin.config.db' in cherrypy.config:
-            self._name = cherrypy.config['admin.config.db']
-        if not self._name:
-            self._name = os.path.join(self._path, 'adminconfig.sqlite')
-        super(AdminStore, self).__init__(self._name)
+    def __init__(self):
+        super(AdminStore, self).__init__('admin.config.db')
 
     def get_data(self, plugin, idval=None, name=None, value=None):
         return self.get_unique_data(plugin+"_data", idval, name, value)
@@ -335,16 +327,7 @@ class AdminStore(Store):
 class UserStore(Store):
 
     def __init__(self, path=None):
-        if path is None:
-            self._path = os.getcwd()
-        else:
-            self._path = path
-        self._name = None
-        if 'user.prefs.db' in cherrypy.config:
-            self._name = cherrypy.config['user.prefs.db']
-        if not self._name:
-            self._name = os.path.join(self._path, 'userprefs.sqlite')
-        super(UserStore, self).__init__(self._name)
+        super(UserStore, self).__init__('user.prefs.db')
 
     def save_user_preferences(self, user, options):
         return self.save_options('users', user, options)
@@ -353,13 +336,4 @@ class UserStore(Store):
 class TranStore(Store):
 
     def __init__(self, path=None):
-        if path is None:
-            self._path = os.getcwd()
-        else:
-            self._path = path
-        self._name = None
-        if 'transactions.db' in cherrypy.config:
-            self._name = cherrypy.config['transactions.db']
-        if not self._name:
-            self._name = os.path.join(self._path, 'transactions.sqlite')
-        super(TranStore, self).__init__(self._name)
+        super(TranStore, self).__init__('transactions.db')
