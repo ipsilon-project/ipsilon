@@ -34,24 +34,7 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-CONF_TEMPLATE='''
-[global]
-debug = True
-
-log.screen = True
-base.mount = "/idp"
-base.dir = "${BASEDIR}"
-admin.config.db = "${ADMINDB}"
-user.prefs.db = "${USERSDB}"
-transactions.db = "${TRANSDB}"
-
-tools.sessions.on = True
-tools.sessions.storage_type = "file"
-tools.sessions.storage_path = "${WORKDIR}/sessions"
-tools.sessions.timeout = 60
-tools.sessions.secure = False
-tools.sessions.httponly = False
-'''
+CONF_TEMPLATE="templates/install/ipsilon.conf"
 
 ADMIN_TEMPLATE='''
 CREATE TABLE login_config (name TEXT,option TEXT,value TEXT);
@@ -73,20 +56,20 @@ def config(workdir):
         f.write(ADMIN_TEMPLATE)
     subprocess.call(['sqlite3', '-init', sql, admin_db, '.quit'])
 
-    users_db = os.path.join(workdir, 'users.sqlite')
+    users_db = os.path.join(workdir, 'userprefs.sqlite')
     sql = os.path.join(workdir, 'users.sql')
     with open(sql, 'w+') as f:
         f.write(USERS_TEMPLATE)
     subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
 
-    trans_db = os.path.join(workdir, 'transactions.sqlite')
-
-    t = Template(CONF_TEMPLATE)
-    text = t.substitute({'BASEDIR': os.getcwd(),
-                         'WORKDIR': workdir,
-                         'ADMINDB': admin_db,
-                         'USERSDB': users_db,
-                         'TRANSDB': trans_db})
+    with open(CONF_TEMPLATE) as f:
+        conf_template = f.read()
+    t = Template(conf_template)
+    text = t.substitute({'debugging': 'True',
+                         'instance': 'idp',
+                         'staticdir': os.getcwd(),
+                         'datadir': workdir,
+                         'secure': 'False'})
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
         f.write(text)
