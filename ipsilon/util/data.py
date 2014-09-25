@@ -66,6 +66,9 @@ class Store(Log):
         create = CREATE % {'table': table, 'cols': cols}
         cursor.execute(create)
 
+    def _drop(self, cursor, table):
+        cursor.execute("DROP TABLE IF EXISTS " + table)
+
     def _update(self, cursor, table, values, kvfilter):
         UPDATE = "UPDATE %(table)s SET %(setval)s %(where)s"
         kv = dict()
@@ -285,6 +288,21 @@ class Store(Log):
             if con:
                 con.close()
 
+    def reset_data(self, table):
+        try:
+            con = sqlite3.connect(self._dbname)
+            cur = con.cursor()
+            self._drop(cur, table)
+            self._create(cur, table, UNIQUE_DATA_COLUMNS)
+            con.commit()
+        except sqlite3.Error, e:
+            if con:
+                con.rollback()
+            self.error("Failed to erase all data from %s: [%s]" % (table, e))
+        finally:
+            if con:
+                con.close()
+
 
 class AdminStore(Store):
 
@@ -307,21 +325,7 @@ class AdminStore(Store):
 
     def wipe_data(self, plugin):
         table = plugin+"_data"
-        # Try to backup old data first, just in case
-        try:
-            con = sqlite3.connect(self._dbname)
-            cur = con.cursor()
-            cur.execute("DROP TABLE IF EXISTS " + table)
-            self._create(cur, table, UNIQUE_DATA_COLUMNS)
-            con.commit()
-        except sqlite3.Error, e:
-            if con:
-                con.rollback()
-            cherrypy.log.error("Failed to wipe %s data: [%s]" % (plugin, e))
-            raise
-        finally:
-            if con:
-                con.close()
+        self.reset_data(table)
 
 
 class UserStore(Store):
