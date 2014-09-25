@@ -43,6 +43,7 @@ base.mount = "/idp"
 base.dir = "${BASEDIR}"
 admin.config.db = "${ADMINDB}"
 user.prefs.db = "${USERSDB}"
+transactions.db = "${TRANSDB}"
 
 tools.sessions.on = True
 tools.sessions.storage_type = "file"
@@ -78,11 +79,14 @@ def config(workdir):
         f.write(USERS_TEMPLATE)
     subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
 
+    trans_db = os.path.join(workdir, 'transactions.sqlite')
+
     t = Template(CONF_TEMPLATE)
     text = t.substitute({'BASEDIR': os.getcwd(),
                          'WORKDIR': workdir,
                          'ADMINDB': admin_db,
-                         'USERSDB': users_db})
+                         'USERSDB': users_db,
+                         'TRANSDB': trans_db})
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
         f.write(text)
