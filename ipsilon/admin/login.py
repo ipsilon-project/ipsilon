@@ -25,12 +25,33 @@ from ipsilon.admin.common import AdminPluginPage
 from ipsilon.login.common import FACILITY
 
 
+def save_enabled_plugins(names):
+    po = PluginObject()
+    po.name = "global"
+    globalconf = dict()
+    globalconf['order'] = ','.join(names)
+    po.set_config(globalconf)
+    po.save_plugin_config(FACILITY)
+
+
 class LoginPluginsOrder(Page):
 
     def __init__(self, site, parent):
         super(LoginPluginsOrder, self).__init__(site, form=True)
         self.url = '%s/order' % parent.url
         self.menu = [parent]
+
+    def _reorder_plugins(self, order):
+        plugins = self._site[FACILITY]['available']
+        root = self._site[FACILITY]['root']
+        prev_obj = None
+        for name in order:
+            if prev_obj is None:
+                root.first_login = plugins[name]
+            else:
+                prev_obj.next_login = plugins[name]
+            prev_obj = plugins[name]
+        prev_obj.next_login = None
 
     @admin_protect
     def GET(self, *args, **kwargs):
@@ -66,12 +87,8 @@ class LoginPluginsOrder(Page):
                                 new_names.append(val)
                                 new_plugins.append(plugins_by_name[val])
 
-                    po = PluginObject()
-                    po.name = "global"
-                    globalconf = dict()
-                    globalconf['order'] = ','.join(new_names)
-                    po.set_config(globalconf)
-                    po.save_plugin_config(FACILITY)
+                    save_enabled_plugins(new_names)
+                    self._reorder_plugins(new_names)
 
                     # When all is saved update also live config. The
                     # live config is a list of the actual plugin
@@ -139,6 +156,7 @@ class LoginPlugins(Page):
         obj = plugins['available'][plugin]
         if obj not in plugins['enabled']:
             obj.enable(self._site)
+            save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
     enable.exposed = True
@@ -152,6 +170,7 @@ class LoginPlugins(Page):
         obj = plugins['available'][plugin]
         if obj in plugins['enabled']:
             obj.disable(self._site)
+            save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")
     disable.exposed = True
