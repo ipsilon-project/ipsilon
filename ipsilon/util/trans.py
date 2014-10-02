@@ -25,7 +25,7 @@ class Transaction(Log):
             data = self.retrieve()
             if data and 'provider' in data:
                 self.provider = data['provider']
-            self._get_cookie()
+            self._get_cookie(data)
         else:
             data = {'provider': self.provider,
                     'origintime': str(datetime.now())}
@@ -41,9 +41,10 @@ class Transaction(Log):
         data = {self.transaction_id: cookiedata}
         self._ts.save_unique_data(TRANSTABLE, data)
 
-    def _get_cookie(self):
-        data = self.retrieve()
-        if 'cookie' not in data:
+    def _get_cookie(self, data=None):
+        if data is None:
+            data = self.retrieve()
+        if data is None or 'cookie' not in data:
             raise ValueError('Cookie name not available')
         self.cookie = SecureCookie(data['cookie'])
         self.cookie.receive()
@@ -51,7 +52,8 @@ class Transaction(Log):
             raise ValueError('Missing or invalid cookie')
 
     def _del_cookie(self):
-        self.cookie.delete()
+        if self.cookie:
+            self.cookie.delete()
 
     def wipe(self):
         if not self.transaction_id:
@@ -67,7 +69,7 @@ class Transaction(Log):
     def retrieve(self):
         data = self._ts.get_unique_data(TRANSTABLE,
                                         uuidval=self.transaction_id)
-        return data.get(self.transaction_id)
+        return data.get(self.transaction_id) or dict()
 
     def get_GET_arg(self):
         return "%s=%s" % (TRANSID, self.transaction_id)
