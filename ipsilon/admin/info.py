@@ -4,7 +4,7 @@
 
 import cherrypy
 from ipsilon.util.page import Page
-from ipsilon.util.page import admin_protect
+from ipsilon.util.page import admin_protect, auth_protect
 from ipsilon.util.plugin import PluginObject
 from ipsilon.admin.common import AdminPluginPage
 from ipsilon.info.common import FACILITY
@@ -112,9 +112,11 @@ class InfoPlugins(Page):
                               enabled=ordered,
                               menu=self._master.menu)
 
+    @auth_protect
     def root(self, *args, **kwargs):
         return self.root_with_msg()
 
+    @admin_protect
     def enable(self, plugin):
         msg = None
         plugins = self._site[FACILITY]
@@ -128,6 +130,7 @@ class InfoPlugins(Page):
         return self.root_with_msg(msg, "success")
     enable.exposed = True
 
+    @admin_protect
     def disable(self, plugin):
         msg = None
         plugins = self._site[FACILITY]

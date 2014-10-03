@@ -34,6 +34,16 @@ def admin_protect(fn):
     return check
 
 
+def auth_protect(fn):
+    def check(self, *args, **kwargs):
+        if UserSession().get_user().is_anonymous:
+            raise cherrypy.HTTPRedirect(self.basepath)
+        else:
+            return fn(self, *args, **kwargs)
+
+    return check
+
+
 class Page(Log):
     def __init__(self, site, form=False):
         if 'template_env' not in site:
