@@ -20,7 +20,6 @@
 
 import ConfigParser
 import io
-from ipsilon.util.plugin import PluginObject
 import os
 import pwd
 import shutil
@@ -29,10 +28,9 @@ from string import Template
 import subprocess
 
 
-class IpsilonTestBase(PluginObject):
+class IpsilonTestBase(object):
 
     def __init__(self, name, execname):
-        super(IpsilonTestBase, self).__init__()
         self.name = name
         self.execname = execname
         self.rootdir = os.getcwd()
