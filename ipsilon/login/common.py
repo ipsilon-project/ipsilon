@@ -45,7 +45,6 @@ class LoginManagerBase(PluginObject, Log):
 
     def auth_successful(self, trans, username, auth_type=None, userdata=None):
         session = UserSession()
-        session.login(username, userdata)
 
         if self.info:
             userattrs = self.info.get_user_attrs(username)
@@ -60,6 +59,9 @@ class LoginManagerBase(PluginObject, Log):
                 userdata.update({'auth_type': auth_type})
             else:
                 userdata = {'auth_type': auth_type}
+
+        # create session login including all the userdata just gathered
+        session.login(username, userdata)
 
         # save username into a cookie if parent was form base auth
         if auth_type == 'password':
