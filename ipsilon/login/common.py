@@ -79,6 +79,7 @@ class LoginManagerBase(PluginObject, Log):
         # on direct login the UI (ie not redirected by a provider) we ned to
         # remove the transaction cookie as it won't be needed anymore
         if trans.provider == 'login':
+            self.debug('Wiping transaction data')
             trans.wipe()
         raise cherrypy.HTTPRedirect(redirect)
 

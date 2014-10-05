@@ -15,7 +15,6 @@ TRANSID = "ipsilon_transaction_id"
 class Transaction(Log):
 
     def __init__(self, provider, **kwargs):
-        self.debug('Transaction: %s' % repr(kwargs))
         self.provider = provider
         self.transaction_id = None
         self._ts = TranStore()
@@ -23,14 +22,17 @@ class Transaction(Log):
         tid = kwargs.get(TRANSID)
         if tid:
             self.transaction_id = tid
-            data = self._ts.get_unique_data(TRANSTABLE, tid)
+            data = self.retrieve()
+            if data and 'provider' in data:
+                self.provider = data['provider']
             self._get_cookie()
         else:
             data = {'provider': self.provider,
                     'origintime': str(datetime.now())}
             self.transaction_id = self._ts.new_unique_data(TRANSTABLE, data)
             self._set_cookie()
-        self.debug('Transaction id: %s' % self.transaction_id)
+        self.debug('Transaction: %s %s' % (self.provider,
+                                           self.transaction_id))
 
     def _set_cookie(self):
         self.cookie = SecureCookie(name=None, value=self.provider)
