@@ -31,9 +31,10 @@ ui-node: less/ipsilon.less less/admin.less
 
 clean:
 	rm -fr testdir cscope.out
+	find ./ -name '*.pyc' -exec rm -f {} \;
 
 cscope:
-	git ls-files | xargs pycscope -i .filelist
+	git ls-files | xargs pycscope
 
 lp-test:
 	pylint -d c,r,i,W0613 -r n -f colorized \
