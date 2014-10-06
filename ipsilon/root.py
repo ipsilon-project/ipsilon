@@ -39,6 +39,7 @@ class Root(Page):
         if template_env:
             sites[site]['template_env'] = template_env
         super(Root, self).__init__(sites[site])
+        self.html_heads = dict()
 
         # set up error pages
         cherrypy.config['error_page.400'] = errors.Error_400(self._site)
@@ -60,4 +61,6 @@ class Root(Page):
         ProviderPlugins(self._site, self.admin)
 
     def root(self):
-        return self._template('index.html', title='Ipsilon')
+        self.debug(self.html_heads)
+        return self._template('index.html', title='Ipsilon',
+                              heads=self.html_heads)
