@@ -1,6 +1,8 @@
 build/
 dist/
 testdir/
+qrun/
 MANIFEST
 *.pyc
 *.pyo
+cscope.out
