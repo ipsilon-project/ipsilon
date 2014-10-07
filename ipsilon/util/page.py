@@ -66,7 +66,7 @@ class Page(Log):
 
         if len(args) > 0:
             op = getattr(self, args[0], None)
-            if callable(op) and getattr(self, args[0]+'.exposed', None):
+            if callable(op) and getattr(op, 'public_function', None):
                 return op(*args[1:], **kwargs)
         else:
             if self._is_form_page:

@@ -73,7 +73,7 @@ class ProviderPlugins(Page):
             obj.enable(self._site)
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
-    enable.exposed = True
+    enable.public_function = True
 
     @admin_protect
     def disable(self, plugin):
@@ -87,4 +87,4 @@ class ProviderPlugins(Page):
             obj.disable(self._site)
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")
-    disable.exposed = True
+    disable.public_function = True

@@ -274,7 +274,7 @@ class SPAdminPage(Page):
         self.parent.del_sp(self.sp.name)
         self.sp.permanently_delete()
         return self.parent.root()
-    delete.exposed = True
+    delete.public_function = True
 
 
 class AdminPage(Page):

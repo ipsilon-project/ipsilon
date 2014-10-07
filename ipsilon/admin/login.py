@@ -161,7 +161,7 @@ class LoginPlugins(Page):
             save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
-    enable.exposed = True
+    enable.public_function = True
 
     @admin_protect
     def disable(self, plugin):
@@ -176,4 +176,4 @@ class LoginPlugins(Page):
             save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")
-    disable.exposed = True
+    disable.public_function = True
