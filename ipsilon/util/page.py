@@ -108,7 +108,7 @@ class Page(Log):
         return t.render(**m)
 
     def default(self, *args, **kwargs):
-        raise cherrypy.HTTPError(404)
+        raise cherrypy.NotFound()
 
     def add_subtree(self, name, page):
         self.__dict__[name] = page

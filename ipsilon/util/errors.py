@@ -54,3 +54,10 @@ class Error_401(Errors):
     def handler(self, status, message, traceback, version):
         return self._error_template('unauthorized.html',
                                     title='Unauthorized', message=message)
+
+
+class Error_404(Errors):
+
+    def handler(self, status, message, traceback, version):
+        return self._error_template('notfound.html',
+                                    title='Not Found', message=message)

@@ -43,6 +43,7 @@ class Root(Page):
         # set up error pages
         cherrypy.config['error_page.400'] = errors.Error_400(self._site)
         cherrypy.config['error_page.401'] = errors.Error_401(self._site)
+        cherrypy.config['error_page.404'] = errors.Error_404(self._site)
         cherrypy.config['error_page.500'] = errors.Errors(self._site)
 
         # now set up the default login plugins
