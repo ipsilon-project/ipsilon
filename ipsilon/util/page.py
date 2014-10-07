@@ -52,6 +52,7 @@ class Page(Log):
         self.basepath = cherrypy.config.get('base.mount', "")
         self.user = None
         self._is_form_page = form
+        self.default_headers = dict()
 
     def _compare_urls(self, url1, url2):
         u1 = unquote(url1)
@@ -62,6 +63,8 @@ class Page(Log):
 
     def __call__(self, *args, **kwargs):
         # pylint: disable=star-args
+        cherrypy.response.headers.update(self.default_headers)
+
         self.user = UserSession().get_user()
 
         if len(args) > 0:
