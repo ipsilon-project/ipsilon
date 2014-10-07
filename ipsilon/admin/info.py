@@ -3,7 +3,7 @@
 # Copyright (C) 2014  Ipsilon Contributors see COPYING for license
 
 import cherrypy
-from ipsilon.util.page import admin_protect, auth_protect
+from ipsilon.util.page import admin_protect
 from ipsilon.util.plugin import PluginObject
 from ipsilon.admin.common import AdminPluginPage
 from ipsilon.admin.common import AdminPage
@@ -112,7 +112,6 @@ class InfoPlugins(AdminPage):
                               enabled=ordered,
                               menu=self._master.menu)
 
-    @auth_protect
     def root(self, *args, **kwargs):
         return self.root_with_msg()
 

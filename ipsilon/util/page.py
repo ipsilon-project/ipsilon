@@ -34,16 +34,6 @@ def admin_protect(fn):
     return check
 
 
-def auth_protect(fn):
-    def check(self, *args, **kwargs):
-        if UserSession().get_user().is_anonymous:
-            raise cherrypy.HTTPRedirect(self.basepath)
-        else:
-            return fn(self, *args, **kwargs)
-
-    return check
-
-
 class Page(Log):
     def __init__(self, site, form=False):
         if 'template_env' not in site:
@@ -53,6 +43,7 @@ class Page(Log):
         self.user = None
         self._is_form_page = form
         self.default_headers = dict()
+        self.auth_protect = False
 
     def _compare_urls(self, url1, url2):
         u1 = unquote(url1)
@@ -66,6 +57,9 @@ class Page(Log):
         cherrypy.response.headers.update(self.default_headers)
 
         self.user = UserSession().get_user()
+
+        if self.auth_protect and self.user.is_anonymous:
+            raise cherrypy.HTTPError(401)
 
         if len(args) > 0:
             op = getattr(self, args[0], None)

@@ -19,7 +19,7 @@
 
 import cherrypy
 from ipsilon.util.page import Page
-from ipsilon.util.page import admin_protect, auth_protect
+from ipsilon.util.page import admin_protect
 
 
 class AdminPage(Page):
@@ -31,6 +31,7 @@ class AdminPage(Page):
             'Pragma': 'no-cache',
             'Expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
         })
+        self.auth_protect = True
 
 
 class AdminPluginPage(AdminPage):
@@ -121,7 +122,6 @@ class Admin(AdminPage):
         self.url = '%s/%s' % (self.basepath, mount)
         self.menu = []
 
-    @auth_protect
     def root(self, *args, **kwargs):
         return self._template('admin/index.html',
                               title='Configuration',
