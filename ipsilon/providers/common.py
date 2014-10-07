@@ -34,6 +34,21 @@ class ProviderException(Exception, Log):
         return repr(self.message)
 
 
+class AuthenticationError(ProviderException):
+
+    def __init__(self, message, code):
+        super(AuthenticationError, self).__init__(message)
+        self.code = code
+        self._debug('%s [%s]' % (message, code))
+
+
+class InvalidRequest(ProviderException):
+
+    def __init__(self, message):
+        super(InvalidRequest, self).__init__(message)
+        self._debug(message)
+
+
 class ProviderBase(PluginObject):
 
     def __init__(self, name, path):

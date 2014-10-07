@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderPageBase, ProviderException
+from ipsilon.providers.common import AuthenticationError, InvalidRequest
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
@@ -26,21 +27,6 @@ from ipsilon.util.trans import Transaction
 import cherrypy
 import datetime
 import lasso
-
-
-class AuthenticationError(ProviderException):
-
-    def __init__(self, message, code):
-        super(AuthenticationError, self).__init__(message)
-        self.code = code
-        self._debug('%s [%s]' % (message, code))
-
-
-class InvalidRequest(ProviderException):
-
-    def __init__(self, message):
-        super(InvalidRequest, self).__init__(message)
-        self._debug(message)
 
 
 class UnknownProvider(ProviderException):
