@@ -3,14 +3,14 @@
 # Copyright (C) 2014  Ipsilon Contributors see COPYING for license
 
 import cherrypy
-from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect, auth_protect
 from ipsilon.util.plugin import PluginObject
 from ipsilon.admin.common import AdminPluginPage
+from ipsilon.admin.common import AdminPage
 from ipsilon.info.common import FACILITY
 
 
-class InfoPluginsOrder(Page):
+class InfoPluginsOrder(AdminPage):
 
     def __init__(self, site, parent):
         super(InfoPluginsOrder, self).__init__(site, form=True)
@@ -84,7 +84,7 @@ class InfoPluginsOrder(Page):
                               options=opts)
 
 
-class InfoPlugins(Page):
+class InfoPlugins(AdminPage):
     def __init__(self, site, parent):
         super(InfoPlugins, self).__init__(site)
         self._master = parent

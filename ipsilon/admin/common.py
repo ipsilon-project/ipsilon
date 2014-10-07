@@ -22,7 +22,18 @@ from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect, auth_protect
 
 
-class AdminPluginPage(Page):
+class AdminPage(Page):
+
+    def __init__(self, *args, **kwargs):
+        super(AdminPage, self).__init__(*args, **kwargs)
+        self.default_headers.update({
+            'Cache-Control': 'no-cache, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
+        })
+
+
+class AdminPluginPage(AdminPage):
 
     def __init__(self, obj, site, parent):
         super(AdminPluginPage, self).__init__(site, form=True)
@@ -103,7 +114,7 @@ class AdminPluginPage(Page):
                               options=self.plugin_config)
 
 
-class Admin(Page):
+class Admin(AdminPage):
 
     def __init__(self, site, mount):
         super(Admin, self).__init__(site)

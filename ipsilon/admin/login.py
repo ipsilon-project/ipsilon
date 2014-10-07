@@ -18,10 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
-from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect, auth_protect
 from ipsilon.util.plugin import PluginObject
 from ipsilon.admin.common import AdminPluginPage
+from ipsilon.admin.common import AdminPage
 from ipsilon.login.common import FACILITY
 
 
@@ -34,7 +34,7 @@ def save_enabled_plugins(names):
     po.save_plugin_config(FACILITY)
 
 
-class LoginPluginsOrder(Page):
+class LoginPluginsOrder(AdminPage):
 
     def __init__(self, site, parent):
         super(LoginPluginsOrder, self).__init__(site, form=True)
@@ -116,7 +116,7 @@ class LoginPluginsOrder(Page):
                               options=opts)
 
 
-class LoginPlugins(Page):
+class LoginPlugins(AdminPage):
     def __init__(self, site, parent):
         super(LoginPlugins, self).__init__(site)
         self._master = parent

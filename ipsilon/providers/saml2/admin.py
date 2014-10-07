@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
-from ipsilon.util.page import Page
+from ipsilon.admin.common import AdminPage
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
@@ -29,7 +29,7 @@ import requests
 VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 
 
-class NewSPAdminPage(Page):
+class NewSPAdminPage(AdminPage):
 
     def __init__(self, site, parent):
         super(NewSPAdminPage, self).__init__(site, form=True)
@@ -127,7 +127,7 @@ class UnauthorizedUser(Exception):
     pass
 
 
-class SPAdminPage(Page):
+class SPAdminPage(AdminPage):
 
     def __init__(self, sp, site, parent):
         super(SPAdminPage, self).__init__(site, form=True)
@@ -277,15 +277,15 @@ class SPAdminPage(Page):
     delete.public_function = True
 
 
-class AdminPage(Page):
+class Saml2AdminPage(AdminPage):
     def __init__(self, site, config):
-        super(AdminPage, self).__init__(site)
+        super(Saml2AdminPage, self).__init__(site)
         self.name = 'admin'
         self.cfg = config
         self.providers = []
         self.menu = []
         self.url = None
-        self.sp = Page(self._site)
+        self.sp = AdminPage(self._site)
 
     def add_sp(self, name, sp):
         page = SPAdminPage(sp, self._site, self)

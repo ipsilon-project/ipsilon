@@ -19,13 +19,13 @@
 
 
 import cherrypy
-from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect, auth_protect
 from ipsilon.providers.common import FACILITY
 from ipsilon.admin.common import AdminPluginPage
+from ipsilon.admin.common import AdminPage
 
 
-class ProviderPlugins(Page):
+class ProviderPlugins(AdminPage):
     def __init__(self, site, parent):
         super(ProviderPlugins, self).__init__(site)
         self._master = parent
