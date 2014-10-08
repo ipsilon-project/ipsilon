@@ -40,7 +40,7 @@ class User(object):
 
     def _get_user_data(self, username):
         store = UserStore()
-        return store.load_options('users', username)
+        return store.load_user_preferences(username)
 
     def reset(self):
         self.name = None
@@ -97,6 +97,14 @@ class User(object):
     def sites(self):
         # TODO: implement setting sites via the user object ?
         raise AttributeError
+
+    def save_plugin_data(self, plugin, data):
+        store = UserStore()
+        store.save_plugin_data(plugin, self.name, data)
+
+    def load_plugin_data(self, plugin):
+        store = UserStore()
+        return store.load_plugin_data(plugin, self.name)
 
 
 class UserSession(Log):

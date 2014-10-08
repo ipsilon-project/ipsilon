@@ -317,7 +317,16 @@ class UserStore(Store):
         super(UserStore, self).__init__('user.prefs.db')
 
     def save_user_preferences(self, user, options):
-        return self.save_options('users', user, options)
+        self.save_options('users', user, options)
+
+    def load_user_preferences(self, user):
+        return self.load_options('users', user)
+
+    def save_plugin_data(self, plugin, user, options):
+        self.save_options(plugin+"_data", user, options)
+
+    def load_plugin_data(self, plugin, user):
+        return self.load_options(plugin+"_data", user)
 
 
 class TranStore(Store):
