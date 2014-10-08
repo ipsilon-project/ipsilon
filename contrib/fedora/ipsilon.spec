@@ -20,6 +20,7 @@ Requires:       python-cherrypy
 Requires:       python-jinja2
 Requires:       python-lxml
 Requires:       python-pam
+Requires:       python-sqlalchemy
 Requires(pre):  shadow-utils
 Requires(post): %_sbindir/semanage, %_sbindir/restorecon
 Requires(postun): %_sbindir/semanage
