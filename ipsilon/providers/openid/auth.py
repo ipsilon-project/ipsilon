@@ -162,17 +162,16 @@ class AuthenticateRequest(ProviderPageBase):
                     'openid_request': json.dumps(kwargs)}
             self.trans.store(data)
 
-            # Add extension data to this list of dictionaries
-            ad = [
-                {
-                    "Trust Root": request.trust_root,
-                },
-            ]
+            # Add extension data to this dictionary
+            ad = {
+                "Trust Root": request.trust_root,
+            }
             userattrs = us.get_user_attrs()
             for n, e in self.cfg.extensions.items():
                 data = e.get_display_data(request, userattrs)
                 self.debug('%s returned %s' % (n, repr(data)))
-                ad.append(data)
+                for key, value in data.items():
+                    ad[self.cfg.mapping.display_name(key)] = value
 
             context = {
                 "title": 'Consent',

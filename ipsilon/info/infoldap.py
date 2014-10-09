@@ -6,15 +6,33 @@
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
+from ipsilon.info.common import InfoMapping
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.log import Log
 import ldap
+
+
+# TODO: fetch mapping from configuration
+ldap_mapping = {
+    'cn': 'fullname',
+    'commonname': 'fullname',
+    'sn': 'surname',
+    'mail': 'email',
+    'destinationindicator': 'country',
+    'postalcode': 'postcode',
+    'st': 'state',
+    'statetorprovincename': 'state',
+    'streetaddress': 'street',
+    'telephonenumber': 'phone',
+}
 
 
 class InfoProvider(InfoProviderBase, Log):
 
     def __init__(self):
         super(InfoProvider, self).__init__()
+        self.mapper = InfoMapping()
+        self.mapper.set_mapping(ldap_mapping)
         self.name = 'ldap'
         self.description = """
 Info plugin that uses LDAP to retrieve user data. """
@@ -92,24 +110,48 @@ Info plugin that uses LDAP to retrieve user data. """
 
         return conn
 
-    def get_user_data_from_conn(self, conn, dn):
+    def _get_user_data(self, conn, dn):
         result = conn.search_s(dn, ldap.SCOPE_BASE)
         if result is None or result == []:
             raise Exception('User object could not be found!')
         elif len(result) > 1:
             raise Exception('No unique user object could be found!')
-        return result[0][1]
+        data = dict()
+        for name, value in result[0][1].iteritems():
+            if type(value) is list and len(value) == 1:
+                value = value[0]
+            data[name] = value
+        return data
 
-    def get_user_attrs(self, user):
-        userattrs = None
+    def _get_user_groups(self, conn, dn, ldapattrs):
+        # TODO: fixme to support RFC2307bis schemas
+        if 'memberuid' in ldapattrs:
+            return ldapattrs['memberuid']
+        else:
+            return []
+
+    def get_user_data_from_conn(self, conn, dn):
+        reply = dict()
         try:
-            conn = self._ldap_bind()
-            dn = self.user_dn_tmpl % {'username': user}
-            userattrs = self.get_user_data_from_conn(conn, dn)
+            ldapattrs = self._get_user_data(conn, dn)
+            userattrs, extras = self.mapper.map_attrs(ldapattrs)
+            groups = self._get_user_groups(conn, dn, ldapattrs)
+            reply['userdata'] = userattrs
+            reply['groups'] = groups
+            reply['extras'] = {'ldap': extras}
         except Exception, e:  # pylint: disable=broad-except
             self.error(e)
 
-        return userattrs
+        return reply
+
+    def get_user_attrs(self, user):
+        try:
+            conn = self._ldap_bind()
+            dn = self.user_dn_tmpl % {'username': user}
+            return self.get_user_data_from_conn(conn, dn)
+        except Exception, e:  # pylint: disable=broad-except
+            self.error(e)
+            return {}
 
 
 class Installer(InfoProviderInstaller):

@@ -9,6 +9,7 @@ from ipsilon.providers.common import FACILITY
 from ipsilon.providers.openid.auth import OpenID
 from ipsilon.providers.openid.extensions.common import LoadExtensions
 from ipsilon.util.plugin import PluginObject
+from ipsilon.info.common import InfoMapping
 
 from openid.server.server import Server
 # TODO: Move this to the database
@@ -19,6 +20,7 @@ class IdpProvider(ProviderBase):
 
     def __init__(self):
         super(IdpProvider, self).__init__('openid', 'openid')
+        self.mapping = InfoMapping()
         self.page = None
         self.server = None
         self.basepath = None

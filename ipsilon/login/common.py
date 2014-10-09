@@ -49,9 +49,17 @@ class LoginManagerBase(PluginObject, Log):
         if self.info:
             userattrs = self.info.get_user_attrs(username)
             if userdata:
-                userdata.update(userattrs or {})
+                userdata.update(userattrs.get('userdata', {}))
             else:
-                userdata = userattrs
+                userdata = userattrs.get('userdata', {})
+
+            # merge groups and extras from login plugin and info plugin
+            userdata['groups'] = list(set(userdata.get('groups', []) +
+                                          userattrs.get('groups', [])))
+
+            userdata['extras'] = userdata.get('extras', {})
+            userdata['extras'].update(userattrs.get('extras', {}))
+
             self.debug("User %s attributes: %s" % (username, repr(userdata)))
 
         if auth_type:

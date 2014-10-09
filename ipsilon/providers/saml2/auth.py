@@ -210,18 +210,33 @@ class AuthenticateRequest(ProviderPageBase):
         if not attrstat.attribute:
             attrstat.attribute = ()
 
-        attributes = us.get_user_attrs()
+        attributes = dict()
+        userattrs = us.get_user_attrs()
+        for key, value in userattrs.get('userdata', {}).iteritems():
+            if type(value) is str:
+                attributes[key] = value
+        if 'groups' in userattrs:
+            attributes['group'] = userattrs['groups']
+        for _, info in userattrs.get('extras', {}).iteritems():
+            for key, value in info.items():
+                attributes[key] = value
+
         for key in attributes:
-            attr = lasso.Saml2Attribute()
-            attr.name = key
-            attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
-            value = str(attributes[key]).encode('utf-8')
-            node = lasso.MiscTextNode.newWithString(value)
-            node.textChild = True
-            attrvalue = lasso.Saml2AttributeValue()
-            attrvalue.any = [node]
-            attr.attributeValue = [attrvalue]
-            attrstat.attribute = attrstat.attribute + (attr,)
+            values = attributes[key]
+            if type(values) is not list:
+                values = [values]
+            for value in values:
+                attr = lasso.Saml2Attribute()
+                attr.name = key
+                attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
+                value = str(value).encode('utf-8')
+                self.debug('value %s' % value)
+                node = lasso.MiscTextNode.newWithString(value)
+                node.textChild = True
+                attrvalue = lasso.Saml2AttributeValue()
+                attrvalue.any = [node]
+                attr.attributeValue = [attrvalue]
+                attrstat.attribute = attrstat.attribute + (attr,)
 
         self.debug('Assertion: %s' % login.assertion.dump())
 
