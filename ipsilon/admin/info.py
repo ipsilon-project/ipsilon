@@ -10,6 +10,15 @@ from ipsilon.admin.common import AdminPage
 from ipsilon.info.common import FACILITY
 
 
+def save_enabled_plugins(names):
+    po = PluginObject()
+    po.name = "global"
+    globalconf = dict()
+    globalconf['order'] = ','.join(names)
+    po.set_config(globalconf)
+    po.save_plugin_config(FACILITY)
+
+
 class InfoPluginsOrder(AdminPage):
 
     def __init__(self, site, parent):
@@ -51,12 +60,7 @@ class InfoPluginsOrder(AdminPage):
                                 new_names.append(val)
                                 new_plugins.append(plugins_by_name[val])
 
-                    po = PluginObject()
-                    po.name = "global"
-                    globalconf = dict()
-                    globalconf['order'] = ','.join(new_names)
-                    po.set_config(globalconf)
-                    po.save_plugin_config(FACILITY)
+                    save_enabled_plugins(new_names)
 
                     # When all is saved update also live config. The
                     # live config is a list of the actual plugin
@@ -125,6 +129,7 @@ class InfoPlugins(AdminPage):
         obj = plugins['available'][plugin]
         if obj not in plugins['enabled']:
             obj.enable(self._site)
+            save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
     enable.public_function = True
@@ -139,6 +144,7 @@ class InfoPlugins(AdminPage):
         obj = plugins['available'][plugin]
         if obj in plugins['enabled']:
             obj.disable(self._site)
+            save_enabled_plugins(list(x.name for x in plugins['enabled']))
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")
     disable.public_function = True

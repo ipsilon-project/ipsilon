@@ -13,11 +13,18 @@ class InfoProviderBase(PluginObject, Log):
 
     def __init__(self):
         super(InfoProviderBase, self).__init__()
+        self.enabled = False
 
     def get_user_attrs(self, user):
         raise NotImplementedError
 
+    @property
+    def is_enabled(self):
+        return self.enabled
+
     def enable(self, site):
+        self.enabled = True
+
         plugins = site[FACILITY]
         if self in plugins['enabled']:
             return
@@ -30,6 +37,8 @@ class InfoProviderBase(PluginObject, Log):
         self.debug('Info plugin enabled: %s' % self.name)
 
     def disable(self, site):
+        self.enabled = False
+
         plugins = site[FACILITY]
         if self not in plugins['enabled']:
             return
@@ -45,7 +54,6 @@ class Info(Log):
 
     def __init__(self, site):
         self._site = site
-        self.providers = []
 
         loader = PluginLoader(Info, FACILITY, 'InfoProvider')
         self._site[FACILITY] = loader.get_plugin_data()
@@ -54,26 +62,30 @@ class Info(Log):
         available = plugins['available'].keys()
         self.debug('Available info providers: %s' % str(available))
 
+        plugins['root'] = self
         for item in plugins['whitelist']:
             self.debug('Login plugin in whitelist: %s' % item)
             if item not in plugins['available']:
                 self.debug('Info Plugin %s not found' % item)
                 continue
-            self.providers.append((item, plugins['available'][item]))
-            self.debug('Added Info plugin: %s' % item)
+            plugins['available'][item].enable(self._site)
 
-    def get_user_attrs(self, user, provider=None):
-        if provider:
-            for p in self.providers:
-                if p[0] == provider:
-                    return p[1].get_user_attrs(user)
-        else:
-            for p in self.providers:
-                ret = p[1].get_user_attrs(user)
-                if ret:
-                    return ret
+    def get_user_attrs(self, user, requested=None):
+        plugins = self._site[FACILITY]['available']
+        result = dict()
 
-        return None
+        for _, p in plugins.items():
+            if requested is None:
+                if not p.is_enabled:
+                    continue
+            else:
+                if requested != p.name:
+                    continue
+            result = p.get_user_attrs(user)
+            if result:
+                break
+
+        return result
 
 
 class InfoProviderInstaller(object):
