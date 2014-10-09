@@ -21,6 +21,7 @@ from ipsilon.login.common import LoginPageBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.trans import Transaction
+from ipsilon.util.user import UserSession
 from string import Template
 import cherrypy
 import os
@@ -40,7 +41,10 @@ class KrbAuth(LoginPageBase):
         trans = Transaction('login', **kwargs)
         # If we can get here, we must be authenticated and remote_user
         # was set. Check the session has a user set already or error.
-        if self.user and self.user.name:
+        us = UserSession()
+        us.remote_login()
+        self.user = us.get_user()
+        if not self.user.is_anonymous:
             userdata = {'krb_principal_name': self.user.name}
             return self.lm.auth_successful(trans, self.user.name,
                                            'krb', userdata)
