@@ -162,7 +162,7 @@ Form based login Manager that uses the Fedora Authentication Server
         self.fpc = FasProxyClient(base_url=self.fas_url,
                                   useragent=self.user_agent,
                                   insecure=(self.insecure == 'YES'))
-        self.page = FAS(site, self, 'login/fas', 'login/fas.html')
+        self.page = FAS(site, self, 'login/fas')
         return self.page
 
 
