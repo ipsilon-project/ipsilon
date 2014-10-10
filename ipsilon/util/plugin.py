@@ -115,7 +115,7 @@ class PluginObject(Log):
         self._options = None
         self._data = AdminStore()
 
-    def get_config_desc(self):
+    def get_config_desc(self, name=None):
         """ The configuration description is a dictionary that provides
             A description of the supported configuration options, as well
             as the default configuration option values.
@@ -124,7 +124,13 @@ class PluginObject(Log):
              - option type
              - default value
         """
-        return self._options
+        if name is None:
+            return self._options
+
+        opt = self._options.get(name, None)
+        if opt is None:
+            return ''
+        return opt[0]
 
     def set_config(self, config):
         self._config = config
@@ -151,6 +157,10 @@ class PluginObject(Log):
 
     def get_plugin_config(self, facility):
         return self._data.load_options(facility, self.name)
+
+    def refresh_plugin_config(self, facility):
+        config = self.get_plugin_config(facility)
+        self.set_config(config)
 
     def save_plugin_config(self, facility, config=None):
         if config is None:

@@ -36,31 +36,27 @@ class AdminPage(Page):
 
 class AdminPluginPage(AdminPage):
 
-    def __init__(self, obj, site, parent):
+    def __init__(self, po, site, parent):
         super(AdminPluginPage, self).__init__(site, form=True)
-        self._obj = obj
-        self.title = '%s plugin' % obj.name
-        self.url = '%s/%s' % (parent.url, obj.name)
+        self._po = po
+        self.title = '%s plugin' % po.name
+        self.url = '%s/%s' % (parent.url, po.name)
         self.facility = parent.facility
         self.menu = [parent]
         self.back = parent.url
 
         # Get the defaults
-        self.plugin_config = obj.get_config_desc()
-        if not self.plugin_config:
-            self.plugin_config = dict()
-
-        # Now overlay the actual config
-        for option in self.plugin_config:
-            self.plugin_config[option][2] = obj.get_config_value(option)
+        options = po.get_config_desc()
+        if options is None:
+            options = dict()
 
         self.options_order = []
-        if hasattr(obj, 'conf_opt_order'):
-            self.options_order = obj.conf_opt_order
+        if hasattr(po, 'conf_opt_order'):
+            self.options_order = po.conf_opt_order
 
         # append any undefined options
         add = []
-        for k in self.plugin_config.keys():
+        for k in options.keys():
             if k not in self.options_order:
                 add.append(k)
         if len(add):
@@ -72,10 +68,10 @@ class AdminPluginPage(AdminPage):
     def GET(self, *args, **kwargs):
         return self._template('admin/plugin_config.html', title=self.title,
                               name='admin_%s_%s_form' % (self.facility,
-                                                         self._obj.name),
+                                                         self._po.name),
                               menu=self.menu, action=self.url, back=self.back,
                               options_order=self.options_order,
-                              options=self.plugin_config)
+                              plugin=self._po)
 
     @admin_protect
     def POST(self, *args, **kwargs):
@@ -84,17 +80,22 @@ class AdminPluginPage(AdminPage):
         message_type = "info"
         new_values = dict()
 
+        # Get the defaults
+        options = self._po.get_config_desc()
+        if options is None:
+            options = dict()
+
         for key, value in kwargs.iteritems():
-            if key in self.plugin_config:
-                if value != self.plugin_config[key][2]:
+            if key in options:
+                if value != self._po.get_config_value(key):
                     cherrypy.log.error("Storing [%s]: %s = %s" %
-                                       (self._obj.name, key, value))
+                                       (self._po.name, key, value))
                     new_values[key] = value
 
         if len(new_values) != 0:
             # First we try to save in the database
             try:
-                self._obj.save_plugin_config(self.facility, new_values)
+                self._po.save_plugin_config(self.facility, new_values)
                 message = "New configuration saved."
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
@@ -102,17 +103,15 @@ class AdminPluginPage(AdminPage):
                 message_type = "error"
 
             # And only if it succeeds we change the live object
-            for name, value in new_values.items():
-                self._obj.set_config_value(name, value)
-                self.plugin_config[name][2] = value
+            self._po.refresh_plugin_config(self.facility)
 
         return self._template('admin/plugin_config.html', title=self.title,
                               message=message,
                               message_type=message_type,
                               name='admin_%s_%s_form' % (self.facility,
-                                                         self._obj.name),
+                                                         self._po.name),
                               menu=self.menu, action=self.url,
-                              options=self.plugin_config)
+                              plugin=self._po)
 
 
 class Admin(AdminPage):
