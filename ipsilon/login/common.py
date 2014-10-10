@@ -24,7 +24,6 @@ from ipsilon.util.plugin import PluginLoader, PluginObject
 from ipsilon.util.plugin import PluginInstaller
 from ipsilon.info.common import Info
 from ipsilon.util.cookies import SecureCookie
-from ipsilon.util.trans import Transaction
 import cherrypy
 
 
@@ -193,7 +192,7 @@ class LoginFormBase(LoginPageBase):
         return self._template(self.formtemplate, **context)
 
     def root(self, *args, **kwargs):
-        self.trans = Transaction('login', **kwargs)
+        self.trans = self.get_valid_transaction('login', **kwargs)
         op = getattr(self, cherrypy.request.method, self.GET)
         if callable(op):
             return op(*args, **kwargs)
@@ -265,7 +264,7 @@ class Login(Page):
 
     def root(self, *args, **kwargs):
         if self.first_login:
-            trans = Transaction('login', **kwargs)
+            trans = self.get_valid_transaction('login', **kwargs)
             redirect = '%s/login/%s?%s' % (self.basepath,
                                            self.first_login.path,
                                            trans.get_GET_arg())

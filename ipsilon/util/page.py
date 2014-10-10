@@ -19,6 +19,7 @@
 
 from ipsilon.util.log import Log
 from ipsilon.util.user import UserSession
+from ipsilon.util.trans import Transaction
 from urllib import unquote
 import cherrypy
 
@@ -112,5 +113,12 @@ class Page(Log):
 
     def del_subtree(self, name):
         del self.__dict__[name]
+
+    def get_valid_transaction(self, provider, **kwargs):
+        try:
+            return Transaction(provider, **kwargs)
+        except ValueError:
+            msg = 'Transaction expired, or cookies not available'
+            raise cherrypy.HTTPError(401, msg)
 
     exposed = True
