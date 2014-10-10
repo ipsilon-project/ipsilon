@@ -90,7 +90,8 @@ class AuthenticateRequest(ProviderPageBase):
                         self.basepath, self.trans.get_GET_arg())
                     data = {'openid_stage': 'auth',
                             'openid_request': json.dumps(kwargs),
-                            'login_return': returl}
+                            'login_return': returl,
+                            'login_target': request.trust_root}
                     self.trans.store(data)
                     redirect = '%s/login?%s' % (self.basepath,
                                                 self.trans.get_GET_arg())

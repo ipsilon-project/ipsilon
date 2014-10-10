@@ -127,7 +127,8 @@ class AuthenticateRequest(ProviderPageBase):
                     self.basepath, self.trans.get_GET_arg())
                 data = {'saml2_stage': 'auth',
                         'saml2_request': login.dump(),
-                        'login_return': returl}
+                        'login_return': returl,
+                        'login_target': login.remoteProviderId}
                 self.trans.store(data)
                 redirect = '%s/login?%s' % (self.basepath,
                                             self.trans.get_GET_arg())

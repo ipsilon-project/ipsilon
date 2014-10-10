@@ -210,8 +210,10 @@ class LoginFormBase(LoginPageBase):
         if username is None:
             username = ''
 
+        target = None
         if self.trans is not None:
             tid = self.trans.transaction_id
+            target = self.trans.retrieve().get('login_target')
         if tid is None:
             tid = ''
 
@@ -224,6 +226,7 @@ class LoginFormBase(LoginPageBase):
             "description": self.lm.help_text,
             "next_url": next_url,
             "username": username,
+            "login_target": target,
         }
         context.update(kwargs)
         if self.trans is not None:
