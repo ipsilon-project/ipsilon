@@ -12,6 +12,23 @@ from fedora.client.fasproxy import FasProxyClient
 from fedora.client import AuthError
 
 
+try:
+    import openid_cla.cla as cla
+
+    CLA_GROUPS = {
+        'cla_click': cla.CLA_URI_FEDORA_CLICK,
+        'cla_dell': cla.CLA_URI_FEDORA_DELL,
+        'cla_done': cla.CLA_URI_FEDORA_DONE,
+        'cla_fedora': cla.CLA_URI_FEDORA_FEDORA,
+        'cla_fpca': cla.CLA_URI_FEDORA_FPCA,
+        'cla_ibm': cla.CLA_URI_FEDORA_IBM,
+        'cla_intel': cla.CLA_URI_FEDORA_INTEL,
+        'cla_redhat': cla.CLA_URI_FEDORA_REDHAT,
+    }
+except ImportError:
+    CLA_GROUPS = dict()
+
+
 class FAS(LoginFormBase):
 
     def POST(self, *args, **kwargs):
@@ -28,9 +45,10 @@ class FAS(LoginFormBase):
             except Exception, e:  # pylint: disable=broad-except
                 cherrypy.log.error("Unknown Error [%s]" % str(e))
             if data and data.user:
+                userdata = self.make_userdata(data.user)
                 return self.lm.auth_successful(self.trans,
                                                data.user['username'],
-                                               userdata={'fas': data.user})
+                                               userdata=userdata)
             else:
                 error = "Authentication failed"
                 cherrypy.log.error(error)
@@ -46,6 +64,26 @@ class FAS(LoginFormBase):
         )
         # pylint: disable=star-args
         return self._template(self.formtemplate, **context)
+
+    def make_userdata(self, fas_data):
+        userdata = dict()
+        userdata['fas'] = fas_data
+
+        # compute and store groups and cla groups
+        userdata['groups'] = []
+        userdata['extras'] = {'cla': []}
+        for group in fas_data.get('approved_memberships', {}):
+            if 'name' not in group:
+                continue
+            if group.get('group_type') == 'cla':
+                if group['name'] in CLA_GROUPS:
+                    userdata['extras']['cla'].append(CLA_GROUPS[group['name']])
+                else:
+                    userdata['extras']['cla'].append(group['name'])
+            else:
+                userdata['groups'].append(group['name'])
+
+        return userdata
 
 
 class LoginManager(LoginManagerBase):
