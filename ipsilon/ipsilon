@@ -60,7 +60,11 @@ admin_config = datastore.load_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
 
-templates = os.path.join(cherrypy.config['base.dir'], 'templates')
+template_dir = cherrypy.config.get('template_dir', 'templates')
+if template_dir.startswith('/'):
+    templates = template_dir
+else:
+    templates = os.path.join(cherrypy.config['base.dir'], template_dir)
 template_env = Environment(loader=FileSystemLoader(templates))
 
 if __name__ == "__main__":
