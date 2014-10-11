@@ -52,22 +52,6 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-def openlogs(path, name):
-    global logger  # pylint: disable=W0603
-    logger = logging.getLogger()
-    try:
-        datestr = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-        filename = '%s/test-%s-%s.log' % (path, name, datestr)
-        lh = logging.FileHandler(filename)
-    except IOError, e:
-        print >> sys.stderr, 'Unable to open %s (%s)' % (filename, str(e))
-        lh = logging.StreamHandler(sys.stderr)
-    formatter = logging.Formatter('[%(asctime)s] %(message)s')
-    lh.setFormatter(formatter)
-    logger.addHandler(lh)
-    logger.setLevel(logging.DEBUG)
-
-
 def try_wrappers(base, wrappers):
     if wrappers == 'no':
         return {}
@@ -102,8 +86,6 @@ if __name__ == '__main__':
 
     if not os.path.exists(args['path']):
         os.makedirs(args['path'])
-
-    openlogs(args['path'], args['test'])
 
     test.setup_base(args['path'], test)
 
