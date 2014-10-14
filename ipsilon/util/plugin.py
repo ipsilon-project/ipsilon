@@ -154,7 +154,7 @@ class PluginObject(Log):
         value = None
         if self._config:
             value = self._config.get(name, None)
-        if not value:
+        if value is None:
             if self._options:
                 opt = self._options.get(name, None)
                 if opt:
