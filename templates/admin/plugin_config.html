@@ -12,7 +12,12 @@
         {% for o in options_order %}
             <div class="form-group">
             <label for="{{ o }}">{{ o }}:</label>
-                <input type="text" class="form-control" name="{{ o }}" value="{{ plugin.get_config_value(o) }}">
+              {% set val = plugin.get_config_value(o) %}
+              {% if val is string %}
+                <input type="text" class="form-control" name="{{ o }}" value="{{ val }}">
+              {% else %}
+                <input type="text" class="form-control" name="{{ o }}" value="{{ val|join(', ') }}">
+              {% endif %}
             </div>
             <span class="help-block">{{ plugin.get_config_desc(o) }}</span>
         {% endfor %}

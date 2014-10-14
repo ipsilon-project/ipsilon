@@ -132,8 +132,23 @@ class PluginObject(Log):
             return ''
         return opt[0]
 
+    def _value_to_list(self, name):
+        if name not in self._config:
+            return
+        value = self._config[name]
+        if type(value) is list:
+            return
+        vlist = [x.strip() for x in value.split(',')]
+        self._config[name] = vlist
+
     def set_config(self, config):
         self._config = config
+        if self._config is None:
+            return
+        if self._options:
+            for name, opt in self._options.iteritems():
+                if opt[1] == 'list':
+                    self._value_to_list(name)
 
     def get_config_value(self, name):
         value = None
@@ -154,6 +169,9 @@ class PluginObject(Log):
         if not self._config:
             self._config = dict()
         self._config[option] = value
+        if self._options and option in self._options:
+            if self._options[option][1] == 'list':
+                self._value_to_list(option)
 
     def get_plugin_config(self, facility):
         return self._data.load_options(facility, self.name)
@@ -165,6 +183,12 @@ class PluginObject(Log):
     def save_plugin_config(self, facility, config=None):
         if config is None:
             config = self._config
+        config = config.copy()
+
+        for key, value in config.items():
+            if type(value) is list:
+                config[key] = ','.join(value)
+
         self._data.save_options(facility, self.name, config)
 
     def get_data(self, idval=None, name=None, value=None):
