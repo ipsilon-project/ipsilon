@@ -226,6 +226,8 @@ class LoginFormBase(LoginPageBase):
             "next_url": next_url,
             "username": username,
             "login_target": target,
+            "cancel_url": '%s/login/cancel?%s' % (self.basepath,
+                                                  self.trans.get_GET_arg()),
         }
         context.update(kwargs)
         if self.trans is not None:
@@ -242,6 +244,7 @@ class Login(Page):
 
     def __init__(self, *args, **kwargs):
         super(Login, self).__init__(*args, **kwargs)
+        self.cancel = Cancel(*args, **kwargs)
         self.first_login = None
         self.info = Info(self._site)
 
@@ -277,6 +280,25 @@ class Logout(Page):
     def root(self, *args, **kwargs):
         UserSession().logout(self.user)
         return self._template('logout.html', title='Logout')
+
+
+class Cancel(Page):
+
+    def GET(self, *args, **kwargs):
+
+        session = UserSession()
+        session.logout(None)
+
+        # return to the caller if any
+        transdata = self.get_valid_transaction('login', **kwargs).retrieve()
+        if 'login_return' not in transdata:
+            raise cherrypy.HTTPError(401)
+        raise cherrypy.HTTPRedirect(transdata['login_return'])
+
+    def root(self, *args, **kwargs):
+        op = getattr(self, cherrypy.request.method, self.GET)
+        if callable(op):
+            return op(*args, **kwargs)
 
 
 class LoginMgrsInstall(object):
