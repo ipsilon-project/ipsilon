@@ -21,7 +21,7 @@
 import cherrypy
 from ipsilon.util.page import admin_protect
 from ipsilon.providers.common import FACILITY
-from ipsilon.admin.common import AdminPluginPage
+from ipsilon.admin.common import AdminPluginConfig
 from ipsilon.admin.common import AdminPage
 
 
@@ -37,7 +37,7 @@ class ProviderPlugins(AdminPage):
         for plugin in self._site[FACILITY]['available']:
             cherrypy.log.error('Admin provider plugin: %s' % plugin)
             obj = self._site[FACILITY]['available'][plugin]
-            page = AdminPluginPage(obj, self._site, self)
+            page = AdminPluginConfig(obj, self._site, self)
             if hasattr(obj, 'admin'):
                 obj.admin.mount(page)
             self.add_subtree(plugin, page)

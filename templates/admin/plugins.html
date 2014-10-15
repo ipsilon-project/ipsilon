@@ -1,0 +1,108 @@
+{% extends "master-admin.html" %}
+{% block main %}
+{% if user.is_admin %}
+
+    <div class = "row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-md-6 col-sm-6 col-xs-6" role="alert">
+          {% if message and message_type != 'success' %}
+            <div class="alert alert-{{message_type}}">
+                <p>{{ message }}</p>
+            </div>
+          {% endif %}
+        </div>
+    </div>
+
+    <table class="table">
+    {% for p in enabled %}
+    <tr><td>
+      <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-5">
+          <strong>{{ p }}</strong>
+        </div>
+        <div class="col-md-7 col-sm-7 col-xs-5">
+          <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-12">
+              <a class="text-info" href="{{ baseurl }}/disable/{{ p }}">Disable</a>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-12">
+            {%- if available[p].get_config_desc() %}
+              <a class="text-primary" href="{{ baseurl }}/{{ p }}">Configure</a>
+            {% endif %}
+          </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-1">
+          {%- if not (loop.first and loop.last) %}
+          <form role="form" id="{{ order_name }}" action="{{ order_action }}" method="post" enctype="application/x-www-form-urlencoded">
+            {%- set outer_loop = loop %}
+            {%- for move in ['&uarr;', '&darr;'] %}
+              {%- if move == '&uarr;' %}
+                {%- if outer_loop.first %}
+                  {%- set state='disabled' %}
+                {%- else %}
+                  {%- set state='btn-default' %}
+                  {%- set idx0=outer_loop.index0-1 %}
+                  {%- set idx1=outer_loop.index0 %}
+                {%- endif %}
+              {%- else %}
+                {%- if outer_loop.last %}
+                  {%- set state='disabled' %}
+                {%- else %}
+                  {%- set state='btn-default' %}
+                  {%- set idx0=outer_loop.index0 %}
+                  {%- set idx1=outer_loop.index0+1 %}
+                {%- endif %}
+              {%- endif %}
+              <button id="submit" class="btn {{ state }}" name="order" type="submit" value="
+              {%- for i in range(enabled|length) %}
+                {%- if i == idx0 -%}
+                  {{- enabled[idx1] -}}
+                {%- elif i == idx1 -%}
+                  {{- enabled[idx0] -}}
+                {%- else -%}
+                  {{- enabled[i] -}}
+                {%- endif -%}
+                {%- if not loop.last -%},{%- endif -%}
+              {%- endfor -%}
+              ">{{ move }}</button>
+            {%- endfor %}
+          </form>
+          {%- endif %}
+        </div>
+      </div>
+    </td></tr>
+    {% endfor %}
+
+    {% for p in available if not p in enabled %}
+    <tr><td>
+      <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-5">
+            <strong>{{ p }}</strong>
+        </div>
+        <div class="col-md-7 col-sm-7 col-xs-6">
+          <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-12">
+              <a class="text-info" href="{{ baseurl }}/enable/{{ p }}">Enable</a>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-12">
+            {%- if available[p].get_config_desc() %}
+              <span class="text-muted">Configure</span>
+            {% endif %}
+          </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-1">
+        </div>
+      </div>
+    </td></tr>
+    {% endfor %}
+
+    <tr><td>
+    </td></tr>
+    </table>
+
+{% endif %}
+{% endblock %}
