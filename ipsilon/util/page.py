@@ -17,11 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import cherrypy
 from ipsilon.util.log import Log
 from ipsilon.util.user import UserSession
 from ipsilon.util.trans import Transaction
 from urllib import unquote
-import cherrypy
+try:
+    from urlparse import urlparse
+except ImportError:
+    # pylint: disable=no-name-in-module, import-error
+    from urllib.parse import urlparse
 
 
 def admin_protect(fn):
@@ -46,10 +51,14 @@ class Page(Log):
         self.default_headers = dict()
         self.auth_protect = False
 
-    def _compare_urls(self, url1, url2):
-        u1 = unquote(url1)
-        u2 = unquote(url2)
-        if u1 == u2:
+    def _check_referer(self, referer, url):
+        r = urlparse(unquote(referer))
+        u = urlparse(unquote(url))
+        if r.scheme != u.scheme:
+            return False
+        if r.netloc != u.netloc:
+            return False
+        if r.path.startswith(self.basepath):
             return True
         return False
 
@@ -79,7 +88,7 @@ class Page(Log):
                                         % (cherrypy.request.method, url))
                             raise cherrypy.HTTPError(403)
                         referer = cherrypy.request.headers['referer']
-                        if not self._compare_urls(referer, url):
+                        if not self._check_referer(referer, url):
                             self._debug("Wrong referer %s in request to %s"
                                         % (referer, url))
                             raise cherrypy.HTTPError(403)
