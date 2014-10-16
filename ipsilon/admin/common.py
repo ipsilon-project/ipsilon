@@ -213,8 +213,14 @@ class AdminPlugins(AdminPage):
     def root_with_msg(self, message=None, message_type=None):
         plugins = self._site[self.facility]
         enabled = []
-        for p in plugins['enabled']:
-            enabled.append(p.name)
+        if self.order:
+            for plugin in plugins['enabled']:
+                enabled.append(plugin.name)
+        else:
+            for _, plugin in plugins['available'].iteritems():
+                if plugin.is_enabled:
+                    enabled.append(plugin.name)
+
         targs = {'title': self.title,
                  'menu': self._master.menu,
                  'message': message,
@@ -240,7 +246,7 @@ class AdminPlugins(AdminPage):
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
         obj = plugins['available'][plugin]
-        if obj not in plugins['enabled']:
+        if not obj.is_enabled:
             obj.enable(self._site)
             if self.order:
                 enabled = list(x.name for x in plugins['enabled'])
@@ -257,7 +263,7 @@ class AdminPlugins(AdminPage):
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
         obj = plugins['available'][plugin]
-        if obj in plugins['enabled']:
+        if obj.is_enabled:
             obj.disable(self._site)
             if self.order:
                 enabled = list(x.name for x in plugins['enabled'])

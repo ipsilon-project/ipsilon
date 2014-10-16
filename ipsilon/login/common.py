@@ -34,6 +34,7 @@ class LoginManagerBase(PluginObject, Log):
 
     def __init__(self):
         super(LoginManagerBase, self).__init__()
+        self._site = None
         self.path = '/'
         self.next_login = None
         self.info = None
@@ -115,7 +116,14 @@ class LoginManagerBase(PluginObject, Log):
     def get_tree(self, site):
         raise NotImplementedError
 
+    @property
+    def is_enabled(self):
+        if self._site:
+            return self in self._site[FACILITY]['enabled']
+        return False
+
     def enable(self, site):
+        self._site = site
         plugins = site[FACILITY]
         if self in plugins['enabled']:
             return
@@ -147,6 +155,7 @@ class LoginManagerBase(PluginObject, Log):
         self.info = root.info
 
     def disable(self, site):
+        self._site = site
         plugins = site[FACILITY]
         if self not in plugins['enabled']:
             return

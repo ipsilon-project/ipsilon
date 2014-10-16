@@ -1,23 +1,73 @@
 {% extends "master-admin.html" %}
 {% block main %}
 {% if user.is_admin %}
-    <h2>Provider plugins</h2>
 
-    {% for p in available %}
-        <div class="row">
-        <div class="col-md-3 col-sm-3 col-xs-6">{{ p }}</div>
+    <div class = "row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-md-6 col-sm-6 col-xs-6" role="alert">
+          {% if message %}
+            <div class="alert alert-{{message_type}}">
+                <p>{{ message }}</p>
+            </div>
+          {% endif %}
+        </div>
+    </div>
+
+    <hr>
+
+    {% for p in enabled %}
+      <div class="row">
         <div class="col-md-3 col-sm-3 col-xs-6">
-        {% if p in enabled %}
-            <a class="btn btn-default" href="{{ baseurl }}/disable/{{ p }}">Disable</a>
-            <a class="btn btn-default" href="{{ baseurl }}/{{ p }}">Configure</a>
-            {% if available[p].admin %}
-                <a class="btn btn-default" href="{{ baseurl }}/{{ p }}/admin">Administer</a>
+          <p><strong>{{ p }}</strong></p>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-6">
+          <div class="row">
+          <div class="col-md-4 col-sm-4 col-xs-12">
+              <p class="text-info"><a href="{{ baseurl }}/disable/{{ p }}">Disable</a></p>
+          </div>
+          <div class="col-md-4 col-sm-4 col-xs-12">
+            {%- if available[p].get_config_desc() %}
+              <p class="text-primary"><a href="{{ baseurl }}/{{ p }}">Configure</a></p>
             {% endif %}
-        {% else %}
-            <a class="btn btn-default" href="{{ baseurl }}/enable/{{ p }}">Enable</a>
-        {% endif %}
+          </div>
+          <div class="col-md-4 col-sm-4 col-xs-12">
+            {%- if available[p].admin %}
+              <p class="text-primary"><a href="{{ baseurl }}/{{ p }}/admin">Manage</a></p>
+            {% endif %}
+          </div>
+          </div>
         </div>
-        </div>
+      </div>
+      <hr>
     {% endfor %}
+
+    {% for p in available if not p in enabled %}
+      <div class="row">
+        <div class="col-md-3 col-sm-3 col-xs-6">
+            <p><strong>{{ p }}</strong></p>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-6">
+          <div class="row">
+          <div class="col-md-4 col-sm-4 col-xs-12">
+              <p class="text-info"><a href="{{ baseurl }}/enable/{{ p }}">Enable</a></p>
+          </div>
+          <div class="col-md-4 col-sm-4 col-xs-12">
+            {%- if available[p].get_config_desc() %}
+              <p class="text-muted">Configure</p>
+            {% endif %}
+          </div>
+          <div class="col-md-4 col-sm-4 col-xs-12">
+            {%- if available[p].admin %}
+              <p class="text-muted">Manage</p>
+            {% endif %}
+          </div>
+          </div>
+        </div>
+      </div>
+      <hr>
+    {% endfor %}
+
 {% endif %}
 {% endblock %}

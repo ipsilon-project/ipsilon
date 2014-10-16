@@ -13,18 +13,19 @@ class InfoProviderBase(PluginObject, Log):
 
     def __init__(self):
         super(InfoProviderBase, self).__init__()
-        self.enabled = False
+        self._site = None
 
     def get_user_attrs(self, user):
         raise NotImplementedError
 
     @property
     def is_enabled(self):
-        return self.enabled
+        if self._site:
+            return self in self._site[FACILITY]['enabled']
+        return False
 
     def enable(self, site):
-        self.enabled = True
-
+        self._site = site
         plugins = site[FACILITY]
         if self in plugins['enabled']:
             return
@@ -37,8 +38,7 @@ class InfoProviderBase(PluginObject, Log):
         self.debug('Info plugin enabled: %s' % self.name)
 
     def disable(self, site):
-        self.enabled = False
-
+        self._site = site
         plugins = site[FACILITY]
         if self not in plugins['enabled']:
             return
