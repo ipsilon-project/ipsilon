@@ -1,31 +1,49 @@
 {% extends "master-admin.html" %}
 {% block main %}
-    <h2>{{ title }}</h2>
-    {% if message %}
-    <div class="alert alert-{{message_type}}">
-        <p>{{ message }}</p>
+{% if user.is_admin %}
+
+    <div class = "row">
+        <div class="col-md-3 col-sm-3 col-xs-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-md-3 col-sm-3 col-xs-6" role="alert">
+          {% if message %}
+            <div class="alert alert-{{message_type}}">
+                <p>{{ message }}</p>
+            </div>
+          {% endif %}
+        </div>
     </div>
-    {% endif %}
+
+    <hr>
+
     <div id="options">
-        <form role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
+        <form class="form-horizontal" role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
 
         {% for o in options_order %}
             <div class="form-group">
-            <label for="{{ o }}">{{ o }}:</label>
+              <label class="col-sm-2" for="{{ o }}">{{ o }}:</label>
+              <div class="col-sm-10">
               {% set val = plugin.get_config_value(o) %}
               {% if val is string %}
                 <input type="text" class="form-control" name="{{ o }}" value="{{ val }}">
               {% else %}
                 <input type="text" class="form-control" name="{{ o }}" value="{{ val|join(', ') }}">
               {% endif %}
+                <span class="help-block">{{ plugin.get_config_desc(o) }}</span>
+              </div>
             </div>
-            <span class="help-block">{{ plugin.get_config_desc(o) }}</span>
+            <hr>
         {% endfor %}
 
-        <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
+          <p>
+            <button id="submit" class="btn btn-primary" name="submit" type="submit" value="Submit">
             Save
-        </button>
-        <a href="{{ back }}" class="btn btn-default" title="Back">Back</a>
+            </button>
+            <a href="{{ back }}" class="btn btn-default" title="Back">Back</a>
+          </p>
         </form>
     </div>
+
+{% endif %}
 {% endblock %}

@@ -65,14 +65,18 @@ class AdminPluginConfig(AdminPage):
             for k in add:
                 self.options_order.append(k)
 
-    @admin_protect
-    def GET(self, *args, **kwargs):
+    def root_with_msg(self, message=None, message_type=None):
         return self._template('admin/plugin_config.html', title=self.title,
+                              menu=self.menu, action=self.url, back=self.back,
+                              message=message, message_type=message_type,
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._po.name),
-                              menu=self.menu, action=self.url, back=self.back,
                               options_order=self.options_order,
                               plugin=self._po)
+
+    @admin_protect
+    def GET(self, *args, **kwargs):
+        return self.root_with_msg()
 
     @admin_protect
     def POST(self, *args, **kwargs):
@@ -106,13 +110,8 @@ class AdminPluginConfig(AdminPage):
             # And only if it succeeds we change the live object
             self._po.refresh_plugin_config(self.facility)
 
-        return self._template('admin/plugin_config.html', title=self.title,
-                              message=message,
-                              message_type=message_type,
-                              name='admin_%s_%s_form' % (self.facility,
-                                                         self._po.name),
-                              menu=self.menu, action=self.url,
-                              plugin=self._po)
+        return self.root_with_msg(message=message,
+                                  message_type=message_type)
 
 
 class AdminPluginsOrder(AdminPage):
