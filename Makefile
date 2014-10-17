@@ -25,9 +25,14 @@ ui: less/ipsilon.less less/admin.less
 # Requires NodeJS less and clear-css packages
 # Should be removed when lesscpy starts to work properly
 ui-node: less/ipsilon.less less/admin.less
+
 	# Create and minify CSS
-	lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
-	lessc --clean-css less/admin.less ui/css/admin.css
+	#lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
+	#lessc --clean-css less/admin.less ui/css/admin.css
+
+	#FIXME: temporarily disable clean-css fo deveopment
+	lessc less/ipsilon.less ui/css/ipsilon.css
+	lessc less/admin.less ui/css/admin.css
 
 clean:
 	rm -fr testdir cscope.out
