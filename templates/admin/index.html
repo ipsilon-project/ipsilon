@@ -2,5 +2,11 @@
 {% block main %}
 {% if user.is_admin %}
     <h2>Select an item to configure</h2>
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        {#<img src="{{ baseurl }}/scheme" width="100%"/>#}
+        <object data="{{ baseurl }}/scheme" type="image/svg+xml" width="100%" height="100%">
+            <param name="wmode" value="transparent" />
+        </object>
+    </div>
 {% endif %}
 {% endblock %}

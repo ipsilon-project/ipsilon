@@ -276,12 +276,15 @@ class Admin(AdminPage):
 
     def __init__(self, site, mount):
         super(Admin, self).__init__(site)
+        self.title = 'Home'
+        self.mount = mount
         self.url = '%s/%s' % (self.basepath, mount)
-        self.menu = []
+        self.menu = [self]
 
     def root(self, *args, **kwargs):
         return self._template('admin/index.html',
                               title='Configuration',
+                              baseurl=self.url,
                               menu=self.menu)
 
     def add_subtree(self, name, page):
@@ -291,3 +294,20 @@ class Admin(AdminPage):
     def del_subtree(self, name):
         self.menu.remove(self.__dict__[name])
         del self.__dict__[name]
+
+    def get_menu_urls(self):
+        urls = dict()
+        for item in self.menu:
+            name = getattr(item, 'name', None)
+            if name:
+                urls['%s_url' % name] = cherrypy.url('/%s/%s' % (self.mount,
+                                                                 name))
+        return urls
+
+    @admin_protect
+    def scheme(self):
+        cherrypy.response.headers.update({'Content-Type': 'image/svg+xml'})
+        urls = self.get_menu_urls()
+        # pylint: disable=star-args
+        return self._template('admin/ipsilon-scheme.svg', **urls)
+    scheme.public_function = True
