@@ -145,8 +145,7 @@ class Installer(object):
 
         po.wipe_config_values(FACILITY)
         config = {'service name': opts['pam_service']}
-        po.set_config(config)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, config)
 
         # Update global config to add login plugin
         po = PluginObject()
@@ -158,8 +157,7 @@ class Installer(object):
             order = []
         order.append('pam')
         globalconf['order'] = ','.join(order)
-        po.set_config(globalconf)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, globalconf)
 
         # for selinux enabled platforms, ignore if it fails just report
         try:

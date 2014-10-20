@@ -198,8 +198,7 @@ class Installer(InfoProviderInstaller):
         elif 'ldap_bind_dn_template' in opts:
             config['user dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
-        po.set_config(config)
-        po.save_plugin_config(self.facility)
+        po.save_plugin_config(self.facility, config)
 
         # Replace global config, only one plugin info can be used
         po.name = 'global'
@@ -210,5 +209,4 @@ class Installer(InfoProviderInstaller):
             order = []
         order.append('ldap')
         globalconf['order'] = ','.join(order)
-        po.set_config(globalconf)
-        po.save_plugin_config(self.facility)
+        po.save_plugin_config(self.facility, globalconf)

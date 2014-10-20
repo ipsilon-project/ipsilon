@@ -211,5 +211,4 @@ class Installer(object):
             order = []
         order.append('fas')
         globalconf['order'] = ','.join(order)
-        po.set_config(globalconf)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, globalconf)

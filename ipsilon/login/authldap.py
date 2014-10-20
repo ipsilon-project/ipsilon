@@ -212,8 +212,7 @@ class Installer(object):
         if 'ldap_bind_dn_template' in opts:
             config['bind dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
-        po.set_config(config)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, config)
 
         # Update global config to add login plugin
         po = PluginObject()
@@ -225,5 +224,4 @@ class Installer(object):
             order = []
         order.append('ldap')
         globalconf['order'] = ','.join(order)
-        po.set_config(globalconf)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, globalconf)

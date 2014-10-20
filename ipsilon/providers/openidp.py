@@ -148,5 +148,4 @@ class Installer(object):
         config = {'endpoint url': url,
                   'identity_url_template': '%sid/%%(username)s' % url,
                   'enabled': '1'}
-        po.set_config(config)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, config)

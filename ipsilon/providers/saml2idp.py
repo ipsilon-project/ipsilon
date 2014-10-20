@@ -307,8 +307,7 @@ class Installer(object):
                   'idp certificate file': cert.cert,
                   'idp key file': cert.key,
                   'enabled': '1'}
-        po.set_config(config)
-        po.save_plugin_config(FACILITY)
+        po.save_plugin_config(FACILITY, config)
 
         # Fixup permissions so only the ipsilon user can read these files
         files.fix_user_dirs(path, opts['system_user'])

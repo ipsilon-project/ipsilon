@@ -101,5 +101,4 @@ class Installer(InfoProviderInstaller):
             order = []
         order.append('nss')
         globalconf['order'] = ','.join(order)
-        po.set_config(globalconf)
-        po.save_plugin_config(self.facility)
+        po.save_plugin_config(self.facility, globalconf)
