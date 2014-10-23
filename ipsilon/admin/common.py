@@ -21,6 +21,7 @@ import cherrypy
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util import config as pconfig
 
 
 class AdminPage(Page):
@@ -46,33 +47,13 @@ class AdminPluginConfig(AdminPage):
         self.menu = [parent]
         self.back = parent.url
 
-        # Get the defaults
-        options = po.get_config_desc()
-        if options is None:
-            options = dict()
-
-        self.options_order = []
-        if hasattr(po, 'conf_opt_order'):
-            self.options_order = po.conf_opt_order
-
-        # append any undefined options
-        add = []
-        for k in options.keys():
-            if k not in self.options_order:
-                add.append(k)
-        if len(add):
-            add.sort()
-            for k in add:
-                self.options_order.append(k)
-
     def root_with_msg(self, message=None, message_type=None):
         return self._template('admin/plugin_config.html', title=self.title,
                               menu=self.menu, action=self.url, back=self.back,
                               message=message, message_type=message_type,
                               name='admin_%s_%s_form' % (self.facility,
                                                          self._po.name),
-                              options_order=self.options_order,
-                              plugin=self._po)
+                              config=self._po.get_config_obj())
 
     @admin_protect
     def GET(self, *args, **kwargs):
@@ -83,31 +64,46 @@ class AdminPluginConfig(AdminPage):
 
         message = "Nothing was modified."
         message_type = "info"
-        new_values = dict()
+        new_db_values = dict()
 
-        # Get the defaults
-        options = self._po.get_config_desc()
-        if options is None:
-            options = dict()
+        conf = self._po.get_config_obj()
 
-        for key, value in kwargs.iteritems():
-            if key in options:
-                if value != self._po.get_config_value(key):
-                    cherrypy.log.error("Storing [%s]: %s = %s" %
-                                       (self._po.name, key, value))
-                    new_values[key] = value
+        for name, option in conf.iteritems():
+            if name in kwargs:
+                value = kwargs[name]
+                if isinstance(option, pconfig.List):
+                    value = [x.strip() for x in value.split('\n')]
+                elif isinstance(option, pconfig.Condition):
+                    value = True
+            else:
+                if isinstance(option, pconfig.Condition):
+                    value = False
+                elif isinstance(option, pconfig.Choice):
+                    value = list()
+                    for a in option.get_allowed():
+                        aname = '%s_%s' % (name, a)
+                        if aname in kwargs:
+                            value.append(a)
+                else:
+                    continue
 
-        if len(new_values) != 0:
+            if value != option.get_value():
+                cherrypy.log.error("Storing [%s]: %s = %s" %
+                                   (self._po.name, name, value))
+            option.set_value(value)
+            new_db_values[name] = option.export_value()
+
+        if len(new_db_values) != 0:
             # First we try to save in the database
             try:
-                self._po.save_plugin_config(self.facility, new_values)
+                self._po.save_plugin_config(self.facility, new_db_values)
                 message = "New configuration saved."
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
                 message = "Failed to save data!"
                 message_type = "error"
 
-            # And only if it succeeds we change the live object
+            # Then refresh the actual objects
             self._po.refresh_plugin_config(self.facility)
 
         return self.root_with_msg(message=message,
@@ -210,7 +206,7 @@ class AdminPlugins(AdminPage):
         po.name = "global"
         globalconf = dict()
         globalconf['order'] = ','.join(names)
-        po.set_config(globalconf)
+        po.import_config(globalconf)
         po.save_plugin_config(self.facility)
 
     def reorder_plugins(self, names):

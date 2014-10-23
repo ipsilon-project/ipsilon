@@ -5,14 +5,15 @@
 # See the file named COPYING for the project license
 
 from ipsilon.util.log import Log
-from ipsilon.util.plugin import PluginLoader, PluginObject
-from ipsilon.util.plugin import PluginInstaller
+from ipsilon.util.plugin import PluginInstaller, PluginLoader
+from ipsilon.util.plugin import PluginObject, PluginConfig
 
 
-class InfoProviderBase(PluginObject, Log):
+class InfoProviderBase(PluginConfig, PluginObject):
 
     def __init__(self):
-        super(InfoProviderBase, self).__init__()
+        PluginConfig.__init__(self)
+        PluginObject.__init__(self)
         self._site = None
         self.is_enabled = False
 
@@ -29,7 +30,7 @@ class InfoProviderBase(PluginObject, Log):
 
         # configure self
         if self.name in plugins['config']:
-            self.set_config(plugins['config'][self.name])
+            self.import_config(plugins['config'][self.name])
 
         plugins['enabled'].append(self)
         self.is_enabled = True

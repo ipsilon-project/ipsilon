@@ -7,6 +7,7 @@ from ipsilon.info.common import InfoMapping
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util import config as pconfig
 import cherrypy
 
 from fedora.client.fasproxy import FasProxyClient
@@ -112,41 +113,33 @@ class LoginManager(LoginManagerBase):
         self.description = """
 Form based login Manager that uses the Fedora Authentication Server
 """
-        self._options = {
-            'help text': [
-                """ The text shown to guide the user at login time. """,
-                'string',
-                'Login wth your FAS credentials'
-            ],
-            'username text': [
-                """ The text shown to ask for the username in the form. """,
-                'string',
-                'FAS Username'
-            ],
-            'password text': [
-                """ The text shown to ask for the password in the form. """,
-                'string',
-                'Password'
-            ],
-            'FAS url': [
-                """ The FAS Url. """,
-                'string',
-                'https://admin.fedoraproject.org/accounts/'
-            ],
-            'FAS Proxy client user Agent': [
-                """ The User Agent presented to the FAS Server. """,
-                'string',
-                'Ipsilon v1.0'
-            ],
-            'FAS Insecure Auth': [
-                """ If 'YES' skips FAS server cert verification. """,
-                'string',
-                ''
-            ],
-        }
-        self.conf_opt_order = ['FAS url', 'FAS Proxy client user Agent',
-                               'FAS Insecure Auth', 'username text',
-                               'password text', 'help text']
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'FAS url',
+                'The FAS Url.',
+                'https://admin.fedoraproject.org/accounts/'),
+            pconfig.String(
+                'FAS Proxy client user Agent',
+                'The User Agent presented to the FAS Server.',
+                'Ipsilon v1.0'),
+            pconfig.Condition(
+                'FAS Insecure Auth',
+                'If checked skips FAS server cert verification.',
+                False),
+            pconfig.String(
+                'username text',
+                'Text used to ask for the username at login time.',
+                'FAS Username'),
+            pconfig.String(
+                'password text',
+                'Text used to ask for the password at login time.',
+                'Password'),
+            pconfig.String(
+                'help text',
+                'Text used to guide the user at login time.',
+                'Login with your FAS credentials')
+        )
 
     @property
     def help_text(self):

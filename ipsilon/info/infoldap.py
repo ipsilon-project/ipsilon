@@ -8,7 +8,7 @@ from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
 from ipsilon.info.common import InfoMapping
 from ipsilon.util.plugin import PluginObject
-from ipsilon.util.log import Log
+from ipsilon.util import config as pconfig
 import ldap
 
 
@@ -27,7 +27,7 @@ ldap_mapping = {
 }
 
 
-class InfoProvider(InfoProviderBase, Log):
+class InfoProvider(InfoProviderBase):
 
     def __init__(self):
         super(InfoProvider, self).__init__()
@@ -36,34 +36,29 @@ class InfoProvider(InfoProviderBase, Log):
         self.name = 'ldap'
         self.description = """
 Info plugin that uses LDAP to retrieve user data. """
-        self._options = {
-            'server url': [
-                """ The LDAP server url """,
-                'string',
-                'ldap://example.com'
-            ],
-            'tls': [
-                " What TLS level show be required " +
-                "(Demand, Allow, Try, Never, NoTLS) ",
-                'string',
-                'Demand'
-            ],
-            'bind dn': [
-                """ User DN to bind as, if empty uses anonymous bind. """,
-                'string',
-                'uid=ipsilon,ou=People,dc=example,dc=com'
-            ],
-            'bind password': [
-                """ Password to use for bind operation """,
-                'string',
-                'Password'
-            ],
-            'user dn template': [
-                """ Template to turn username into DN. """,
-                'string',
-                'uid=%(username)s,ou=People,dc=example,dc=com'
-            ],
-        }
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'server url',
+                'The LDAP server url.',
+                'ldap://example.com'),
+            pconfig.Template(
+                'user dn template',
+                'Template to turn username into DN.',
+                'uid=%(username)s,ou=People,dc=example,dc=com'),
+            pconfig.Pick(
+                'tls',
+                'What TLS level show be required',
+                ['Demand', 'Allow', 'Try', 'Never', 'NoTLS'],
+                'Demand'),
+            pconfig.String(
+                'bind dn',
+                'DN to bind as, if empty uses anonymous bind.',
+                'uid=ipsilon,ou=People,dc=example,dc=com'),
+            pconfig.String(
+                'bind password',
+                'Password to use for bind operation'),
+        )
 
     @property
     def server_url(self):

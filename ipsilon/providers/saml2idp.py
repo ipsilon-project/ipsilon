@@ -27,6 +27,7 @@ from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util import config as pconfig
 import cherrypy
 import lasso
 import os
@@ -126,48 +127,47 @@ class IdpProvider(ProviderBase):
         self.description = """
 Provides SAML 2.0 authentication infrastructure. """
 
-        self._options = {
-            'idp storage path': [
-                """ Path to data storage accessible by the IdP """,
-                'string',
-                '/var/lib/ipsilon/saml2'
-            ],
-            'idp metadata file': [
-                """ The IdP Metadata file genearated at install time. """,
-                'string',
-                'metadata.xml'
-            ],
-            'idp certificate file': [
-                """ The IdP PEM Certificate genearated at install time. """,
-                'string',
-                'certificate.pem'
-            ],
-            'idp key file': [
-                """ The IdP Certificate Key genearated at install time. """,
-                'string',
-                'certificate.key'
-            ],
-            'allow self registration': [
-                """ Allow authenticated users to register applications. """,
-                'boolean',
-                True
-            ],
-            'default allowed nameids': [
-                """Default Allowed NameIDs for Service Providers. """,
-                'list',
-                ['persistent', 'transient', 'email', 'kerberos', 'x509']
-            ],
-            'default nameid': [
-                """Default NameID used by Service Providers. """,
-                'string',
-                'persistent'
-            ],
-            'default email domain': [
-                """Default email domain, for users missing email property.""",
-                'string',
-                'example.com'
-            ]
-        }
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'idp storage path',
+                'Path to data storage accessible by the IdP.',
+                '/var/lib/ipsilon/saml2'),
+            pconfig.String(
+                'idp metadata file',
+                'The IdP Metadata file genearated at install time.',
+                'metadata.xml'),
+            pconfig.String(
+                'idp certificate file',
+                'The IdP PEM Certificate genearated at install time.',
+                'certificate.pem'),
+            pconfig.String(
+                'idp key file',
+                'The IdP Certificate Key genearated at install time.',
+                'certificate.key'),
+            pconfig.Condition(
+                'allow self registration',
+                'Allow authenticated users to register applications.',
+                True),
+            pconfig.Choice(
+                'default allowed nameids',
+                'Default Allowed NameIDs for Service Providers.',
+                metadata.SAML2_NAMEID_MAP.keys(),
+                ['persistent', 'transient', 'email', 'kerberos', 'x509']),
+            pconfig.Pick(
+                'default nameid',
+                'Default NameID used by Service Providers.',
+                metadata.SAML2_NAMEID_MAP.keys(),
+                'persistent'),
+            pconfig.String(
+                'default email domain',
+                'Used for users missing the email property.',
+                'example.com'),
+            pconfig.Condition(
+                'enabled',
+                'Whether the SAML IDP is enabled',
+                False)
+        )
         if cherrypy.config.get('debug', False):
             import logging
             import sys

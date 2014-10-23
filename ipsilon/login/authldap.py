@@ -6,6 +6,7 @@ from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.log import Log
+from ipsilon.util import config as pconfig
 from ipsilon.info.infoldap import InfoProvider as LDAPInfo
 import ldap
 
@@ -107,47 +108,38 @@ class LoginManager(LoginManagerBase):
         self.description = """
 Form based login Manager that uses a simple bind LDAP operation to perform
 authentication. """
-        self._options = {
-            'help text': [
-                """ The text shown to guide the user at login time. """,
-                'string',
-                'Insert your Username and Password and then submit.'
-            ],
-            'username text': [
-                """ The text shown to ask for the username in the form. """,
-                'string',
-                'Username'
-            ],
-            'password text': [
-                """ The text shown to ask for the password in the form. """,
-                'string',
-                'Password'
-            ],
-            'server url': [
-                """ The LDAP server url """,
-                'string',
-                'ldap://example.com'
-            ],
-            'tls': [
-                " What TLS level show be required " +
-                "(Demand, Allow, Try, Never, NoTLS) ",
-                'string',
-                'Demand'
-            ],
-            'bind dn template': [
-                """ Template to turn username into DN. """,
-                'string',
-                'uid=%(username)s,ou=People,dc=example,dc=com'
-            ],
-            'get user info': [
-                """ Get user info via ldap directly after auth (Yes/No) """,
-                'string',
-                'Yes'
-            ],
-        }
-        self.conf_opt_order = ['server url', 'bind dn template',
-                               'get user info', 'tls', 'username text',
-                               'password text', 'help text']
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'server url',
+                'The LDAP server url.',
+                'ldap://example.com'),
+            pconfig.Template(
+                'bind dn template',
+                'Template to turn username into DN.',
+                'uid=%(username)s,ou=People,dc=example,dc=com'),
+            pconfig.Condition(
+                'get user info',
+                'Get user info via ldap using user credentials',
+                True),
+            pconfig.Pick(
+                'tls',
+                'What TLS level show be required',
+                ['Demand', 'Allow', 'Try', 'Never', 'NoTLS'],
+                'Demand'),
+            pconfig.String(
+                'username text',
+                'Text used to ask for the username at login time.',
+                'Username'),
+            pconfig.String(
+                'password text',
+                'Text used to ask for the password at login time.',
+                'Password'),
+            pconfig.String(
+                'help text',
+                'Text used to guide the user at login time.',
+                'Provide your Username and Password')
+        )
 
     @property
     def help_text(self):

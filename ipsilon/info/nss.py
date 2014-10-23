@@ -25,6 +25,7 @@ class InfoProvider(InfoProviderBase):
         self.mapper = InfoMapping()
         self.mapper.set_mapping(posix_map)
         self.name = 'nss'
+        self.new_config(self.name)
 
     def _get_posix_user(self, user):
         p = pwd.getpwnam(user)

@@ -19,8 +19,8 @@
 
 from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
-from ipsilon.util.plugin import PluginLoader, PluginObject
-from ipsilon.util.plugin import PluginInstaller
+from ipsilon.util.plugin import PluginInstaller, PluginLoader
+from ipsilon.util.plugin import PluginObject, PluginConfig
 from ipsilon.info.common import Info
 from ipsilon.util.cookies import SecureCookie
 import cherrypy
@@ -29,10 +29,11 @@ import cherrypy
 USERNAME_COOKIE = 'ipsilon_default_username'
 
 
-class LoginManagerBase(PluginObject):
+class LoginManagerBase(PluginConfig, PluginObject):
 
     def __init__(self):
-        super(LoginManagerBase, self).__init__()
+        PluginConfig.__init__(self)
+        PluginObject.__init__(self)
         self._site = None
         self.path = '/'
         self.next_login = None
@@ -126,7 +127,7 @@ class LoginManagerBase(PluginObject):
 
         # configure self
         if self.name in plugins['config']:
-            self.set_config(plugins['config'][self.name])
+            self.import_config(plugins['config'][self.name])
 
         # and add self to the root
         root = plugins['root']

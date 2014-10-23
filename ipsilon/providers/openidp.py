@@ -9,6 +9,7 @@ from ipsilon.providers.common import FACILITY
 from ipsilon.providers.openid.auth import OpenID
 from ipsilon.providers.openid.extensions.common import LoadExtensions
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util import config as pconfig
 from ipsilon.info.common import InfoMapping
 
 from openid.server.server import Server
@@ -24,42 +25,41 @@ class IdpProvider(ProviderBase):
         self.page = None
         self.server = None
         self.basepath = None
-        self.extensions = None
+        self.extensions = LoadExtensions()
+        print self.extensions.available()
+        print self.extensions.available().keys()
         self.description = """
 Provides OpenID 2.0 authentication infrastructure. """
 
-        self._options = {
-            'default email domain': [
-                """Default email domain, for users missing email property.""",
-                'string',
-                'example.com'
-            ],
-            'endpoint url': [
-                """The Absolute URL of the OpenID provider""",
-                'string',
-                'http://localhost:8080/idp/openid/'
-            ],
-            'identity url template': [
-                """The templated URL where identities are exposed.""",
-                'string',
-                'http://localhost:8080/idp/openid/id/%(username)s'
-            ],
-            'trusted roots': [
-                """List of trusted relying parties.""",
-                'list',
-                []
-            ],
-            'untrusted roots': [
-                """List of untrusted relying parties.""",
-                'list',
-                []
-            ],
-            'enabled extensions': [
-                """List of enabled extensions""",
-                'list',
-                []
-            ],
-        }
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'default email domain',
+                'Used for users missing the email property.',
+                'example.com'),
+            pconfig.String(
+                'endpoint url',
+                'The Absolute URL of the OpenID provider',
+                'http://localhost:8080/idp/openid/'),
+            pconfig.Template(
+                'identity url template',
+                'The templated URL where identities are exposed.',
+                'http://localhost:8080/idp/openid/id/%(username)s'),
+            pconfig.List(
+                'trusted roots',
+                'List of trusted relying parties.'),
+            pconfig.List(
+                'untrusted roots',
+                'List of untrusted relying parties.'),
+            pconfig.Choice(
+                'enabled extensions',
+                'Choose the extensions to enable',
+                self.extensions.available().keys()),
+            pconfig.Condition(
+                'enabled',
+                'Whether the OpenID IDP is enabled',
+                False)
+        )
 
     @property
     def endpoint_url(self):
@@ -112,11 +112,10 @@ Provides OpenID 2.0 authentication infrastructure. """
 
     def init_idp(self):
         self.server = Server(MemoryStore(), op_endpoint=self.endpoint_url)
-        loader = LoadExtensions(self.enabled_extensions)
-        self.extensions = loader.get_extensions()
 
     def on_enable(self):
         self.init_idp()
+        self.extensions.enable(self._config['enabled extensions'].get_value())
 
 
 class Installer(object):

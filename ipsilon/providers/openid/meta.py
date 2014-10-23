@@ -42,7 +42,7 @@ class XRDSHandler(MetaHandler):
             'http://specs.openid.net/auth/2.0/server',
             'http://openid.net/server/1.0',
         ]
-        for _, e in self.cfg.extensions.items():
+        for _, e in self.cfg.extensions.available().items():
             types.extend(e.get_type_uris())
 
         return self.reply(types=types,
@@ -65,7 +65,7 @@ class UserXRDSHandler(XRDSHandler):
                 'http://specs.openid.net/auth/2.0/signon',
                 'http://openid.net/signon/1.0',
             ]
-            for _, e in self.cfg.extensions.items():
+            for _, e in self.cfg.extensions.available().items():
                 types.extend(e.get_type_uris())
 
             return self.reply(types=types,

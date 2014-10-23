@@ -84,6 +84,7 @@ class LoginManager(LoginManagerBase):
         self.description = """
 Kereros Negotiate authentication plugin. Relies on the mod_auth_kerb apache
 plugin for actual authentication. """
+        self.new_config(self.name)
 
     def get_tree(self, site):
         self.page = Krb(site, self)

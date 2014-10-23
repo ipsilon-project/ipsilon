@@ -168,7 +168,7 @@ class AuthenticateRequest(ProviderPageBase):
                 "Trust Root": request.trust_root,
             }
             userattrs = us.get_user_attrs()
-            for n, e in self.cfg.extensions.items():
+            for n, e in self.cfg.extensions.available().items():
                 data = e.get_display_data(request, userattrs)
                 self.debug('%s returned %s' % (n, repr(data)))
                 for key, value in data.items():
@@ -194,7 +194,7 @@ class AuthenticateRequest(ProviderPageBase):
             claimed_id=identity_url
         )
         userattrs = session.get_user_attrs()
-        for _, e in self.cfg.extensions.items():
+        for _, e in self.cfg.extensions.available().items():
             resp = e.get_response(request, userattrs)
             if resp is not None:
                 response.addExtension(resp)

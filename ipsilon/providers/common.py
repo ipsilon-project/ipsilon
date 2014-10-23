@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.util.log import Log
-from ipsilon.util.plugin import PluginLoader, PluginObject
-from ipsilon.util.plugin import PluginInstaller
+from ipsilon.util.plugin import PluginInstaller, PluginLoader
+from ipsilon.util.plugin import PluginObject, PluginConfig
 from ipsilon.util.page import Page
 import cherrypy
 
@@ -49,10 +49,11 @@ class InvalidRequest(ProviderException):
         self._debug(message)
 
 
-class ProviderBase(PluginObject):
+class ProviderBase(PluginConfig, PluginObject):
 
     def __init__(self, name, path):
-        super(ProviderBase, self).__init__()
+        PluginConfig.__init__(self)
+        PluginObject.__init__(self)
         self.name = name
         self.path = path
         self.tree = None
@@ -74,14 +75,14 @@ class ProviderBase(PluginObject):
         # configure self
         plugins = site[FACILITY]
         if self.name in plugins['config']:
-            self.set_config(plugins['config'][self.name])
+            self.import_config(plugins['config'][self.name])
 
         # init pages and admin interfaces
         self.tree = self.get_tree(site)
 
         self._debug('IdP Provider registered: %s' % self.name)
 
-        if self.get_config_value('enabled') == '1':
+        if self.get_config_value('enabled') is True:
             # and enable self
             self._enable(site)
 
@@ -97,7 +98,7 @@ class ProviderBase(PluginObject):
             return
 
         self._enable(site)
-        self.set_config_value('enabled', '1')
+        self.set_config_value('enabled', True)
         self.save_plugin_config(FACILITY)
 
     def disable(self, site):
@@ -109,7 +110,7 @@ class ProviderBase(PluginObject):
         root.del_subtree(self.name)
 
         self.is_enabled = False
-        self.set_config_value('enabled', '0')
+        self.set_config_value('enabled', False)
         self.save_plugin_config(FACILITY)
         self._debug('IdP Provider disabled: %s' % self.name)
 

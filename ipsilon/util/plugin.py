@@ -21,6 +21,7 @@ import os
 import imp
 import cherrypy
 import inspect
+from ipsilon.util.config import Config
 from ipsilon.util.data import AdminStore
 from ipsilon.util.log import Log
 
@@ -112,82 +113,24 @@ class PluginObject(Log):
     def __init__(self):
         self.name = None
         self._config = None
-        self._options = None
         self._data = AdminStore()
 
-    def get_config_desc(self, name=None):
-        """ The configuration description is a dictionary that provides
-            A description of the supported configuration options, as well
-            as the default configuration option values.
-            The key is the option name, the value is an array of 3 elements:
-             - description
-             - option type
-             - default value
-        """
-        if name is None:
-            return self._options
-
-        opt = self._options.get(name, None)
-        if opt is None:
-            return ''
-        return opt[0]
-
-    def _value_to_list(self, name):
-        if name not in self._config:
-            return
-        value = self._config[name]
-        if type(value) is list:
-            return
-        vlist = [x.strip() for x in value.split(',')]
-        self._config[name] = vlist
-
-    def set_config(self, config):
+    def import_config(self, config):
         self._config = config
-        if self._config is None:
-            return
-        if self._options:
-            for name, opt in self._options.iteritems():
-                if opt[1] == 'list':
-                    self._value_to_list(name)
 
-    def get_config_value(self, name):
-        value = None
-        if self._config:
-            value = self._config.get(name, None)
-        if value is None:
-            if self._options:
-                opt = self._options.get(name, None)
-                if opt:
-                    value = opt[2]
-
-        if cherrypy.config.get('debug', False):
-            cherrypy.log('[%s] %s: %s' % (self.name, name, value))
-
-        return value
-
-    def set_config_value(self, option, value):
-        if not self._config:
-            self._config = dict()
-        self._config[option] = value
-        if self._options and option in self._options:
-            if self._options[option][1] == 'list':
-                self._value_to_list(option)
+    def export_config(self):
+        return self._config
 
     def get_plugin_config(self, facility):
         return self._data.load_options(facility, self.name)
 
     def refresh_plugin_config(self, facility):
         config = self.get_plugin_config(facility)
-        self.set_config(config)
+        self.import_config(config)
 
     def save_plugin_config(self, facility, config=None):
         if config is None:
-            config = self._config
-        config = config.copy()
-
-        for key, value in config.items():
-            if type(value) is list:
-                config[key] = ','.join(value)
+            config = self.export_config()
 
         self._data.save_options(facility, self.name, config)
 
@@ -209,3 +152,41 @@ class PluginObject(Log):
 
     def wipe_data(self):
         self._data.wipe_data(self.name)
+
+
+class PluginConfig(Log):
+
+    def __init__(self):
+        self._config = None
+
+    def new_config(self, name, *config_args):
+        self._config = Config(name, *config_args)
+
+    def get_config_obj(self):
+        if self._config is None:
+            raise AttributeError('Config not initialized')
+        return self._config
+
+    def import_config(self, config):
+        if not self._config:
+            raise AttributeError('Config not initialized, cannot import')
+
+        for key, value in config.iteritems():
+            if key in self._config:
+                self._config[key].import_value(str(value))
+
+    def export_config(self):
+        config = dict()
+        for name, option in self._config.iteritems():
+            config[name] = option.export_value()
+        return config
+
+    def get_config_value(self, name):
+        if not self._config:
+            raise AttributeError('Config not initialized')
+        return self._config[name].get_value()
+
+    def set_config_value(self, name, value):
+        if not self._config:
+            raise AttributeError('Config not initialized')
+        return self._config[name].set_value(value)

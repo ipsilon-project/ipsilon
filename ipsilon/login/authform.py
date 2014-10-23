@@ -21,6 +21,7 @@ from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.user import UserSession
+from ipsilon.util import config as pconfig
 from string import Template
 import cherrypy
 import subprocess
@@ -54,24 +55,21 @@ class LoginManager(LoginManagerBase):
         self.description = """
 Form based login Manager. Relies on mod_intercept_form_submit plugin for
  actual authentication. """
-        self._options = {
-            'help text': [
-                """ The text shown to guide the user at login time. """,
-                'string',
-                'Insert your Username and Password and then submit.'
-            ],
-            'username text': [
-                """ The text shown to ask for the username in the form. """,
-                'string',
-                'Username'
-            ],
-            'password text': [
-                """ The text shown to ask for the password in the form. """,
-                'string',
-                'Password'
-            ],
-        }
-        self.conf_opt_order = ['username text', 'password text', 'help text']
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'username text',
+                'Text used to ask for the username at login time.',
+                'Username'),
+            pconfig.String(
+                'password text',
+                'Text used to ask for the password at login time.',
+                'Password'),
+            pconfig.String(
+                'help text',
+                'Text used to guide the user at login time.',
+                'Insert your Username and Password and then submit.')
+        )
 
     @property
     def help_text(self):

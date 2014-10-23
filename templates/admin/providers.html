@@ -28,7 +28,7 @@
               <p class="text-info"><a href="{{ baseurl }}/disable/{{ p }}">Disable</a></p>
           </div>
           <div class="col-md-4 col-sm-4 col-xs-12">
-            {%- if available[p].get_config_desc() %}
+            {%- if available[p].get_config_obj() %}
               <p class="text-primary"><a href="{{ baseurl }}/{{ p }}">Configure</a></p>
             {% endif %}
           </div>
@@ -54,7 +54,7 @@
               <p class="text-info"><a href="{{ baseurl }}/enable/{{ p }}">Enable</a></p>
           </div>
           <div class="col-md-4 col-sm-4 col-xs-12">
-            {%- if available[p].get_config_desc() %}
+            {%- if available[p].get_config_obj() %}
               <p class="text-muted">Configure</p>
             {% endif %}
           </div>

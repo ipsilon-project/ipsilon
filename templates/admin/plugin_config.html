@@ -19,18 +19,59 @@
 
     <div id="options">
         <form class="form-horizontal" role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
-
-        {% for o in options_order %}
+        {% for k, v in config.iteritems() %}
             <div class="form-group">
-              <label class="col-sm-2" for="{{ o }}">{{ o }}:</label>
+              <label class="col-sm-2" for="{{ v.name }}">{{ v.name }}:</label>
               <div class="col-sm-10">
-              {% set val = plugin.get_config_value(o) %}
-              {% if val is string %}
-                <input type="text" class="form-control" name="{{ o }}" value="{{ val }}">
-              {% else %}
-                <input type="text" class="form-control" name="{{ o }}" value="{{ val|join(', ') }}">
-              {% endif %}
-                <span class="help-block">{{ plugin.get_config_desc(o) }}</span>
+              {%- set value = v.get_value() -%}
+              {% if v.__class__.__name__ in ['String', 'Template'] -%}
+                <input type="text" class="form-control" name="{{ v.name }}"
+                  {%- if value %}
+                    value="{{ value }}"
+                  {%- endif -%}
+                >
+              {% elif v.__class__.__name__ == 'List' -%}
+                <textarea class="form-control" name="{{ v.name }}">
+                  {%- if value %}
+                    {{- value|join('\n') -}}
+                  {%- endif -%}
+                </textarea>
+              {% elif v.__class__.__name__ == 'Choice' -%}
+                {% set entries = v.get_allowed() -%}
+                <div class="row">
+                {% for e in entries -%}
+                  <div class="col-md-4">
+                    <input type="checkbox" name="{{ v.name }}_{{ e }}"
+                      {%- if value and e in value %}
+                        checked="true"
+                      {%- endif -%}
+                    >&nbsp;{{ e }}
+                  </div>
+                {% endfor %}
+                </div>
+              {% elif v.__class__.__name__ == 'Pick' -%}
+                {% set entries = v.get_allowed() -%}
+                <div class="row">
+                {% for e in entries -%}
+                  <div class="col-md-4">
+                    <input type="radio" name="{{ v.name }}" value="{{ e }}"
+                      {%- if e == value %}
+                        checked="true"
+                      {%- endif -%}
+                    >&nbsp;{{ e }}
+                  </div>
+                {% endfor %}
+                </div>
+              {% elif v.__class__.__name__ == 'Condition' -%}
+                <input type="checkbox" name="{{ v.name }}"
+                  {%- if value %}
+                    checked="true"
+                  {% endif -%}
+                >
+              {% else -%}
+                {{ v.__class__.__name__ }}
+              {% endif -%}
+                <span class="help-block">{{ v.description }}</span>
               </div>
             </div>
             <hr>

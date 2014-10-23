@@ -20,6 +20,7 @@
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util import config as pconfig
 import cherrypy
 
 
@@ -63,23 +64,24 @@ class LoginManager(LoginManagerBase):
         self.page = None
         self.description = """
 Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
-        self._options = {
-            'help text': [
-                """ The text shown to guide the user at login time. """,
-                'string',
-                'Insert your Username and Password and then submit.'
-            ],
-            'username text': [
-                """ The text shown to ask for the username in the form. """,
-                'string',
-                'Username'
-            ],
-            'password text': [
-                """ The text shown to ask for the password in the form. """,
-                'string',
-                'Password'
-            ],
-        }
+        self.new_config(
+            self.name,
+            pconfig.String(
+                'username text',
+                'Text used to ask for the username at login time.',
+                'Username'),
+            pconfig.String(
+                'password text',
+                'Text used to ask for the password at login time.',
+                'Password'),
+            pconfig.String(
+                'help text',
+                'Text used to guide the user at login time.',
+                'DISABLE IN PRODUCTION, USE ONLY FOR TEST ' +
+                'Use any username they are all valid, "admin" gives ' +
+                'administrative powers. ' +
+                'Use the fixed password "ipsilon" for any user')
+        )
 
     @property
     def help_text(self):

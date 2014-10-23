@@ -165,7 +165,7 @@ class List(Option):
 
     def export_value(self):
         if self._assigned_value:
-            return ', '.join(self._assigned_value)
+            return ','.join(self._assigned_value)
         return None
 
     def import_value(self, value):
@@ -205,19 +205,16 @@ class Choice(Option):
     def set_value(self, value):
         if type(value) is not list:
             value = [value]
+        self._assigned_value = list()
         for val in value:
-            if type(val) is not tuple:
-                val = (val, True)
-            if val[0] not in self._allowed_values:
+            if val not in self._allowed_values:
                 raise ValueError(
-                    'Value "%s" not allowed [%s]' % (val[0],
+                    'Value "%s" not allowed [%s]' % (val,
                                                      self._allowed_values))
-            if val[1] is True:
-                if val[0] not in self._assigned_value:
-                    self._assigned_value.append(val[0])
-            else:
-                if val[0] in self._assigned_value:
-                    self._assigned_value.remove(val[0])
+            self._assigned_value.append(val)
+
+        if not self._assigned_value:
+            self._assigned_value = None
 
     def unset_value(self, value):
         if type(value) is str:
@@ -236,11 +233,14 @@ class Choice(Option):
 
     def import_value(self, value):
         enabled = [x.strip() for x in value.split(',')]
+        if enabled:
+            if self._assigned_value is None:
+                self._assigned_value = list()
         for val in enabled:
             if val not in self._allowed_values:
                 # We silently ignore invalid options on import for now
                 continue
-            self._assigned_value[val] = True
+            self._assigned_value.append(val)
 
 
 class Pick(Option):
@@ -268,30 +268,11 @@ class Pick(Option):
         self._str_import_value(value)
 
 
-class Condition(Option):
+class Condition(Pick):
 
     def __init__(self, name, description, default_value=False):
-        super(Condition, self).__init__(name, description)
-        self._default_value = default_value
-
-    def set_value(self, value):
-        if value is True:
-            self._assigned_value = True
-        elif value is False:
-            self._assigned_value = False
-        else:
-            raise ValueError('Value must be True or False, got %s' % value)
-
-    def export_value(self):
-        if self._assigned_value is True:
-            return '1'
-        elif self._assigned_value is False:
-            return '0'
-        else:
-            return None
+        super(Condition, self).__init__(name, description,
+                                        [True, False], default_value)
 
     def import_value(self, value):
-        if value in ['1', 'YES']:
-            self._assigned_value = True
-        else:
-            self._assigned_value = False
+        self._assigned_value = value == 'True'
