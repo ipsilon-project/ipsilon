@@ -3,6 +3,7 @@
 # Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
 
 
+from ipsilon.info.common import InfoMapping
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
@@ -28,8 +29,22 @@ try:
 except ImportError:
     CLA_GROUPS = dict()
 
+fas_mapping = {
+    'username': 'nickname',
+    'telephone': 'phone',
+    'country_code': 'country',
+    'human_name': 'fullname',
+    'email': 'email',
+    'timezone': 'timezone',
+}
+
 
 class FAS(LoginFormBase):
+
+    def __init__(self, site, mgr, page):
+        super(FAS, self).__init__(site, mgr, page)
+        self.mapper = InfoMapping()
+        self.mapper.set_mapping(fas_mapping)
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -66,12 +81,11 @@ class FAS(LoginFormBase):
         return self._template(self.formtemplate, **context)
 
     def make_userdata(self, fas_data):
-        userdata = dict()
-        userdata['fas'] = fas_data
+        userdata, fas_extra = self.mapper.map_attrs(fas_data)
 
         # compute and store groups and cla groups
         userdata['groups'] = []
-        userdata['extras'] = {'cla': []}
+        userdata['extras'] = {'fas': fas_extra, 'cla': []}
         for group in fas_data.get('approved_memberships', {}):
             if 'name' not in group:
                 continue
