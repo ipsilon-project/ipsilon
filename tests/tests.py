@@ -18,10 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-from datetime import datetime
 import inspect
 from ipsilon.util import plugin
-import logging
 import os
 import sys
 import subprocess
