@@ -20,7 +20,6 @@
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
-import cherrypy
 import pam
 import subprocess
 
@@ -34,10 +33,10 @@ class Pam(LoginFormBase):
             ok = pam.authenticate(username, password)
 
         if ok:
-            cherrypy.log("User %s successfully authenticated." % username)
+            self.log("User %s successfully authenticated." % username)
             return username
 
-        cherrypy.log("User %s failed authentication." % username)
+        self.log("User %s failed authentication." % username)
         return None
 
     def POST(self, *args, **kwargs):
@@ -52,10 +51,10 @@ class Pam(LoginFormBase):
                 return self.lm.auth_successful(self.trans, user, 'password')
             else:
                 error = "Authentication failed"
-                cherrypy.log.error(error)
+                self.error(error)
         else:
             error = "Username or password is missing"
-            cherrypy.log.error("Error: " + error)
+            self.error("Error: " + error)
 
         context = self.create_tmpl_context(
             username=username,
