@@ -127,11 +127,18 @@ class AdminPluginsOrder(AdminPage):
     def GET(self, *args, **kwargs):
         return self.parent.root_with_msg()
 
+    def _get_enabled_by_name(self):
+        by_name = dict()
+        for p in self._site[self.facility]['available'].values():
+            if p.is_enabled:
+                by_name[p.name] = p
+        return by_name
+
     @admin_protect
     def POST(self, *args, **kwargs):
         message = "Nothing was modified."
         message_type = "info"
-        by_name = {p.name: p for p in self._site[self.facility]['enabled']}
+        by_name = self._get_enabled_by_name()
 
         if 'order' in kwargs:
             order = kwargs['order'].split(',')
@@ -214,7 +221,8 @@ class AdminPlugins(AdminPage):
         enabled = []
         if self.order:
             for plugin in plugins['enabled']:
-                enabled.append(plugin.name)
+                if plugin.is_enabled:
+                    enabled.append(plugin.name)
         else:
             for _, plugin in plugins['available'].iteritems():
                 if plugin.is_enabled:

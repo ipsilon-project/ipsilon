@@ -56,6 +56,7 @@ class ProviderBase(PluginObject):
         self.name = name
         self.path = path
         self.tree = None
+        self.is_enabled = False
 
     def on_enable(self):
         # this one does nothing
@@ -81,30 +82,23 @@ class ProviderBase(PluginObject):
         self._debug('IdP Provider registered: %s' % self.name)
 
         if self.get_config_value('enabled') == '1':
-            # and add self to the root
-            root = site[FACILITY]['root']
-            root.add_subtree(self.name, self.tree)
-            self._debug('IdP Provider enabled: %s' % self.name)
+            # and enable self
+            self._enable(site)
 
-    @property
-    def is_enabled(self):
-        if self.get_config_value('enabled') == '1':
-            return True
-        return False
+    def _enable(self, site):
+        root = site[FACILITY]['root']
+        root.add_subtree(self.name, self.tree)
+        self._debug('IdP Provider enabled: %s' % self.name)
+        self.is_enabled = True
+        self.on_enable()
 
     def enable(self, site):
         if self.is_enabled:
             return
 
-        # and add self to the root
-        root = site[FACILITY]['root']
-        root.add_subtree(self.name, self.tree)
-
+        self._enable(site)
         self.set_config_value('enabled', '1')
         self.save_plugin_config(FACILITY)
-
-        self.on_enable()
-        self._debug('IdP Provider enabled: %s' % self.name)
 
     def disable(self, site):
         if not self.is_enabled:
@@ -114,6 +108,7 @@ class ProviderBase(PluginObject):
         root = site[FACILITY]['root']
         root.del_subtree(self.name)
 
+        self.is_enabled = False
         self.set_config_value('enabled', '0')
         self.save_plugin_config(FACILITY)
         self._debug('IdP Provider disabled: %s' % self.name)

@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.util.log import Log
 from ipsilon.util.page import Page
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginLoader, PluginObject
@@ -30,7 +29,7 @@ import cherrypy
 USERNAME_COOKIE = 'ipsilon_default_username'
 
 
-class LoginManagerBase(PluginObject, Log):
+class LoginManagerBase(PluginObject):
 
     def __init__(self):
         super(LoginManagerBase, self).__init__()
@@ -38,6 +37,7 @@ class LoginManagerBase(PluginObject, Log):
         self.path = '/'
         self.next_login = None
         self.info = None
+        self.is_enabled = False
 
     def redirect_to_path(self, path):
         base = cherrypy.config.get('base.mount', "")
@@ -116,17 +116,13 @@ class LoginManagerBase(PluginObject, Log):
     def get_tree(self, site):
         raise NotImplementedError
 
-    @property
-    def is_enabled(self):
-        if self._site:
-            return self in self._site[FACILITY]['enabled']
-        return False
-
     def enable(self, site):
-        self._site = site
-        plugins = site[FACILITY]
-        if self in plugins['enabled']:
+        if self.is_enabled:
             return
+
+        if not self._site:
+            self._site = site
+        plugins = self._site[FACILITY]
 
         # configure self
         if self.name in plugins['config']:
@@ -149,16 +145,17 @@ class LoginManagerBase(PluginObject, Log):
             root.first_login = self
 
         plugins['enabled'].append(self)
+        self.is_enabled = True
         self._debug('Login plugin enabled: %s' % self.name)
 
         # Get handle of the info plugin
         self.info = root.info
 
     def disable(self, site):
-        self._site = site
-        plugins = site[FACILITY]
-        if self not in plugins['enabled']:
+        if not self.is_enabled:
             return
+
+        plugins = self._site[FACILITY]
 
         # remove self from chain
         root = plugins['root']
@@ -173,6 +170,7 @@ class LoginManagerBase(PluginObject, Log):
         self.next_login = None
 
         plugins['enabled'].remove(self)
+        self.is_enabled = False
         self._debug('Login plugin disabled: %s' % self.name)
 
 
