@@ -158,7 +158,7 @@ class Installer(InfoProviderInstaller):
 
     def __init__(self):
         super(Installer, self).__init__()
-        self.name = 'nss'
+        self.name = 'ldap'
 
     def install_args(self, group):
         group.add_argument('--info-ldap', choices=['yes', 'no'], default='no',
