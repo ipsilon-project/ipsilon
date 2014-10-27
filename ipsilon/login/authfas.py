@@ -5,7 +5,6 @@
 
 from ipsilon.info.common import InfoMapping
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import cherrypy
@@ -175,9 +174,10 @@ Form based login Manager that uses the Fedora Authentication Server
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'fas'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--fas', choices=['yes', 'no'], default='no',
@@ -188,20 +188,11 @@ class Installer(object):
             return
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'fas'
         po.wipe_data()
-
-        po.wipe_config_values(FACILITY)
+        po.wipe_config_values()
 
         # Update global config to add login plugin
-        po = PluginObject()
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('fas')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        po.is_enabled = True
+        po.save_enabled_state()

@@ -10,7 +10,7 @@ from openid_cla import cla
 
 class OpenidExtension(OpenidExtensionBase):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(OpenidExtension, self).__init__('CLAs')
         self.type_uris = [
             cla.cla_uri,

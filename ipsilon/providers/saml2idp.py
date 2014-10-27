@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderBase, ProviderPageBase
-from ipsilon.providers.common import FACILITY
 from ipsilon.providers.saml2.auth import AuthenticateRequest
 from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.provider import IdentityProvider
@@ -119,8 +118,8 @@ class SAML2(ProviderPageBase):
 
 class IdpProvider(ProviderBase):
 
-    def __init__(self):
-        super(IdpProvider, self).__init__('saml2', 'saml2')
+    def __init__(self, *pargs):
+        super(IdpProvider, self).__init__('saml2', 'saml2', *pargs)
         self.admin = None
         self.page = None
         self.idp = None
@@ -163,10 +162,6 @@ Provides SAML 2.0 authentication infrastructure. """
                 'default email domain',
                 'Used for users missing the email property.',
                 'example.com'),
-            pconfig.Condition(
-                'enabled',
-                'Whether the SAML IDP is enabled',
-                False)
         )
         if cherrypy.config.get('debug', False):
             import logging
@@ -242,7 +237,8 @@ Provides SAML 2.0 authentication infrastructure. """
         return idp
 
     def on_enable(self):
-        self.init_idp()
+        super(IdpProvider, self).on_enable()
+        self.idp = self.init_idp()
         if hasattr(self, 'admin'):
             if self.admin:
                 self.admin.add_sps()
@@ -250,9 +246,10 @@ Provides SAML 2.0 authentication infrastructure. """
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'saml2'
         self.ptype = 'provider'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--saml2', choices=['yes', 'no'], default='yes',
@@ -297,17 +294,19 @@ class Installer(object):
         meta.output(os.path.join(path, 'metadata.xml'))
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'saml2'
         po.wipe_data()
-
-        po.wipe_config_values(FACILITY)
+        po.wipe_config_values()
         config = {'idp storage path': path,
                   'idp metadata file': 'metadata.xml',
                   'idp certificate file': cert.cert,
-                  'idp key file': cert.key,
-                  'enabled': '1'}
-        po.save_plugin_config(FACILITY, config)
+                  'idp key file': cert.key}
+        po.save_plugin_config(config)
+
+        # Update global config to add login plugin
+        po.is_enabled = True
+        po.save_enabled_state()
 
         # Fixup permissions so only the ipsilon user can read these files
         files.fix_user_dirs(path, opts['system_user'])

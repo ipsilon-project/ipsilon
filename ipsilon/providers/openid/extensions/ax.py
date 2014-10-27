@@ -28,7 +28,7 @@ AP_MAP = {
 
 class OpenidExtension(OpenidExtensionBase):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(OpenidExtension, self).__init__('Attribute Exchange')
         self.type_uris = [
             ax.AXMessage.ns_uri,

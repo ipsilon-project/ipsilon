@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import cherrypy
@@ -102,9 +101,10 @@ Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'testauth'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--testauth', choices=['yes', 'no'], default='no',
@@ -114,19 +114,12 @@ class Installer(object):
         if opts['testauth'] != 'yes':
             return
 
+        print self.pargs
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'testauth'
         po.wipe_data()
 
         # Update global config to add login plugin
-        po = PluginObject()
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('testauth')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        po.is_enabled = True
+        po.save_enabled_state()

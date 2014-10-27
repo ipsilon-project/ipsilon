@@ -34,5 +34,5 @@ class Teams(OpenidExtensionBase):
 
 
 class OpenidExtension(Teams):
-    def __init__(self):
+    def __init__(self, *pargs):
         super(OpenidExtension, self).__init__('Teams')

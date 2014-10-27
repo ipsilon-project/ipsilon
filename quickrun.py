@@ -41,7 +41,7 @@ CONF_TEMPLATE="templates/install/ipsilon.conf"
 
 ADMIN_TEMPLATE='''
 CREATE TABLE login_config (name TEXT,option TEXT,value TEXT);
-INSERT INTO login_config VALUES('global', 'order', 'testauth');
+INSERT INTO login_config VALUES('global', 'enabled', 'testauth');
 '''
 
 USERS_TEMPLATE='''

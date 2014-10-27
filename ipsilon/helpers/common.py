@@ -20,8 +20,11 @@
 from ipsilon.util.plugin import PluginInstaller
 
 
+FACILITY = 'environment_helpers'
+
+
 class EnvHelpersInstall(object):
 
     def __init__(self):
-        pi = PluginInstaller(EnvHelpersInstall)
+        pi = PluginInstaller(EnvHelpersInstall, FACILITY)
         self.plugins = pi.get_plugins()

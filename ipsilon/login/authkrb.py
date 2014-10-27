@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginPageBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.user import UserSession
 from string import Template
@@ -61,8 +60,9 @@ class KrbError(LoginPageBase):
         if 'WWW-Authenticate' not in cherrypy.request.headers:
             cherrypy.response.status = 401
 
-            if self.lm.next_login:
-                return self.lm.next_login.page.root(*args, **kwargs)
+            next_login = self.lm.next_login()
+            if next_login:
+                return next_login.page.root(*args, **kwargs)
 
             conturl = '%s/login' % self.basepath
             return self._template('login/krb.html',
@@ -117,9 +117,10 @@ CONF_TEMPLATE = """
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'krb'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--krb', choices=['yes', 'no'], default='no',
@@ -152,17 +153,15 @@ class Installer(object):
             httpd_conf.write(hunk)
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'krb'
         po.wipe_data()
 
         # Update global config, put 'krb' always first
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.insert(0, 'krb')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        ph = self.pargs[0]
+        ph.refresh_enabled()
+        if 'krb' not in ph.enabled:
+            enabled = []
+            enabled.extend(ph.enabled)
+            enabled.insert(0, 'krb')
+            ph.save_enabled(enabled)

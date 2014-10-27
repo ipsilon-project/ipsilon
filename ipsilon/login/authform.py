@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.user import UserSession
 from ipsilon.util import config as pconfig
@@ -105,9 +104,10 @@ LoadModule authnz_pam_module modules/mod_authnz_pam.so
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'form'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--form', choices=['yes', 'no'], default='no',
@@ -128,21 +128,14 @@ class Installer(object):
             httpd_conf.write(hunk)
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'form'
         po.wipe_data()
-        po.wipe_config_values(FACILITY)
+        po.wipe_config_values()
 
-        # Update global config, put 'krb' always first
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('form')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        # Update global config to add login plugin
+        po.is_enabled = True
+        po.save_enabled_state()
 
         # for selinux enabled platforms, ignore if it fails just report
         try:

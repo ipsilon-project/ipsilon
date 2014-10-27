@@ -11,39 +11,12 @@ from ipsilon.util.plugin import PluginObject, PluginConfig
 
 class InfoProviderBase(PluginConfig, PluginObject):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         PluginConfig.__init__(self)
-        PluginObject.__init__(self)
-        self._site = None
-        self.is_enabled = False
+        PluginObject.__init__(self, *pargs)
 
     def get_user_attrs(self, user):
         raise NotImplementedError
-
-    def enable(self, site):
-        if self.is_enabled:
-            return
-
-        if not self._site:
-            self._site = site
-        plugins = self._site[FACILITY]
-
-        # configure self
-        if self.name in plugins['config']:
-            self.import_config(plugins['config'][self.name])
-
-        plugins['enabled'].append(self)
-        self.is_enabled = True
-        self.debug('Info plugin enabled: %s' % self.name)
-
-    def disable(self, site):
-        if not self.is_enabled:
-            return
-
-        plugins = self._site[FACILITY]
-        plugins['enabled'].remove(self)
-        self.is_enabled = False
-        self.debug('Info plugin disabled: %s' % self.name)
 
 
 class InfoMapping(Log):
@@ -96,23 +69,22 @@ class Info(Log):
     def __init__(self, site):
         self._site = site
 
-        loader = PluginLoader(Info, FACILITY, 'InfoProvider')
-        self._site[FACILITY] = loader.get_plugin_data()
-        plugins = self._site[FACILITY]
+        plugins = PluginLoader(Info, FACILITY, 'InfoProvider')
+        plugins.get_plugin_data()
+        self._site[FACILITY] = plugins
 
-        available = plugins['available'].keys()
+        available = plugins.available.keys()
         self.debug('Available info providers: %s' % str(available))
 
-        plugins['root'] = self
-        for item in plugins['whitelist']:
-            self.debug('Login plugin in whitelist: %s' % item)
-            if item not in plugins['available']:
+        for item in plugins.enabled:
+            self.debug('Login plugin in enabled list: %s' % item)
+            if item not in plugins.available:
                 self.debug('Info Plugin %s not found' % item)
                 continue
-            plugins['available'][item].enable(self._site)
+            plugins.available[item].enable()
 
     def get_user_attrs(self, user, requested=None):
-        plugins = self._site[FACILITY]['available']
+        plugins = self._site[FACILITY].available
         result = dict()
 
         for _, p in plugins.items():
@@ -146,5 +118,5 @@ class InfoProviderInstaller(object):
 class InfoProviderInstall(object):
 
     def __init__(self):
-        pi = PluginInstaller(InfoProviderInstall)
+        pi = PluginInstaller(InfoProviderInstall, FACILITY)
         self.plugins = pi.get_plugins()

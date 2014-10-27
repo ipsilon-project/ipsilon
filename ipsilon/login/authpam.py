@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import pam
@@ -120,9 +119,10 @@ for authentication. """
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'pam'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--pam', choices=['yes', 'no'], default='no',
@@ -135,25 +135,16 @@ class Installer(object):
             return
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'pam'
         po.wipe_data()
-
-        po.wipe_config_values(FACILITY)
+        po.wipe_config_values()
         config = {'service name': opts['pam_service']}
-        po.save_plugin_config(FACILITY, config)
+        po.save_plugin_config(config)
 
         # Update global config to add login plugin
-        po = PluginObject()
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('pam')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        po.is_enabled = True
+        po.save_enabled_state()
 
         # for selinux enabled platforms, ignore if it fails just report
         try:

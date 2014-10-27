@@ -10,7 +10,7 @@ from openid.extensions import sreg
 
 class OpenidExtension(OpenidExtensionBase):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(OpenidExtension, self).__init__('Simple Registration')
         self.type_uris = [
             sreg.ns_uri_1_1,

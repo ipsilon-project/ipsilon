@@ -10,7 +10,7 @@ from openid_teams import teams
 
 class OpenidExtension(Teams):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(OpenidExtension, self).__init__('Fedora Teams')
 
     def _resp(self, request, userdata):

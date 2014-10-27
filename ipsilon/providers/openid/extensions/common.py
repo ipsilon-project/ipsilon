@@ -50,22 +50,20 @@ FACILITY = 'openid_extensions'
 class LoadExtensions(Log):
 
     def __init__(self):
-        loader = PluginLoader(LoadExtensions, FACILITY, 'OpenidExtension')
-        self.plugins = loader.get_plugin_data()
+        self.plugins = PluginLoader(LoadExtensions,
+                                    FACILITY, 'OpenidExtension')
+        self.plugins.get_plugin_data()
 
-        available = self.plugins['available'].keys()
+        available = self.plugins.available.keys()
         self._debug('Available Extensions: %s' % str(available))
 
     def enable(self, enabled):
         for item in enabled:
-            if item not in self.plugins['available']:
+            if item not in self.plugins.available:
                 self.debug('<%s> not available' % item)
                 continue
             self.debug('Enable OpenId extension: %s' % item)
-            self.plugins['available'][item].enable()
+            self.plugins.available[item].enable()
 
     def available(self):
-        available = self.plugins['available']
-        if available is None:
-            available = dict()
-        return available
+        return self.plugins.available

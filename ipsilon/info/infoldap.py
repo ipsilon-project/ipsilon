@@ -29,8 +29,8 @@ ldap_mapping = {
 
 class InfoProvider(InfoProviderBase):
 
-    def __init__(self):
-        super(InfoProvider, self).__init__()
+    def __init__(self, *pargs):
+        super(InfoProvider, self).__init__(*pargs)
         self.mapper = InfoMapping()
         self.mapper.set_mapping(ldap_mapping)
         self.name = 'ldap'
@@ -151,9 +151,10 @@ Info plugin that uses LDAP to retrieve user data. """
 
 class Installer(InfoProviderInstaller):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(Installer, self).__init__()
         self.name = 'ldap'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--info-ldap', choices=['yes', 'no'], default='no',
@@ -172,10 +173,10 @@ class Installer(InfoProviderInstaller):
             return
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'ldap'
         po.wipe_data()
-        po.wipe_config_values(self.facility)
+        po.wipe_config_values()
         config = dict()
         if 'info_ldap_server_url' in opts:
             config['server url'] = opts['info_ldap_server_url']
@@ -193,15 +194,8 @@ class Installer(InfoProviderInstaller):
         elif 'ldap_bind_dn_template' in opts:
             config['user dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
-        po.save_plugin_config(self.facility, config)
+        po.save_plugin_config(config)
 
-        # Replace global config, only one plugin info can be used
-        po.name = 'global'
-        globalconf = po.get_plugin_config(self.facility)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('ldap')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(self.facility, globalconf)
+        # Update global config to add login plugin
+        po.is_enabled = True
+        po.save_enabled_state()

@@ -51,68 +51,29 @@ class InvalidRequest(ProviderException):
 
 class ProviderBase(PluginConfig, PluginObject):
 
-    def __init__(self, name, path):
+    def __init__(self, name, path, *pargs):
         PluginConfig.__init__(self)
-        PluginObject.__init__(self)
+        PluginObject.__init__(self, *pargs)
         self.name = name
+        self._root = None
         self.path = path
         self.tree = None
-        self.is_enabled = False
-
-    def on_enable(self):
-        # this one does nothing
-        # derived classes can override with custom behavior
-        return
 
     def get_tree(self, site):
         raise NotImplementedError
 
-    def register(self, site):
-        if self.tree:
-            # already registered
-            return
+    def register(self, root, site):
 
-        # configure self
-        plugins = site[FACILITY]
-        if self.name in plugins['config']:
-            self.import_config(plugins['config'][self.name])
-
+        self._root = root
         # init pages and admin interfaces
         self.tree = self.get_tree(site)
-
         self._debug('IdP Provider registered: %s' % self.name)
 
-        if self.get_config_value('enabled') is True:
-            # and enable self
-            self._enable(site)
+    def on_enable(self):
+        self._root.add_subtree(self.name, self.tree)
 
-    def _enable(self, site):
-        root = site[FACILITY]['root']
-        root.add_subtree(self.name, self.tree)
-        self._debug('IdP Provider enabled: %s' % self.name)
-        self.is_enabled = True
-        self.on_enable()
-
-    def enable(self, site):
-        if self.is_enabled:
-            return
-
-        self._enable(site)
-        self.set_config_value('enabled', True)
-        self.save_plugin_config(FACILITY)
-
-    def disable(self, site):
-        if not self.is_enabled:
-            return
-
-        # remove self to the root
-        root = site[FACILITY]['root']
-        root.del_subtree(self.name)
-
-        self.is_enabled = False
-        self.set_config_value('enabled', False)
-        self.save_plugin_config(FACILITY)
-        self._debug('IdP Provider disabled: %s' % self.name)
+    def on_disable(self):
+        self._root.del_subtree(self.name)
 
 
 class ProviderPageBase(Page):
@@ -155,21 +116,26 @@ FACILITY = 'provider_config'
 class LoadProviders(Log):
 
     def __init__(self, root, site):
-        loader = PluginLoader(LoadProviders, FACILITY, 'IdpProvider')
-        site[FACILITY] = loader.get_plugin_data()
-        providers = site[FACILITY]
+        plugins = PluginLoader(LoadProviders, FACILITY, 'IdpProvider')
+        plugins.get_plugin_data()
+        site[FACILITY] = plugins
 
-        available = providers['available'].keys()
+        available = plugins.available.keys()
         self._debug('Available providers: %s' % str(available))
 
-        providers['root'] = root
-        for item in providers['available']:
-            plugin = providers['available'][item]
-            plugin.register(site)
+        for item in plugins.available:
+            plugin = plugins.available[item]
+            plugin.register(root, site)
+
+        for item in plugins.enabled:
+            self._debug('Provider plugin in enabled list: %s' % item)
+            if item not in plugins.available:
+                continue
+            plugins.available[item].enable()
 
 
 class ProvidersInstall(object):
 
     def __init__(self):
-        pi = PluginInstaller(ProvidersInstall)
+        pi = PluginInstaller(ProvidersInstall, FACILITY)
         self.plugins = pi.get_plugins()

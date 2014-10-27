@@ -5,7 +5,6 @@
 from __future__ import absolute_import
 
 from ipsilon.providers.common import ProviderBase
-from ipsilon.providers.common import FACILITY
 from ipsilon.providers.openid.auth import OpenID
 from ipsilon.providers.openid.extensions.common import LoadExtensions
 from ipsilon.util.plugin import PluginObject
@@ -19,8 +18,8 @@ from openid.store.memstore import MemoryStore
 
 class IdpProvider(ProviderBase):
 
-    def __init__(self):
-        super(IdpProvider, self).__init__('openid', 'openid')
+    def __init__(self, *pargs):
+        super(IdpProvider, self).__init__('openid', 'openid', *pargs)
         self.mapping = InfoMapping()
         self.page = None
         self.server = None
@@ -55,10 +54,6 @@ Provides OpenID 2.0 authentication infrastructure. """
                 'enabled extensions',
                 'Choose the extensions to enable',
                 self.extensions.available().keys()),
-            pconfig.Condition(
-                'enabled',
-                'Whether the OpenID IDP is enabled',
-                False)
         )
 
     @property
@@ -99,10 +94,10 @@ Provides OpenID 2.0 authentication infrastructure. """
         # self.admin = AdminPage(site, self)
 
         # Expose OpenID presence in the root
-        headers = site[FACILITY]['root'].default_headers
+        headers = self._root.default_headers
         headers['X-XRDS-Location'] = self.endpoint_url+'XRDS'
 
-        html_heads = site[FACILITY]['root'].html_heads
+        html_heads = self._root.html_heads
         HEAD_LINK = '<link rel="%s" href="%s">'
         openid_heads = [HEAD_LINK % ('openid2.provider', self.endpoint_url),
                         HEAD_LINK % ('openid.server', self.endpoint_url)]
@@ -114,15 +109,17 @@ Provides OpenID 2.0 authentication infrastructure. """
         self.server = Server(MemoryStore(), op_endpoint=self.endpoint_url)
 
     def on_enable(self):
+        super(IdpProvider, self).on_enable()
         self.init_idp()
         self.extensions.enable(self._config['enabled extensions'].get_value())
 
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'openid'
         self.ptype = 'provider'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--openid', choices=['yes', 'no'], default='yes',
@@ -139,12 +136,14 @@ class Installer(object):
             proto, opts['hostname'], opts['instance'])
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'openid'
         po.wipe_data()
-
-        po.wipe_config_values(FACILITY)
+        po.wipe_config_values()
         config = {'endpoint url': url,
-                  'identity_url_template': '%sid/%%(username)s' % url,
-                  'enabled': '1'}
-        po.save_plugin_config(FACILITY, config)
+                  'identity_url_template': '%sid/%%(username)s' % url}
+        po.save_plugin_config(config)
+
+        # Update global config to add login plugin
+        po.is_enabled = True
+        po.save_enabled_state()

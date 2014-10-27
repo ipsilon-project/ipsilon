@@ -20,8 +20,8 @@ posix_map = {
 
 class InfoProvider(InfoProviderBase):
 
-    def __init__(self):
-        super(InfoProvider, self).__init__()
+    def __init__(self, *pargs):
+        super(InfoProvider, self).__init__(*pargs)
         self.mapper = InfoMapping()
         self.mapper.set_mapping(posix_map)
         self.name = 'nss'
@@ -75,9 +75,10 @@ class InfoProvider(InfoProviderBase):
 
 class Installer(InfoProviderInstaller):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         super(Installer, self).__init__()
         self.name = 'nss'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--info-nss', choices=['yes', 'no'], default='no',
@@ -88,18 +89,11 @@ class Installer(InfoProviderInstaller):
             return
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'nss'
         po.wipe_data()
-        po.wipe_config_values(self.facility)
+        po.wipe_config_values()
 
-        # Replace global config, only one plugin info can be used
-        po.name = 'global'
-        globalconf = po.get_plugin_config(self.facility)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('nss')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(self.facility, globalconf)
+        # Update global config to add login plugin
+        po.is_enabled = True
+        po.save_enabled_state()

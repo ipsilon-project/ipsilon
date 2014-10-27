@@ -31,7 +31,7 @@ class Plugins(object):
     def __init__(self):
         self._providers_tree = None
 
-    def _load_class(self, tree, class_type, file_name):
+    def _load_class(self, tree, class_type, file_name, *pargs):
         cherrypy.log.error('Check module %s for class %s' % (file_name,
                                                              class_type))
         name, ext = os.path.splitext(os.path.split(file_name)[-1])
@@ -47,12 +47,12 @@ class Plugins(object):
             return
 
         if hasattr(mod, class_type):
-            instance = getattr(mod, class_type)()
+            instance = getattr(mod, class_type)(*pargs)
             public_name = getattr(instance, 'name', name)
             tree[public_name] = instance
             cherrypy.log.error('Added module %s as %s' % (name, public_name))
 
-    def _load_classes(self, tree, path, class_type):
+    def _load_classes(self, tree, path, class_type, *pargs):
         files = None
         try:
             files = os.listdir(path)
@@ -62,58 +62,108 @@ class Plugins(object):
 
         for name in files:
             filename = os.path.join(path, name)
-            self._load_class(tree, class_type, filename)
+            self._load_class(tree, class_type, filename, *pargs)
 
-    def get_plugins(self, path, class_type):
+    def get_plugins(self, path, class_type, *pargs):
         plugins = dict()
-        self._load_classes(plugins, path, class_type)
+        self._load_classes(plugins, path, class_type, *pargs)
         return plugins
 
 
-class PluginLoader(object):
+class PluginLoader(Log):
 
     def __init__(self, baseobj, facility, plugin_type):
-        config = AdminStore().load_options(facility)
-        cherrypy.log('LOAD: %s\n' % repr(config))
-        whitelist = []
-        if 'global' in config:
-            sec = config['global']
-            if 'order' in sec:
-                whitelist = sec['order'].split(',')
-        if cherrypy.config.get('debug', False):
-            cherrypy.log('[%s] %s: %s' % (facility, whitelist, config))
-        if config is None:
-            config = dict()
+        self._pathname, _ = os.path.split(inspect.getfile(baseobj))
+        self.facility = facility
+        self._plugin_type = plugin_type
+        self.available = dict()
+        self.enabled = list()
+        self.__data = None
 
-        p = Plugins()
-        (pathname, dummy) = os.path.split(inspect.getfile(baseobj))
-        self._plugins = {
-            'config': config,
-            'available': p.get_plugins(pathname, plugin_type),
-            'whitelist': whitelist,
-            'enabled': []
-        }
-
-    def get_plugin_data(self):
-        return self._plugins
-
-
-class PluginInstaller(object):
-    def __init__(self, baseobj):
-        (pathname, dummy) = os.path.split(inspect.getfile(baseobj))
-        self._pathname = pathname
+    # Defer initialization or instantiating the store will fail at load
+    # time when used with Installer plugins as the cherrypy config context
+    # is created after all Installer plugins are loaded.
+    @property
+    def _data(self):
+        if not self.__data:
+            self.__data = AdminStore()
+        return self.__data
 
     def get_plugins(self):
         p = Plugins()
-        return p.get_plugins(self._pathname, 'Installer')
+        return p.get_plugins(self._pathname, self._plugin_type, self)
+
+    def refresh_enabled(self):
+        config = self._data.load_options(self.facility, name='global')
+        self.enabled = []
+        if config:
+            if 'enabled' in config:
+                self.enabled = config['enabled'].split(',')
+
+    def get_plugin_data(self):
+        self.available = self.get_plugins()
+        self.refresh_enabled()
+
+    def save_enabled(self, enabled):
+        if enabled:
+            self._data.save_options(self.facility, 'global',
+                                    {'enabled': ','.join(enabled)})
+        else:
+            self._data.delete_options(self.facility, 'global',
+                                      {'enabled': '*'})
+        self.debug('Plugin enabled state saved: %s' % enabled)
+        self.refresh_enabled()
+
+
+class PluginInstaller(PluginLoader):
+    def __init__(self, baseobj, facility):
+        super(PluginInstaller, self).__init__(baseobj, facility, 'Installer')
 
 
 class PluginObject(Log):
 
-    def __init__(self):
+    def __init__(self, plugins):
         self.name = None
         self._config = None
         self._data = AdminStore()
+        self._plugins = plugins
+        self.is_enabled = False
+
+    def on_enable(self):
+        return
+
+    def on_disable(self):
+        return
+
+    def save_enabled_state(self):
+        enabled = []
+        self._plugins.refresh_enabled()
+        enabled.extend(self._plugins.enabled)
+        if self.is_enabled:
+            if self.name not in enabled:
+                enabled.append(self.name)
+        else:
+            if self.name in enabled:
+                enabled.remove(self.name)
+        self._plugins.save_enabled(enabled)
+
+    def enable(self):
+        if self.is_enabled:
+            return
+
+        self.refresh_plugin_config()
+        self.on_enable()
+        self.is_enabled = True
+        self.debug('Plugin enabled: %s' % self.name)
+
+    def disable(self):
+        if not self.is_enabled:
+            return
+
+        self.on_disable()
+
+        self.is_enabled = False
+        self.debug('Plugin disabled: %s' % self.name)
 
     def import_config(self, config):
         self._config = config
@@ -121,18 +171,19 @@ class PluginObject(Log):
     def export_config(self):
         return self._config
 
-    def get_plugin_config(self, facility):
-        return self._data.load_options(facility, self.name)
+    def get_plugin_config(self):
+        return self._data.load_options(self._plugins.facility, self.name)
 
-    def refresh_plugin_config(self, facility):
-        config = self.get_plugin_config(facility)
-        self.import_config(config)
+    def refresh_plugin_config(self):
+        config = self.get_plugin_config()
+        if config:
+            self.import_config(config)
 
-    def save_plugin_config(self, facility, config=None):
+    def save_plugin_config(self, config=None):
         if config is None:
             config = self.export_config()
 
-        self._data.save_options(facility, self.name, config)
+        self._data.save_options(self._plugins.facility, self.name, config)
 
     def get_data(self, idval=None, name=None, value=None):
         return self._data.get_data(self.name, idval=idval, name=name,
@@ -147,8 +198,8 @@ class PluginObject(Log):
     def del_datum(self, idval):
         self._data.del_datum(self.name, idval)
 
-    def wipe_config_values(self, facility):
-        self._data.delete_options(facility, self.name, None)
+    def wipe_config_values(self):
+        self._data.delete_options(self._plugins.facility, self.name, None)
 
     def wipe_data(self):
         self._data.wipe_data(self.name)

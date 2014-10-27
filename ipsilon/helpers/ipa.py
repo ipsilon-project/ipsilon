@@ -46,7 +46,7 @@ failure (see logs) and retry.
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'ipa'
         self.ptype = 'helper'
         self.logger = None

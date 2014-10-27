@@ -3,7 +3,6 @@
 # Copyright (C) 2014  Ipsilon Contributors, see COPYING for license
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
-from ipsilon.login.common import FACILITY
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.log import Log
 from ipsilon.util import config as pconfig
@@ -176,9 +175,10 @@ authentication. """
 
 class Installer(object):
 
-    def __init__(self):
+    def __init__(self, *pargs):
         self.name = 'ldap'
         self.ptype = 'login'
+        self.pargs = pargs
 
     def install_args(self, group):
         group.add_argument('--ldap', choices=['yes', 'no'], default='no',
@@ -193,27 +193,19 @@ class Installer(object):
             return
 
         # Add configuration data to database
-        po = PluginObject()
+        po = PluginObject(*self.pargs)
         po.name = 'ldap'
         po.wipe_data()
+        po.wipe_config_values()
 
-        po.wipe_config_values(FACILITY)
         config = dict()
         if 'ldap_server_url' in opts:
             config['server url'] = opts['ldap_server_url']
         if 'ldap_bind_dn_template' in opts:
             config['bind dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
-        po.save_plugin_config(FACILITY, config)
+        po.save_plugin_config(config)
 
         # Update global config to add login plugin
-        po = PluginObject()
-        po.name = 'global'
-        globalconf = po.get_plugin_config(FACILITY)
-        if 'order' in globalconf:
-            order = globalconf['order'].split(',')
-        else:
-            order = []
-        order.append('ldap')
-        globalconf['order'] = ','.join(order)
-        po.save_plugin_config(FACILITY, globalconf)
+        po.is_enabled = True
+        po.save_enabled_state()

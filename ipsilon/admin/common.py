@@ -20,7 +20,6 @@
 import cherrypy
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
-from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 
 
@@ -96,7 +95,7 @@ class AdminPluginConfig(AdminPage):
         if len(new_db_values) != 0:
             # First we try to save in the database
             try:
-                self._po.save_plugin_config(self.facility, new_db_values)
+                self._po.save_plugin_config(new_db_values)
                 message = "New configuration saved."
                 message_type = "success"
             except Exception:  # pylint: disable=broad-except
@@ -104,7 +103,7 @@ class AdminPluginConfig(AdminPage):
                 message_type = "error"
 
             # Then refresh the actual objects
-            self._po.refresh_plugin_config(self.facility)
+            self._po.refresh_plugin_config()
 
         return self.root_with_msg(message=message,
                                   message_type=message_type)
@@ -123,45 +122,40 @@ class AdminPluginsOrder(AdminPage):
     def GET(self, *args, **kwargs):
         return self.parent.root_with_msg()
 
-    def _get_enabled_by_name(self):
-        by_name = dict()
-        for p in self._site[self.facility]['available'].values():
+    def _get_enabled_list(self):
+        cur = list()
+        for p in self._site[self.facility].available.values():
             if p.is_enabled:
-                by_name[p.name] = p
-        return by_name
+                cur.append(p.name)
+        return cur
 
     @admin_protect
     def POST(self, *args, **kwargs):
         message = "Nothing was modified."
         message_type = "info"
-        by_name = self._get_enabled_by_name()
+        cur_enabled = self._get_enabled_list()
 
         if 'order' in kwargs:
             order = kwargs['order'].split(',')
             if len(order) != 0:
-                new_names = []
-                new_plugins = []
+                new_order = []
                 try:
                     for v in order:
                         val = v.strip()
-                        if val not in by_name:
+                        if val not in cur_enabled:
                             error = "Invalid plugin name: %s" % val
                             raise ValueError(error)
-                        new_names.append(val)
-                        new_plugins.append(by_name[val])
-                    if len(new_names) < len(by_name):
-                        for val in by_name:
-                            if val not in new_names:
-                                new_names.append(val)
-                                new_plugins.append(by_name[val])
+                        new_order.append(val)
+                    if len(new_order) < len(cur_enabled):
+                        for val in cur_enabled:
+                            if val not in new_order:
+                                new_order.append(val)
 
-                    self.parent.save_enabled_plugins(new_names)
-                    self.parent.reorder_plugins(new_names)
+                    self.parent.save_enabled_plugins(new_order)
 
                     # When all is saved update also live config. The
-                    # live config is a list of the actual plugin
-                    # objects.
-                    self._site[self.facility]['enabled'] = new_plugins
+                    # live config is the ordered list of plugin names.
+                    self._site[self.facility].refresh_enabled()
 
                     message = "New configuration saved."
                     message_type = "success"
@@ -190,9 +184,9 @@ class AdminPlugins(AdminPage):
         self.order = None
         parent.add_subtree(name, self)
 
-        for plugin in self._site[facility]['available']:
+        for plugin in self._site[facility].available:
             cherrypy.log.error('Admin info plugin: %s' % plugin)
-            obj = self._site[facility]['available'][plugin]
+            obj = self._site[facility].available[plugin]
             page = AdminPluginConfig(obj, self._site, self)
             if hasattr(obj, 'admin'):
                 obj.admin.mount(page)
@@ -202,34 +196,17 @@ class AdminPlugins(AdminPage):
             self.order = AdminPluginsOrder(self._site, self, facility)
 
     def save_enabled_plugins(self, names):
-        po = PluginObject()
-        po.name = "global"
-        globalconf = dict()
-        globalconf['order'] = ','.join(names)
-        po.import_config(globalconf)
-        po.save_plugin_config(self.facility)
-
-    def reorder_plugins(self, names):
-        return
+        self._site[self.facility].save_enabled(names)
 
     def root_with_msg(self, message=None, message_type=None):
         plugins = self._site[self.facility]
-        enabled = []
-        if self.order:
-            for plugin in plugins['enabled']:
-                if plugin.is_enabled:
-                    enabled.append(plugin.name)
-        else:
-            for _, plugin in plugins['available'].iteritems():
-                if plugin.is_enabled:
-                    enabled.append(plugin.name)
 
         targs = {'title': self.title,
                  'menu': self._master.menu,
                  'message': message,
                  'message_type': message_type,
-                 'available': plugins['available'],
-                 'enabled': enabled,
+                 'available': plugins.available,
+                 'enabled': plugins.enabled,
                  'baseurl': self.url,
                  'newurl': self.url}
         if self.order:
@@ -246,15 +223,13 @@ class AdminPlugins(AdminPage):
     def enable(self, plugin):
         msg = None
         plugins = self._site[self.facility]
-        if plugin not in plugins['available']:
+        if plugin not in plugins.available:
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
-        obj = plugins['available'][plugin]
+        obj = plugins.available[plugin]
         if not obj.is_enabled:
-            obj.enable(self._site)
-            if self.order:
-                enabled = list(x.name for x in plugins['enabled'])
-                self.save_enabled_plugins(enabled)
+            obj.enable()
+            obj.save_enabled_state()
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, "success")
     enable.public_function = True
@@ -263,15 +238,13 @@ class AdminPlugins(AdminPage):
     def disable(self, plugin):
         msg = None
         plugins = self._site[self.facility]
-        if plugin not in plugins['available']:
+        if plugin not in plugins.available:
             msg = "Unknown plugin %s" % plugin
             return self.root_with_msg(msg, "error")
-        obj = plugins['available'][plugin]
+        obj = plugins.available[plugin]
         if obj.is_enabled:
-            obj.disable(self._site)
-            if self.order:
-                enabled = list(x.name for x in plugins['enabled'])
-                self.save_enabled_plugins(enabled)
+            obj.disable()
+            obj.save_enabled_state()
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, "success")
     disable.public_function = True

@@ -31,14 +31,13 @@ USERNAME_COOKIE = 'ipsilon_default_username'
 
 class LoginManagerBase(PluginConfig, PluginObject):
 
-    def __init__(self):
+    def __init__(self, *args):
         PluginConfig.__init__(self)
-        PluginObject.__init__(self)
+        PluginObject.__init__(self, *args)
+        self._root = None
         self._site = None
         self.path = '/'
-        self.next_login = None
         self.info = None
-        self.is_enabled = False
 
     def redirect_to_path(self, path):
         base = cherrypy.config.get('base.mount', "")
@@ -94,8 +93,9 @@ class LoginManagerBase(PluginConfig, PluginObject):
 
     def auth_failed(self, trans):
         # try with next module
-        if self.next_login:
-            return self.redirect_to_path(self.next_login.path)
+        next_login = self.next_login()
+        if next_login:
+            return self.redirect_to_path(next_login.path)
 
         # return to the caller if any
         session = UserSession()
@@ -117,62 +117,26 @@ class LoginManagerBase(PluginConfig, PluginObject):
     def get_tree(self, site):
         raise NotImplementedError
 
-    def enable(self, site):
-        if self.is_enabled:
-            return
+    def register(self, root, site):
+        self._root = root
+        self._site = site
 
-        if not self._site:
-            self._site = site
+    def next_login(self):
         plugins = self._site[FACILITY]
+        try:
+            idx = plugins.enabled.index(self.name)
+            item = plugins.enabled[idx + 1]
+            return plugins.available[item]
+        except (ValueError, IndexError):
+            return None
 
-        # configure self
-        if self.name in plugins['config']:
-            self.import_config(plugins['config'][self.name])
+    def on_enable(self):
 
         # and add self to the root
-        root = plugins['root']
-        root.add_subtree(self.name, self.get_tree(site))
-
-        # finally add self in login chain
-        prev_obj = None
-        for prev_obj in plugins['enabled']:
-            if prev_obj.next_login:
-                break
-        if prev_obj:
-            while prev_obj.next_login:
-                prev_obj = prev_obj.next_login
-            prev_obj.next_login = self
-        if not root.first_login:
-            root.first_login = self
-
-        plugins['enabled'].append(self)
-        self.is_enabled = True
-        self._debug('Login plugin enabled: %s' % self.name)
+        self._root.add_subtree(self.name, self.get_tree(self._site))
 
         # Get handle of the info plugin
-        self.info = root.info
-
-    def disable(self, site):
-        if not self.is_enabled:
-            return
-
-        plugins = self._site[FACILITY]
-
-        # remove self from chain
-        root = plugins['root']
-        if root.first_login == self:
-            root.first_login = self.next_login
-        elif root.first_login:
-            prev_obj = root.first_login
-            while prev_obj.next_login != self:
-                prev_obj = prev_obj.next_login
-            if prev_obj:
-                prev_obj.next_login = self.next_login
-        self.next_login = None
-
-        plugins['enabled'].remove(self)
-        self.is_enabled = False
-        self._debug('Login plugin disabled: %s' % self.name)
+        self.info = self._root.info
 
 
 class LoginPageBase(Page):
@@ -207,8 +171,9 @@ class LoginFormBase(LoginPageBase):
 
     def create_tmpl_context(self, **kwargs):
         next_url = None
-        if self.lm.next_login is not None:
-            next_url = '%s?%s' % (self.lm.next_login.path,
+        next_login = self.lm.next_login()
+        if next_login:
+            next_url = '%s?%s' % (next_login.path,
                                   self.trans.get_GET_arg())
 
         cookie = SecureCookie(USERNAME_COOKIE)
@@ -253,31 +218,42 @@ class Login(Page):
     def __init__(self, *args, **kwargs):
         super(Login, self).__init__(*args, **kwargs)
         self.cancel = Cancel(*args, **kwargs)
-        self.first_login = None
         self.info = Info(self._site)
 
-        loader = PluginLoader(Login, FACILITY, 'LoginManager')
-        self._site[FACILITY] = loader.get_plugin_data()
-        plugins = self._site[FACILITY]
+        plugins = PluginLoader(Login, FACILITY, 'LoginManager')
+        plugins.get_plugin_data()
+        self._site[FACILITY] = plugins
 
-        available = plugins['available'].keys()
+        available = plugins.available.keys()
         self._debug('Available login managers: %s' % str(available))
 
-        plugins['root'] = self
-        for item in plugins['whitelist']:
-            self._debug('Login plugin in whitelist: %s' % item)
-            if item not in plugins['available']:
+        for item in plugins.available:
+            plugin = plugins.available[item]
+            plugin.register(self, self._site)
+
+        for item in plugins.enabled:
+            self._debug('Login plugin in enabled list: %s' % item)
+            if item not in plugins.available:
                 continue
-            plugins['available'][item].enable(self._site)
+            plugins.available[item].enable()
 
     def add_subtree(self, name, page):
         self.__dict__[name] = page
 
+    def get_first_login(self):
+        plugin = None
+        plugins = self._site[FACILITY]
+        if plugins.enabled:
+            first = plugins.enabled[0]
+            plugin = plugins.available[first]
+        return plugin
+
     def root(self, *args, **kwargs):
-        if self.first_login:
+        plugin = self.get_first_login()
+        if plugin:
             trans = self.get_valid_transaction('login', **kwargs)
             redirect = '%s/login/%s?%s' % (self.basepath,
-                                           self.first_login.path,
+                                           plugin.path,
                                            trans.get_GET_arg())
             raise cherrypy.HTTPRedirect(redirect)
         return self._template('login/index.html', title='Login')
@@ -312,5 +288,5 @@ class Cancel(Page):
 class LoginMgrsInstall(object):
 
     def __init__(self):
-        pi = PluginInstaller(LoginMgrsInstall)
+        pi = PluginInstaller(LoginMgrsInstall, FACILITY)
         self.plugins = pi.get_plugins()
