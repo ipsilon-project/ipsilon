@@ -230,7 +230,8 @@ class AdminPlugins(AdminPage):
                  'message_type': message_type,
                  'available': plugins['available'],
                  'enabled': enabled,
-                 'baseurl': self.url}
+                 'baseurl': self.url,
+                 'newurl': self.url}
         if self.order:
             targs['order_name'] = '%s_order_form' % self.name
             targs['order_action'] = self.order.url
