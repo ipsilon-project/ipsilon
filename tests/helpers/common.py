@@ -117,10 +117,30 @@ class IpsilonTestBase(object):
 
         return http_conf_file
 
+    def setup_pgdb(self, datadir, env):
+        cmd = ['/usr/bin/pg_ctl', 'initdb', '-D', datadir]
+        subprocess.check_call(cmd, env=env)
+        auth = 'host all all 127.0.0.1/24 trust\n'
+        filename = os.path.join(datadir, 'pg_hba.conf')
+        with open(filename, 'a') as f:
+            f.write(auth)
+
     def start_http_server(self, conf, env):
         p = subprocess.Popen(['/usr/sbin/httpd', '-DFOREGROUND', '-f', conf],
                              env=env, preexec_fn=os.setsid)
         self.processes.append(p)
+
+    def start_pgdb_server(self, datadir, rundir, log, addr, port, env):
+        p = subprocess.Popen(['/usr/bin/pg_ctl', 'start', '-D', datadir, '-o',
+                              '-c unix_socket_directories=%s -c port=%s -c \
+                               listen_addresses=%s' % (rundir, port, addr),
+                              '-l', log, '-w'],
+                             env=env, preexec_fn=os.setsid)
+        self.processes.append(p)
+        p.wait()
+        for d in ['adminconfig', 'userprefs', 'transactions']:
+            cmd = ['/usr/bin/createdb', '-h', addr, '-p', port, d]
+            subprocess.check_call(cmd, env=env)
 
     def wait(self):
         for p in self.processes:

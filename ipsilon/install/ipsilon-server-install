@@ -104,6 +104,12 @@ def install(plugins, args):
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
+                'admindb': args['database_url'] % {
+                    'datadir': args['data_dir'], 'dbname': 'adminconfig'},
+                'usersdb': args['database_url'] % {
+                    'datadir': args['data_dir'], 'dbname': 'userprefs'},
+                'transdb': args['database_url'] % {
+                    'datadir': args['data_dir'], 'dbname': 'transactions'},
                 'secure': "False" if args['secure'] == "no" else "True",
                 'debugging': "True" if args['server_debugging'] else "False"}
     if args['secure'] == 'no':
@@ -191,7 +197,7 @@ def find_plugins():
 
 
 def parse_config_profile(args):
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser.RawConfigParser()
     files = config.read(args['config_profile'])
     if len(files) == 0:
         raise ConfigurationError('Config Profile file %s not found!' %
@@ -231,6 +237,9 @@ def parse_args(plugins):
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
                         help="User account that is assigned admin privileges")
+    parser.add_argument('--database-url',
+                        default='sqlite:///%(datadir)s/%(dbname)s.sqlite',
+                        help="The (templatized) database URL to use")
     parser.add_argument('--secure', choices=['yes', 'no'], default='yes',
                         help="Turn on all security checks")
     parser.add_argument('--config-profile', default=None,

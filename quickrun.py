@@ -65,6 +65,8 @@ def config(workdir):
         f.write(USERS_TEMPLATE)
     subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
 
+    trans_db = os.path.join(workdir, 'transactions.sqlite')
+
     with open(CONF_TEMPLATE) as f:
         conf_template = f.read()
     t = Template(conf_template)
@@ -72,6 +74,9 @@ def config(workdir):
                          'instance': 'idp',
                          'staticdir': os.getcwd(),
                          'datadir': workdir,
+                         'admindb': admin_db,
+                         'usersdb': users_db,
+                         'transdb': trans_db,
                          'secure': 'False'})
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
