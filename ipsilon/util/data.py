@@ -150,7 +150,7 @@ class Store(Log):
             self._row_to_dict_tree(data, r)
         return data
 
-    def load_data(self, table, columns, kvfilter=None):
+    def _load_data(self, table, columns, kvfilter=None):
         rows = []
         try:
             q = self._query(self._db, table, columns, trans=False)
@@ -162,13 +162,13 @@ class Store(Log):
     def load_config(self):
         table = 'config'
         columns = ['name', 'value']
-        return self.load_data(table, columns)
+        return self._load_data(table, columns)
 
     def load_options(self, table, name=None):
         kvfilter = dict()
         if name:
             kvfilter['name'] = name
-        options = self.load_data(table, OPTIONS_COLUMNS, kvfilter)
+        options = self._load_data(table, OPTIONS_COLUMNS, kvfilter)
         if name and name in options:
             return options[name]
         return options
@@ -237,7 +237,7 @@ class Store(Log):
             kvfilter['name'] = name
         if value:
             kvfilter['value'] = value
-        return self.load_data(table, UNIQUE_DATA_COLUMNS, kvfilter)
+        return self._load_data(table, UNIQUE_DATA_COLUMNS, kvfilter)
 
     def save_unique_data(self, table, data):
         q = None
@@ -272,7 +272,7 @@ class Store(Log):
         except Exception, e:  # pylint: disable=broad-except
             self.error("Failed to delete data from %s: [%s]" % (table, e))
 
-    def reset_data(self, table):
+    def _reset_data(self, table):
         try:
             q = self._query(self._db, table, UNIQUE_DATA_COLUMNS)
             q.drop()
@@ -305,7 +305,7 @@ class AdminStore(Store):
 
     def wipe_data(self, plugin):
         table = plugin+"_data"
-        self.reset_data(table)
+        self._reset_data(table)
 
 
 class UserStore(Store):
