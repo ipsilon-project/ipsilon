@@ -126,9 +126,6 @@ class Store(Log):
         self._db = SqlStore(config_name)
         self._query = SqlQuery
 
-    def new_query(self, table, columns=None, autotable=True, autocommit=True):
-        return self._query(self._db, table, columns, autotable, autocommit)
-
     def _row_to_dict_tree(self, data, row):
         name = row[0]
         if len(row) > 2:
