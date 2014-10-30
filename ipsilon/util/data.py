@@ -48,17 +48,15 @@ class SqlStore(Log):
 
 def SqlAutotable(f):
     def at(self, *args, **kwargs):
-        if self.autotable:
-            self.create()
+        self.create()
         return f(self, *args, **kwargs)
     return at
 
 
 class SqlQuery(Log):
 
-    def __init__(self, db_obj, table, columns, autotable=True, trans=True):
+    def __init__(self, db_obj, table, columns, trans=True):
         self._db = db_obj
-        self.autotable = autotable
         self._con = self._db.connection()
         self._trans = self._con.begin() if trans else None
         self._table = self._get_table(table, columns)
