@@ -22,6 +22,8 @@ from ipsilon.util.log import Log
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column, Text
 from sqlalchemy.sql import select
+import ConfigParser
+import os
 import uuid
 
 
@@ -32,12 +34,11 @@ UNIQUE_DATA_COLUMNS = ['uuid', 'name', 'value']
 class SqlStore(Log):
 
     def __init__(self, name):
-        if name not in cherrypy.config:
-            raise NameError('Unknown database %s' % name)
-        engine_name = cherrypy.config[name]
+        engine_name = name
         if '://' not in engine_name:
             engine_name = 'sqlite:///' + engine_name
         self._dbengine = create_engine(engine_name)
+        self.is_readonly = False
 
     def engine(self):
         return self._dbengine
@@ -118,11 +119,133 @@ class SqlQuery(Log):
         self._con.execute(self._table.delete(self._where(kvfilter)))
 
 
-class Store(Log):
+class FileStore(Log):
 
+    def __init__(self, name):
+        self._filename = name
+        self.is_readonly = True
+        self._timestamp = None
+        self._config = None
+
+    def get_config(self):
+        try:
+            stat = os.stat(self._filename)
+        except OSError, e:
+            self.error("Unable to check config file %s: [%s]" % (
+                self._filename, e))
+            self._config = None
+            raise
+        timestamp = stat.st_mtime
+        if self._config is None or timestamp > self._timestamp:
+            self._config = ConfigParser.RawConfigParser()
+            self._config.read(self._filename)
+        return self._config
+
+
+class FileQuery(Log):
+
+    def __init__(self, fstore, table, columns, trans=True):
+        self._fstore = fstore
+        self._config = fstore.get_config()
+        self._section = table
+        if len(columns) > 3 or columns[-1] != 'value':
+            raise ValueError('Unsupported configuration format')
+        self._columns = columns
+
+    def rollback(self):
+        return
+
+    def commit(self):
+        return
+
+    def create(self):
+        raise NotImplementedError
+
+    def drop(self):
+        raise NotImplementedError
+
+    def select(self, kvfilter=None, columns=None):
+        if self._section not in self._config.sections():
+            return []
+
+        opts = self._config.options(self._section)
+
+        prefix = None
+        prefix_ = ''
+        if self._columns[0] in kvfilter:
+            prefix = kvfilter[self._columns[0]]
+            prefix_ = prefix + ' '
+
+        name = None
+        if len(self._columns) == 3 and self._columns[1] in kvfilter:
+            name = kvfilter[self._columns[1]]
+
+        value = None
+        if self._columns[-1] in kvfilter:
+            value = kvfilter[self._columns[-1]]
+
+        res = []
+        for o in opts:
+            if len(self._columns) == 3:
+                # 3 cols
+                if prefix and not o.startswith(prefix_):
+                    continue
+
+                col1, col2 = o.split(' ', 1)
+                if name and col2 != name:
+                    continue
+
+                col3 = self._config.get(self._section, o)
+                if value and col3 != value:
+                    continue
+
+                r = [col1, col2, col3]
+            else:
+                # 2 cols
+                if prefix and o != prefix:
+                    continue
+                r = [o, self._config.get(self._section, o)]
+
+            if columns:
+                s = []
+                for c in columns:
+                    s.append(r[self._columns.index(c)])
+                res.append(s)
+            else:
+                res.append(r)
+
+        self.debug('SELECT(%s, %s, %s) -> %s' % (self._section,
+                                                 repr(kvfilter),
+                                                 repr(columns),
+                                                 repr(res)))
+        return res
+
+    def insert(self, values):
+        raise NotImplementedError
+
+    def update(self, values, kvfilter):
+        raise NotImplementedError
+
+    def delete(self, kvfilter):
+        raise NotImplementedError
+
+
+class Store(Log):
     def __init__(self, config_name):
-        self._db = SqlStore(config_name)
-        self._query = SqlQuery
+        if config_name not in cherrypy.config:
+            raise NameError('Unknown database %s' % config_name)
+        name = cherrypy.config[config_name]
+        if name.startswith('configfile://'):
+            _, filename = name.split('://')
+            self._db = FileStore(filename)
+            self._query = FileQuery
+        else:
+            self._db = SqlStore(name)
+            self._query = SqlQuery
+
+    @property
+    def is_readonly(self):
+        return self._db.is_readonly
 
     def _row_to_dict_tree(self, data, row):
         name = row[0]
