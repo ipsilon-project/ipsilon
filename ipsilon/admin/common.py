@@ -23,6 +23,15 @@ from ipsilon.util.page import admin_protect
 from ipsilon.util import config as pconfig
 
 
+class AdminError(Exception):
+    def __init__(self, message):
+        super(AdminError, self).__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return str(self.message)
+
+
 class AdminPage(Page):
 
     def __init__(self, *args, **kwargs):
@@ -60,6 +69,11 @@ class AdminPluginConfig(AdminPage):
 
     @admin_protect
     def POST(self, *args, **kwargs):
+
+        if self._po.is_readonly:
+            return self.root_with_msg(
+                message="Configuration is marked Read-Only",
+                message_type="warning")
 
         message = "Nothing was modified."
         message_type = "info"
@@ -131,6 +145,12 @@ class AdminPluginsOrder(AdminPage):
 
     @admin_protect
     def POST(self, *args, **kwargs):
+
+        if self._site[self.facility].is_readonly:
+            return self.parent.root_with_msg(
+                message="Configuration is marked Read-Only",
+                message_type="warning")
+
         message = "Nothing was modified."
         message_type = "info"
         cur_enabled = self._get_enabled_list()
@@ -219,14 +239,27 @@ class AdminPlugins(AdminPage):
     def root(self, *args, **kwargs):
         return self.root_with_msg()
 
+    def _get_plugin_obj(self, plugin):
+        plugins = self._site[self.facility]
+        if plugins.is_readonly:
+            msg = "Configuration is marked Read-Only"
+            raise AdminError(msg)
+        if plugin not in plugins.available:
+            msg = "Unknown plugin %s" % plugin
+            raise AdminError(msg)
+        obj = plugins.available[plugin]
+        if obj.is_readonly:
+            msg = "Plugin Configuration is marked Read-Only"
+            raise AdminError(msg)
+        return obj
+
     @admin_protect
     def enable(self, plugin):
         msg = None
-        plugins = self._site[self.facility]
-        if plugin not in plugins.available:
-            msg = "Unknown plugin %s" % plugin
-            return self.root_with_msg(msg, "error")
-        obj = plugins.available[plugin]
+        try:
+            obj = self._get_plugin_obj(plugin)
+        except AdminError, e:
+            return self.root_with_msg(str(e), "warning")
         if not obj.is_enabled:
             obj.enable()
             obj.save_enabled_state()
@@ -237,11 +270,10 @@ class AdminPlugins(AdminPage):
     @admin_protect
     def disable(self, plugin):
         msg = None
-        plugins = self._site[self.facility]
-        if plugin not in plugins.available:
-            msg = "Unknown plugin %s" % plugin
-            return self.root_with_msg(msg, "error")
-        obj = plugins.available[plugin]
+        try:
+            obj = self._get_plugin_obj(plugin)
+        except AdminError, e:
+            return self.root_with_msg(str(e), "warning")
         if obj.is_enabled:
             obj.disable()
             obj.save_enabled_state()

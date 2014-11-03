@@ -89,6 +89,10 @@ class PluginLoader(Log):
             self.__data = AdminStore()
         return self.__data
 
+    @property
+    def is_readonly(self):
+        return self._data.is_readonly
+
     def get_plugins(self):
         p = Plugins()
         return p.get_plugins(self._pathname, self._plugin_type, self)
@@ -128,6 +132,10 @@ class PluginObject(Log):
         self._data = AdminStore()
         self._plugins = plugins
         self.is_enabled = False
+
+    @property
+    def is_readonly(self):
+        return self._data.is_readonly
 
     def on_enable(self):
         return
