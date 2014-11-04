@@ -23,6 +23,11 @@ from ipsilon.util.page import admin_protect
 from ipsilon.util import config as pconfig
 
 
+ADMIN_STATUS_OK = "success"
+ADMIN_STATUS_ERROR = "danger"
+ADMIN_STATUS_WARN = "warning"
+
+
 class AdminError(Exception):
     def __init__(self, message):
         super(AdminError, self).__init__(message)
@@ -73,7 +78,7 @@ class AdminPluginConfig(AdminPage):
         if self._po.is_readonly:
             return self.root_with_msg(
                 message="Configuration is marked Read-Only",
-                message_type="warning")
+                message_type=ADMIN_STATUS_WARN)
 
         message = "Nothing was modified."
         message_type = "info"
@@ -111,10 +116,10 @@ class AdminPluginConfig(AdminPage):
             try:
                 self._po.save_plugin_config(new_db_values)
                 message = "New configuration saved."
-                message_type = "success"
+                message_type = ADMIN_STATUS_OK
             except Exception:  # pylint: disable=broad-except
                 message = "Failed to save data!"
-                message_type = "error"
+                message_type = ADMIN_STATUS_ERROR
 
             # Then refresh the actual objects
             self._po.refresh_plugin_config()
@@ -149,7 +154,7 @@ class AdminPluginsOrder(AdminPage):
         if self._site[self.facility].is_readonly:
             return self.parent.root_with_msg(
                 message="Configuration is marked Read-Only",
-                message_type="warning")
+                message_type=ADMIN_STATUS_WARN)
 
         message = "Nothing was modified."
         message_type = "info"
@@ -178,15 +183,15 @@ class AdminPluginsOrder(AdminPage):
                     self._site[self.facility].refresh_enabled()
 
                     message = "New configuration saved."
-                    message_type = "success"
+                    message_type = ADMIN_STATUS_OK
 
                 except ValueError, e:
                     message = str(e)
-                    message_type = "error"
+                    message_type = ADMIN_STATUS_ERROR
 
                 except Exception, e:  # pylint: disable=broad-except
                     message = "Failed to save data!"
-                    message_type = "error"
+                    message_type = ADMIN_STATUS_ERROR
 
         return self.parent.root_with_msg(message=message,
                                          message_type=message_type)
@@ -259,12 +264,12 @@ class AdminPlugins(AdminPage):
         try:
             obj = self._get_plugin_obj(plugin)
         except AdminError, e:
-            return self.root_with_msg(str(e), "warning")
+            return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if not obj.is_enabled:
             obj.enable()
             obj.save_enabled_state()
             msg = "Plugin %s enabled" % obj.name
-        return self.root_with_msg(msg, "success")
+        return self.root_with_msg(msg, ADMIN_STATUS_OK)
     enable.public_function = True
 
     @admin_protect
@@ -273,12 +278,12 @@ class AdminPlugins(AdminPage):
         try:
             obj = self._get_plugin_obj(plugin)
         except AdminError, e:
-            return self.root_with_msg(str(e), "warning")
+            return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if obj.is_enabled:
             obj.disable()
             obj.save_enabled_state()
             msg = "Plugin %s disabled" % obj.name
-        return self.root_with_msg(msg, "success")
+        return self.root_with_msg(msg, ADMIN_STATUS_OK)
     disable.public_function = True
 
 

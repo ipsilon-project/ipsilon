@@ -19,6 +19,9 @@
 
 import cherrypy
 from ipsilon.admin.common import AdminPage
+from ipsilon.admin.common import ADMIN_STATUS_OK
+from ipsilon.admin.common import ADMIN_STATUS_ERROR
+from ipsilon.admin.common import ADMIN_STATUS_WARN
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
@@ -59,7 +62,7 @@ class NewSPAdminPage(AdminPage):
             if 'content-type' not in cherrypy.request.headers:
                 self._debug("Invalid request, missing content-type")
                 message = "Malformed request"
-                message_type = "error"
+                message_type = ADMIN_STATUS_ERROR
                 return self.form_new(message, message_type)
             ctype = cherrypy.request.headers['content-type'].split(';')[0]
             if ctype != 'multipart/form-data':
@@ -70,7 +73,7 @@ class NewSPAdminPage(AdminPage):
                     if re.search(VALID_IN_NAME, value):
                         message = "Invalid name!" \
                                   " Use only numbers and letters"
-                        message_type = "error"
+                        message_type = ADMIN_STATUS_ERROR
                         return self.form_new(message, message_type)
 
                     name = value
@@ -91,7 +94,7 @@ class NewSPAdminPage(AdminPage):
                         except Exception, e:  # pylint: disable=broad-except
                             self._debug("Failed to fetch metadata: " + repr(e))
                             message = "Failed to fetch metadata: " + repr(e)
-                            message_type = "error"
+                            message_type = ADMIN_STATUS_ERROR
                             return self.form_new(message, message_type)
 
             if name and meta:
@@ -100,21 +103,21 @@ class NewSPAdminPage(AdminPage):
                     sp = spc.create_from_buffer(name, meta)
                     sp_page = self.parent.add_sp(name, sp)
                     message = "SP Successfully added"
-                    message_type = "success"
+                    message_type = ADMIN_STATUS_OK
                     return sp_page.form_standard(message, message_type)
                 except InvalidProviderId, e:
                     message = str(e)
-                    message_type = "error"
+                    message_type = ADMIN_STATUS_ERROR
                 except Exception, e:  # pylint: disable=broad-except
                     self._debug(repr(e))
                     message = "Failed to create Service Provider!"
-                    message_type = "error"
+                    message_type = ADMIN_STATUS_ERROR
             else:
                 message = "A name and a metadata file must be provided"
-                message_type = "error"
+                message_type = ADMIN_STATUS_ERROR
         else:
             message = "Unauthorized"
-            message_type = "error"
+            message_type = ADMIN_STATUS_ERROR
 
         return self.form_new(message, message_type)
 
@@ -235,16 +238,16 @@ class SPAdminPage(AdminPage):
 
         except InvalidValueFormat, e:
             message = str(e)
-            message_type = "warning"
+            message_type = ADMIN_STATUS_WARN
             return self.form_standard(message, message_type)
         except UnauthorizedUser, e:
             message = str(e)
-            message_type = "error"
+            message_type = ADMIN_STATUS_ERROR
             return self.form_standard(message, message_type)
         except Exception, e:  # pylint: disable=broad-except
             self._debug("Error: %s" % repr(e))
             message = "Internal Error"
-            message_type = "error"
+            message_type = ADMIN_STATUS_ERROR
             return self.form_standard(message, message_type)
 
         if len(results) > 0:
@@ -263,10 +266,10 @@ class SPAdminPage(AdminPage):
                     self.url = '%s/sp/%s' % (self.parent.url, rename[1])
                     self.parent.rename_sp(rename[0], rename[1])
                 message = "Properties successfully changed"
-                message_type = "success"
+                message_type = ADMIN_STATUS_OK
             except Exception:  # pylint: disable=broad-except
                 message = "Failed to save data!"
-                message_type = "error"
+                message_type = ADMIN_STATUS_ERROR
 
         return self.form_standard(message, message_type, self.url)
 
