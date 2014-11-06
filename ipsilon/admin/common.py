@@ -141,13 +141,6 @@ class AdminPluginsOrder(AdminPage):
     def GET(self, *args, **kwargs):
         return self.parent.root_with_msg()
 
-    def _get_enabled_list(self):
-        cur = list()
-        for p in self._site[self.facility].available.values():
-            if p.is_enabled:
-                cur.append(p.name)
-        return cur
-
     @admin_protect
     def POST(self, *args, **kwargs):
 
@@ -158,7 +151,8 @@ class AdminPluginsOrder(AdminPage):
 
         message = "Nothing was modified."
         message_type = "info"
-        cur_enabled = self._get_enabled_list()
+        changed = None
+        cur_enabled = self._site[self.facility].enabled
 
         if 'order' in kwargs:
             order = kwargs['order'].split(',')
@@ -185,6 +179,12 @@ class AdminPluginsOrder(AdminPage):
                     message = "New configuration saved."
                     message_type = ADMIN_STATUS_OK
 
+                    changed = dict()
+                    self.debug('%s -> %s' % (cur_enabled, new_order))
+                    for i in range(0, len(cur_enabled)):
+                        if cur_enabled[i] != new_order[i]:
+                            changed[cur_enabled[i]] = 'reordered'
+
                 except ValueError, e:
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
@@ -194,7 +194,8 @@ class AdminPluginsOrder(AdminPage):
                     message_type = ADMIN_STATUS_ERROR
 
         return self.parent.root_with_msg(message=message,
-                                         message_type=message_type)
+                                         message_type=message_type,
+                                         changed=changed)
 
 
 class AdminPlugins(AdminPage):
@@ -223,8 +224,11 @@ class AdminPlugins(AdminPage):
     def save_enabled_plugins(self, names):
         self._site[self.facility].save_enabled(names)
 
-    def root_with_msg(self, message=None, message_type=None):
+    def root_with_msg(self, message=None, message_type=None, changed=None):
         plugins = self._site[self.facility]
+
+        if changed is None:
+            changed = dict()
 
         targs = {'title': self.title,
                  'menu': self._master.menu,
@@ -232,6 +236,7 @@ class AdminPlugins(AdminPage):
                  'message_type': message_type,
                  'available': plugins.available,
                  'enabled': plugins.enabled,
+                 'changed': changed,
                  'baseurl': self.url,
                  'newurl': self.url}
         if self.order:
@@ -269,7 +274,8 @@ class AdminPlugins(AdminPage):
             obj.enable()
             obj.save_enabled_state()
             msg = "Plugin %s enabled" % obj.name
-        return self.root_with_msg(msg, ADMIN_STATUS_OK)
+        return self.root_with_msg(msg, ADMIN_STATUS_OK,
+                                  changed={obj.name: 'enabled'})
     enable.public_function = True
 
     @admin_protect
@@ -283,7 +289,8 @@ class AdminPlugins(AdminPage):
             obj.disable()
             obj.save_enabled_state()
             msg = "Plugin %s disabled" % obj.name
-        return self.root_with_msg(msg, ADMIN_STATUS_OK)
+        return self.root_with_msg(msg, ADMIN_STATUS_OK,
+                                  changed={obj.name: 'disabled'})
     disable.public_function = True
 
 

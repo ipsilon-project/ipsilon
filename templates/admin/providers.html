@@ -15,58 +15,56 @@
         </div>
     </div>
 
-    <hr>
-
-    {% for p in enabled %}
-      <div class="row">
+    {% for p in available %}
+      {%- if p in enabled %}
+        {%- set highlight = "hl-enabled" %}
+        {%- set actpath = "disable" %}
+        {%- set actlabel = "Disable" %}
+        {%- if p in changed %}
+          {%- if changed[p] == 'enabled' %}
+          {%- set highlight = "hl-enabled-new" %}
+          {%- endif %}
+        {%- endif %}
+      {%- else %}
+        {%- set highlight = "hl-disabled" %}
+        {%- set actpath = "enable" %}
+        {%- set actlabel = "Enable" %}
+        {%- if p in changed %}
+          {%- if changed[p] == 'disabled' %}
+          {%- set highlight = "hl-disabled-new" %}
+          {%- endif %}
+        {%- endif %}
+      {%- endif %}
+      <div class="row ipsilon-row {{ highlight }}">
         <div class="col-md-3 col-sm-3 col-xs-6">
           <p><strong>{{ p }}</strong></p>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-6">
           <div class="row">
           <div class="col-md-4 col-sm-4 col-xs-12">
-              <p class="text-info"><a href="{{ baseurl }}/disable/{{ p }}">Disable</a></p>
+              <p class="text-info"><a href="{{ baseurl }}/{{ actpath }}/{{ p }}">{{ actlabel }}</a></p>
           </div>
           <div class="col-md-4 col-sm-4 col-xs-12">
             {%- if available[p].get_config_obj() %}
+              {%- if p in enabled %}
               <p class="text-primary"><a href="{{ baseurl }}/{{ p }}">Configure</a></p>
-            {% endif %}
-          </div>
-          <div class="col-md-4 col-sm-4 col-xs-12">
-            {%- if available[p].admin %}
-              <p class="text-primary"><a href="{{ baseurl }}/{{ p }}/admin">Manage</a></p>
-            {% endif %}
-          </div>
-          </div>
-        </div>
-      </div>
-      <hr>
-    {% endfor %}
-
-    {% for p in available if not p in enabled %}
-      <div class="row">
-        <div class="col-md-3 col-sm-3 col-xs-6">
-            <p><strong>{{ p }}</strong></p>
-        </div>
-        <div class="col-md-9 col-sm-9 col-xs-6">
-          <div class="row">
-          <div class="col-md-4 col-sm-4 col-xs-12">
-              <p class="text-info"><a href="{{ baseurl }}/enable/{{ p }}">Enable</a></p>
-          </div>
-          <div class="col-md-4 col-sm-4 col-xs-12">
-            {%- if available[p].get_config_obj() %}
+              {%- else %}
               <p class="text-muted">Configure</p>
-            {% endif %}
+              {%- endif %}
+            {%- endif %}
           </div>
           <div class="col-md-4 col-sm-4 col-xs-12">
             {%- if available[p].admin %}
+              {%- if p in enabled %}
+              <p class="text-primary"><a href="{{ baseurl }}/{{ p }}/admin">Manage</a></p>
+              {%- else %}
               <p class="text-muted">Manage</p>
+              {%- endif %}
             {% endif %}
           </div>
           </div>
         </div>
       </div>
-      <hr>
     {% endfor %}
 
 {% endif %}

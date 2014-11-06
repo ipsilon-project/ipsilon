@@ -1,0 +1,86 @@
+// Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
+
+// Widgets
+
+// imitate tables
+.ipsilon-row {
+
+    // reuse bootstrap colors
+    border-top: 1px solid @table-border-color;
+    padding: @table-cell-padding;
+
+    // to have equal height - basically a hack, increase if default elements are
+    // larger. Proper equal height would have to be done in JavaScript.
+    min-height: @input-height-large;
+}
+
+
+.ipsilon-row:last-child {
+    border-bottom: 1px solid @table-border-color;
+}
+
+// add to div with 'ipsilon-row' class to change background
+.hl-enabled {
+    // ugly color
+    background-color: @state-enabled-bg;
+}
+
+.hl-disabled {
+    background-color: @state-disabled-bg;
+
+    strong {
+        color: #555;
+    }
+}
+
+// animation
+// https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Using_CSS_animations
+
+@keyframes bgfadein {
+    from {
+        background-color: @state-disabled-bg;
+    }
+    to {
+        background-color: @state-enabled-bg;
+    }
+}
+
+@keyframes bgfadeout {
+    from {
+        background-color: @state-enabled-bg;
+    }
+    to {
+        background-color: @state-disabled-bg;
+    }
+}
+
+// add these classes to rows to hightlight them on load
+.hl-enabled-new {
+    animation-duration: 2s;
+    animation-name: bgfadein;
+    animation-fill-mode: both
+}
+
+.hl-disabled-new {
+    animation-duration: 2s;
+    animation-name: bgfadeout;
+    animation-fill-mode: both
+}
+
+@keyframes flashout {
+    0% {
+        background-color: @state-enabled-bg;
+    }
+    50% {
+        background-color: @state-info-bg;
+    }
+    100% {
+        background-color: @state-enabled-bg;
+    }
+}
+
+.hl-enabled-flash {
+    animation-duration: 1s;
+    animation-name: flashout;
+    animation-fill-mode: both
+}

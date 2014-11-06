@@ -6068,3 +6068,62 @@ fieldset[disabled] .btn-primary.active {
   font-weight: 900;
   src: local('Open Sans Extrabold Italic'), url('../fonts/open-sans/OpenSans-ExtraBoldItalic.ttf') format('truetype');
 }
+.ipsilon-row {
+  border-top: 1px solid #dddddd;
+  padding: 8px;
+  min-height: 37px;
+}
+.ipsilon-row:last-child {
+  border-bottom: 1px solid #dddddd;
+}
+.hl-enabled {
+  background-color: #ffffff;
+}
+.hl-disabled {
+  background-color: #ededed;
+}
+.hl-disabled strong {
+  color: #555;
+}
+@keyframes bgfadein {
+  from {
+    background-color: #ededed;
+  }
+  to {
+    background-color: #ffffff;
+  }
+}
+@keyframes bgfadeout {
+  from {
+    background-color: #ffffff;
+  }
+  to {
+    background-color: #ededed;
+  }
+}
+.hl-enabled-new {
+  animation-duration: 3s;
+  animation-name: bgfadein;
+  animation-fill-mode: both;
+}
+.hl-disabled-new {
+  animation-duration: 3s;
+  animation-name: bgfadeout;
+  animation-fill-mode: both;
+}
+@keyframes flashout {
+  0% {
+    background-color: #ffffff;
+  }
+  50% {
+    background-color: #d9edf7;
+  }
+  100% {
+    background-color: #ffffff;
+  }
+}
+.hl-enabled-flash {
+  animation-duration: 1.5s;
+  animation-name: flashout;
+  animation-fill-mode: both;
+}

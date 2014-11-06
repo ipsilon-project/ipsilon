@@ -15,21 +15,27 @@
         </div>
     </div>
 
-    <table class="table">
     {% for p in enabled %}
-    <tr><td>
-      <div class="row">
+      {% set highlight = "hl-enabled" %}
+      {% if p in changed %}
+        {% if changed[p] == 'enabled' %}
+        {% set highlight = "hl-enabled-new" %}
+        {% elif changed[p] == 'reordered' %}
+        {% set highlight = "hl-enabled-flash" %}
+        {% endif %}
+      {% endif %}
+      <div class="row ipsilon-row {{ highlight }}">
         <div class="col-md-3 col-sm-3 col-xs-5">
-          <strong>{{ p }}</strong>
+          <p><strong>{{ p }}</strong></p>
         </div>
         <div class="col-md-7 col-sm-7 col-xs-5">
           <div class="row">
           <div class="col-md-6 col-sm-6 col-xs-12">
-              <a class="text-info" href="{{ baseurl }}/disable/{{ p }}">Disable</a>
+              <p class="text-info"><a href="{{ baseurl }}/disable/{{ p }}">Disable</a></p>
           </div>
           <div class="col-md-6 col-sm-6 col-xs-12">
             {%- if available[p].get_config_obj() %}
-              <a class="text-primary" href="{{ baseurl }}/{{ p }}">Configure</a>
+              <p class="text-primary"><a href="{{ baseurl }}/{{ p }}">Configure</a></p>
             {% endif %}
           </div>
           </div>
@@ -73,12 +79,16 @@
           {%- endif %}
         </div>
       </div>
-    </td></tr>
     {% endfor %}
 
     {% for p in available if not p in enabled %}
-    <tr><td>
-      <div class="row">
+      {% set highlight = "hl-disabled" %}
+      {% if p in changed %}
+        {% if changed[p] == 'disabled' %}
+        {% set highlight = "hl-disabled-new" %}
+        {% endif %}
+      {% endif %}
+      <div class="row ipsilon-row {{ highlight }}">
         <div class="col-md-3 col-sm-3 col-xs-5">
             <strong>{{ p }}</strong>
         </div>
@@ -97,12 +107,7 @@
         <div class="col-md-2 col-sm-2 col-xs-1">
         </div>
       </div>
-    </td></tr>
     {% endfor %}
-
-    <tr><td>
-    </td></tr>
-    </table>
 
 {% endif %}
 {% endblock %}
