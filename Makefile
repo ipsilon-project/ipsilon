@@ -60,6 +60,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=attrs
 	PYTHONPATH=./ ./tests/tests.py --test=trans
 	PYTHONPATH=./ ./tests/tests.py --test=pgdb
+	PYTHONPATH=./ ./tests/tests.py --test=fconf
 
 test: lp-test tests
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
