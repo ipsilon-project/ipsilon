@@ -77,6 +77,9 @@ def config(workdir):
                          'admindb': admin_db,
                          'usersdb': users_db,
                          'transdb': trans_db,
+                         'sesstype': 'file',
+                         'sessopt': 'path',
+                         'sessval': os.path.join(workdir, 'sessions'),
                          'secure': 'False'})
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:

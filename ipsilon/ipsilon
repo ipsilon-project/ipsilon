@@ -27,6 +27,7 @@ from ipsilon.util.data import AdminStore
 from ipsilon.util import page
 from ipsilon.root import Root
 from jinja2 import Environment, FileSystemLoader
+import ipsilon.util.sessions
 
 
 def nuke_session_locks():
@@ -51,6 +52,7 @@ elif os.path.isfile('/etc/ipsilon/ipsilon.conf'):
 else:
     raise IOError("Configuration file not found")
 
+cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
 cherrypy.config.update(cfgfile)
 
 nuke_session_locks()

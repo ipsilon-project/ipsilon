@@ -112,6 +112,18 @@ def install(plugins, args):
                     'datadir': args['data_dir'], 'dbname': 'transactions'},
                 'secure': "False" if args['secure'] == "no" else "True",
                 'debugging': "True" if args['server_debugging'] else "False"}
+    # Testing database sessions
+    if 'session_type' in args:
+        confopts['sesstype'] = args['session_type']
+    else:
+        confopts['sesstype'] = 'file'
+    if 'session_dburi' in args:
+        confopts['sessopt'] = 'dburi'
+        confopts['sessval'] = args['session_dburi']
+    else:
+        confopts['sessopt'] = 'path'
+        confopts['sessval'] = os.path.join(args['data_dir'], 'sessions')
+    # Whetehr to disable security (for testing)
     if args['secure'] == 'no':
         confopts['secure'] = "False"
         confopts['sslrequiressl'] = ""
