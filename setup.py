@@ -46,6 +46,7 @@ setup(
                   (DATA+'ui/saml2sp', glob('ui/saml2sp/*.html')),
                   (DATA+'templates', glob('templates/*.html')),
                   (DATA+'templates/admin', glob('templates/admin/*.html')),
+                  (DATA+'templates/admin', glob('templates/admin/*.svg')),
                   (DATA+'templates/login', glob('templates/login/*.html')),
                   (DATA+'templates/saml2', glob('templates/saml2/*.html')),
                   (DATA+'templates/openid', glob('templates/openid/*.html')),
