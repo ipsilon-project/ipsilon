@@ -331,5 +331,5 @@ class Admin(AdminPage):
         cherrypy.response.headers.update({'Content-Type': 'image/svg+xml'})
         urls = self.get_menu_urls()
         # pylint: disable=star-args
-        return self._template('admin/ipsilon-scheme.svg', **urls)
+        return str(self._template('admin/ipsilon-scheme.svg', **urls))
     scheme.public_function = True
