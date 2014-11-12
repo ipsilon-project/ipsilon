@@ -24,7 +24,7 @@ DATA = 'share/ipsilon/'
 
 setup(
     name = 'ipsilon',
-    version = '0.2.5',
+    version = '0.2.6',
     license = 'GPLv3+',
     maintainer = 'Simo Sorce',
     maintainer_email = 'simo@redhat.com',
