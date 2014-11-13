@@ -93,6 +93,11 @@ Provides OpenID 2.0 authentication infrastructure. """
         self.page = OpenID(site, self)
         # self.admin = AdminPage(site, self)
 
+        return self.page
+
+    def init_idp(self):
+        self.server = Server(MemoryStore(), op_endpoint=self.endpoint_url)
+
         # Expose OpenID presence in the root
         headers = self._root.default_headers
         headers['X-XRDS-Location'] = self.endpoint_url+'XRDS'
@@ -102,11 +107,6 @@ Provides OpenID 2.0 authentication infrastructure. """
         openid_heads = [HEAD_LINK % ('openid2.provider', self.endpoint_url),
                         HEAD_LINK % ('openid.server', self.endpoint_url)]
         html_heads['openid'] = openid_heads
-
-        return self.page
-
-    def init_idp(self):
-        self.server = Server(MemoryStore(), op_endpoint=self.endpoint_url)
 
     def on_enable(self):
         super(IdpProvider, self).on_enable()
