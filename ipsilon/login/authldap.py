@@ -49,7 +49,7 @@ class LDAP(LoginFormBase, Log):
             self.lm.info = None
 
             if not self.ldap_info:
-                self.ldap_info = LDAPInfo()
+                self.ldap_info = LDAPInfo(self._site)
 
             return self.ldap_info.get_user_data_from_conn(conn, dn)
 
@@ -162,7 +162,7 @@ authentication. """
 
     @property
     def get_user_info(self):
-        return (self.get_config_value('get user info').lower() == 'yes')
+        return self.get_config_value('get user info')
 
     @property
     def bind_dn_tmpl(self):
