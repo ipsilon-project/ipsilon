@@ -93,6 +93,9 @@ def install(plugins, args):
     args['httpd_conf'] = os.path.join(HTTPDCONFD,
                                       'ipsilon-%s.conf' % args['instance'])
     args['data_dir'] = os.path.join(DATADIR, args['instance'])
+    args['public_data_dir'] = os.path.join(args['data_dir'], 'public')
+    args['wellknown_dir'] = os.path.join(args['public_data_dir'],
+                                         'well-known')
     if os.path.exists(ipsilon_conf):
         shutil.move(ipsilon_conf, '%s.bakcup.%s' % (ipsilon_conf, now))
     if os.path.exists(idp_conf):
@@ -101,6 +104,8 @@ def install(plugins, args):
         os.makedirs(instance_conf, 0700)
     confopts = {'instance': args['instance'],
                 'datadir': args['data_dir'],
+                'publicdatadir': args['public_data_dir'],
+                'wellknowndir': args['wellknown_dir'],
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
@@ -142,6 +147,10 @@ def install(plugins, args):
                               confopts)
     if not os.path.exists(args['httpd_conf']):
         os.symlink(idp_conf, args['httpd_conf'])
+    if not os.path.exists(args['public_data_dir']):
+        os.makedirs(args['public_data_dir'], 0755)
+    if not os.path.exists(args['wellknown_dir']):
+        os.makedirs(args['wellknown_dir'], 0755)
     sessdir = os.path.join(args['data_dir'], 'sessions')
     if not os.path.exists(sessdir):
         os.makedirs(sessdir, 0700)

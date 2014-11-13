@@ -12,6 +12,7 @@ BuildRequires:	python2-devel
 BuildRequires:	python-setuptools
 BuildRequires:	lasso-python
 BuildRequires:  python-openid, python-openid-cla, python-openid-teams
+BuildRequires:  m2crypto
 Requires:       ipsilon-tools = %{version}-%{release}
 Requires:       ipsilon-provider = %{version}-%{release}
 Requires:	mod_wsgi
@@ -65,6 +66,17 @@ Requires:       python-openid-teams
 
 %description openid
 Provides an OpenId provider plugin for the Ipsilon identity Provider
+
+
+%package persona
+Summary:        Persona provider plugin
+Group:          System Environment/Base
+License:        GPLv3+
+Provides:       ipsilon-provider = %{version}-%{release}
+Requires:       m2crypto
+
+%description persona
+Provides a Persona provider plugin for the Ipsilon identity Provider
 
 
 %package authfas
@@ -191,6 +203,10 @@ fi
 %files openid
 %{python2_sitelib}/ipsilon/providers/openid*
 %{_datadir}/ipsilon/templates/openid/*
+
+%files persona
+%{python2_sitelib}/ipsilon/providers/persona*
+%{_datadir}/ipsilon/templates/persona/*
 
 %files authfas
 %{python2_sitelib}/ipsilon/login/authfas*

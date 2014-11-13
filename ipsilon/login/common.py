@@ -179,15 +179,17 @@ class LoginFormBase(LoginPageBase):
         cookie = SecureCookie(USERNAME_COOKIE)
         cookie.receive()
         username = cookie.value
-        if username is None:
-            username = ''
 
         target = None
         if self.trans is not None:
             tid = self.trans.transaction_id
             target = self.trans.retrieve().get('login_target')
+            username = self.trans.retrieve().get('login_username')
         if tid is None:
             tid = ''
+
+        if username is None:
+            username = ''
 
         context = {
             "title": 'Login',
