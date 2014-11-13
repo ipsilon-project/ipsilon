@@ -22,7 +22,7 @@ class MetaHandler(ProviderPageBase):
     def reply(self, **kwargs):
         if self._template_name is None:
             raise ValueError('Template not set')
-        return self._template(self._template_name, **kwargs)
+        return str(self._template(self._template_name, **kwargs))
 
     def default(self, *args, **kwargs):
         if self._take_args:
