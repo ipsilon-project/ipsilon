@@ -231,10 +231,15 @@ class FileQuery(Log):
 
 
 class Store(Log):
-    def __init__(self, config_name):
-        if config_name not in cherrypy.config:
-            raise NameError('Unknown database %s' % config_name)
-        name = cherrypy.config[config_name]
+    def __init__(self, config_name=None, database_url=None):
+        if config_name is None and database_url is None:
+            raise ValueError('config_name or database_url must be provided')
+        if config_name:
+            if config_name not in cherrypy.config:
+                raise NameError('Unknown database %s' % config_name)
+            name = cherrypy.config[config_name]
+        else:
+            name = database_url
         if name.startswith('configfile://'):
             _, filename = name.split('://')
             self._db = FileStore(filename)
