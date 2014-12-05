@@ -159,6 +159,8 @@ class List(Option):
         super(List, self).__init__(name, description)
         if default_list:
             self._default_value = list(default_list)
+        else:
+            self._default_value = []
 
     def set_value(self, value):
         self._assigned_value = list(value)
