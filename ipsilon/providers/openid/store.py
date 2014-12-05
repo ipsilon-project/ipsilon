@@ -11,6 +11,7 @@ from openid.store.interface import OpenIDStore as OpenIDStoreInterface
 
 from time import time
 
+
 class OpenIDStore(Store, OpenIDStoreInterface):
     def __init__(self, database_url):
         Store.__init__(self, database_url=database_url)
