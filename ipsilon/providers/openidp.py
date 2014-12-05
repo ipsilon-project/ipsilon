@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 from ipsilon.providers.common import ProviderBase
+from ipsilon.providers.openid.store import OpenIDStore
 from ipsilon.providers.openid.auth import OpenID
 from ipsilon.providers.openid.extensions.common import LoadExtensions
 from ipsilon.util.plugin import PluginObject
@@ -12,8 +13,6 @@ from ipsilon.util import config as pconfig
 from ipsilon.info.common import InfoMapping
 
 from openid.server.server import Server
-# TODO: Move this to the database
-from openid.store.memstore import MemoryStore
 
 
 class IdpProvider(ProviderBase):
@@ -32,6 +31,10 @@ Provides OpenID 2.0 authentication infrastructure. """
 
         self.new_config(
             self.name,
+            pconfig.String(
+                'database url',
+                'Database URL for OpenID temp storage',
+                'openid.sqlite'),
             pconfig.String(
                 'default email domain',
                 'Used for users missing the email property.',
@@ -96,7 +99,9 @@ Provides OpenID 2.0 authentication infrastructure. """
         return self.page
 
     def init_idp(self):
-        self.server = Server(MemoryStore(), op_endpoint=self.endpoint_url)
+        self.server = Server(
+            OpenIDStore(self.get_config_value('database url')),
+            op_endpoint=self.endpoint_url)
 
         # Expose OpenID presence in the root
         headers = self._root.default_headers
