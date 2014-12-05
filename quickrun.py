@@ -92,8 +92,9 @@ if __name__ == '__main__':
 
     penv = dict()
     penv.update(os.environ)
-    penv['PYTHONPATH'] = './'
+    penv['PYTHONPATH'] = os.getcwd()
 
+    exe = os.path.join(os.getcwd(), 'ipsilon/ipsilon')
 
     if args['cleanup']:
         shutil.rmtree(args['workdir'])
@@ -103,5 +104,7 @@ if __name__ == '__main__':
     else:
         conf = os.path.join(args['workdir'], 'ipsilon.conf')
 
-    p = subprocess.Popen(['./ipsilon/ipsilon', conf], env=penv)
+    os.chdir(args['workdir'])
+
+    p = subprocess.Popen([exe, conf], env=penv)
     p.wait()
