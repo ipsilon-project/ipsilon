@@ -104,6 +104,11 @@ if __name__ == '__main__':
     else:
         conf = os.path.join(args['workdir'], 'ipsilon.conf')
 
+    if not os.path.exists(os.path.join(args['workdir'], 'ui')):
+        os.symlink(os.path.join(os.getcwd(), 'ui'),
+                   os.path.join(args['workdir'], 'ui'))
+
+
     os.chdir(args['workdir'])
 
     p = subprocess.Popen([exe, conf], env=penv)
