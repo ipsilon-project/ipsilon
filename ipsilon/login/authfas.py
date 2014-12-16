@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
 
 

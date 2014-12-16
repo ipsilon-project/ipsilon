@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
 
 from __future__ import absolute_import

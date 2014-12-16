@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
 
 from ipsilon.util.data import Store

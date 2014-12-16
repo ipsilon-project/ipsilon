@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2014 Ipsilon Project Contributors
 #
 # See the file named COPYING for the project license

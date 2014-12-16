@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2014  Ipsilon Contributors see COPYING for license
 
 from ipsilon.admin.common import AdminPlugins

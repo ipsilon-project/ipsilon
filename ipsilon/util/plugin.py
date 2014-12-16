@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (C) 2013  Simo Sorce <simo@redhat.com>
 #
 # see file 'COPYING' for use and warranty information
