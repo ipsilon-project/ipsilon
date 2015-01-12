@@ -266,7 +266,7 @@ def parse_args(plugins):
     parser.add_argument('--config-profile', default=None,
                         help="File containing install options")
     parser.add_argument('--server-debugging', action='store_true',
-                        help="Uninstall the server and all data")
+                        help="Enable debugging")
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
 

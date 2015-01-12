@@ -180,7 +180,7 @@ class Installer(object):
 
     def install_args(self, group):
         group.add_argument('--ldap', choices=['yes', 'no'], default='no',
-                           help='Configure PAM authentication')
+                           help='Configure LDAP authentication')
         group.add_argument('--ldap-server-url', action='store',
                            help='LDAP Server Url')
         group.add_argument('--ldap-bind-dn-template', action='store',
