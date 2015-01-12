@@ -17,18 +17,36 @@ class Transaction(Log):
         self.transaction_id = None
         self._ts = TranStore()
         self.cookie = None
+
+        # Backwards compat,
+        # if arguments are passed find or get new transaction
+        if kwargs:
+            self.find_tid(kwargs)
+            if not self.transaction_id:
+                self.create_tid()
+
+    def find_tid(self, kwargs):
         tid = kwargs.get(TRANSID)
         if tid:
+            # If more than one only pick the first
+            if isinstance(tid, list):
+                tid = tid[0]
             self.transaction_id = tid
             data = self.retrieve()
             if data and 'provider' in data:
                 self.provider = data['provider']
             self._get_cookie(data)
-        else:
-            data = {'provider': self.provider,
-                    'origintime': str(datetime.now())}
-            self.transaction_id = self._ts.new_unique_data(TRANSTABLE, data)
-            self._set_cookie()
+            self.debug('Transaction: %s %s' % (self.provider,
+                                               self.transaction_id))
+            return tid
+
+        return None
+
+    def create_tid(self):
+        data = {'provider': self.provider,
+                'origintime': str(datetime.now())}
+        self.transaction_id = self._ts.new_unique_data(TRANSTABLE, data)
+        self._set_cookie()
         self.debug('Transaction: %s %s' % (self.provider,
                                            self.transaction_id))
 

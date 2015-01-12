@@ -22,9 +22,11 @@ from ipsilon.util.trans import Transaction
 from urllib import unquote
 try:
     from urlparse import urlparse
+    from urlparse import parse_qs
 except ImportError:
     # pylint: disable=no-name-in-module, import-error
     from urllib.parse import urlparse
+    from urllib.parse import parse_qs
 
 
 def admin_protect(fn):
@@ -123,7 +125,18 @@ class Page(Log):
 
     def get_valid_transaction(self, provider, **kwargs):
         try:
-            return Transaction(provider, **kwargs)
+            t = Transaction(provider)
+            # Try with kwargs first
+            tid = t.find_tid(kwargs)
+            if not tid:
+                # If no TID yet See if we have it in a referer
+                if 'referer' in cherrypy.request.headers:
+                    r = urlparse(unquote(cherrypy.request.headers['referer']))
+                    if r.query:
+                        tid = t.find_tid(parse_qs(r.query))
+                if not tid:
+                    t.create_tid()
+            return t
         except ValueError:
             msg = 'Transaction expired, or cookies not available'
             raise cherrypy.HTTPError(401, msg)
