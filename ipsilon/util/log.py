@@ -3,8 +3,10 @@
 # See the file named COPYING for the project license
 
 import cherrypy
-import inspect
 import cStringIO
+import inspect
+import os
+import traceback
 
 def log_request_response():
     '''Log the contents of the request and subsequent response.
@@ -246,10 +248,67 @@ cherrypy.tools.log_request_response = cherrypy.Tool('on_end_resource', log_reque
 
 class Log(object):
 
+    @staticmethod
+    def stacktrace():
+        buf = cStringIO.StringIO()
+
+        stack = traceback.extract_stack()
+        traceback.print_list(stack[:-2], file=buf)
+
+        stacktrace_string = buf.getvalue()
+        buf.close()
+        return stacktrace_string
+
+    @staticmethod
+    def get_class_from_frame(frame_obj):
+        '''
+        Taken from:
+        http://stackoverflow.com/questions/2203424/
+        python-how-to-retrieve-class-information-from-a-frame-object
+
+        At the frame object level, there does not seem to be any way
+        to find the actual python function object that has been
+        called.
+
+        However, if your code relies on the common convention of naming
+        the instance parameter of a method self, then you could do this.
+        '''
+
+        args, _, _, value_dict = inspect.getargvalues(frame_obj)
+        # Is the functions first parameter named 'self'?
+        if len(args) and args[0] == 'self':
+        # in that case, 'self' will be referenced in value_dict
+            instance = value_dict.get('self', None)
+            if instance:
+                # return its class
+                return getattr(instance, '__class__', None)
+        # return None otherwise
+        return None
+
+    @staticmethod
+    def call_location():
+        frame = inspect.stack()[2]
+        frame_obj = frame[0]
+        filename = frame[1]
+        line_number = frame[2]
+        func = frame[3]
+
+        # Only report the last 3 components of the path
+        filename = os.sep.join(filename.split(os.sep)[-3:])
+
+        cls = Log.get_class_from_frame(frame_obj)
+        if cls:
+            location = '%s:%s %s.%s()' %  \
+                       (filename, line_number, cls.__name__, func)
+        else:
+            location = '%s:%s %s()' % (filename, line_number, func)
+        return location
+
+
     def debug(self, fact):
         if cherrypy.config.get('debug', False):
-            s = inspect.stack()
-            cherrypy.log('DEBUG(%s): %s' % (s[1][3], fact))
+            location = Log.call_location()
+            cherrypy.log('DEBUG(%s): %s' % (location, fact))
 
     # for compatibility with existing code
     _debug = debug
@@ -259,3 +318,5 @@ class Log(object):
 
     def error(self, fact):
         cherrypy.log.error('ERROR: %s' % fact)
+        if cherrypy.config.get('stacktrace_on_error', False):
+            cherrypy.log.error(Log.stacktrace())
