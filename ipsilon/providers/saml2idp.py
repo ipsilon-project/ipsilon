@@ -242,6 +242,27 @@ Provides SAML 2.0 authentication infrastructure. """
                 self.admin.add_sps()
 
 
+class IdpMetadataGenerator(object):
+
+    def __init__(self, url, idp_cert):
+        self.meta = metadata.Metadata(metadata.IDP_ROLE)
+        self.meta.set_entity_id('%s/saml2/metadata' % url)
+        self.meta.add_certs(idp_cert, idp_cert)
+        self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-post'],
+                              '%s/saml2/SSO/POST' % url)
+        self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
+                              '%s/saml2/SSO/Redirect' % url)
+        self.meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
+        self.meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT)
+        self.meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL)
+
+    def output(self, path=None):
+        return self.meta.output(path)
+
+
 class Installer(object):
 
     def __init__(self, *pargs):
@@ -270,23 +291,10 @@ class Installer(object):
         proto = 'https'
         if opts['secure'].lower() == 'no':
             proto = 'http'
-        url = '%s://%s/%s/saml2' % (proto, opts['hostname'], opts['instance'])
-        meta = metadata.Metadata(metadata.IDP_ROLE)
-        meta.set_entity_id(url + '/metadata')
-        meta.add_certs(cert, cert)
-        meta.add_service(metadata.SAML2_SERVICE_MAP['sso-post'],
-                         url + '/SSO/POST')
-        meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
-                         url + '/SSO/Redirect')
-
-        meta.add_allowed_name_format(
-            lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
-        meta.add_allowed_name_format(
-            lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT)
-        meta.add_allowed_name_format(
-            lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL)
+        url = '%s://%s/%s' % (proto, opts['hostname'], opts['instance'])
+        meta = IdpMetadataGenerator(url, cert)
         if 'krb' in opts and opts['krb'] == 'yes':
-            meta.add_allowed_name_format(
+            meta.meta.add_allowed_name_format(
                 lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS)
 
         meta.output(os.path.join(path, 'metadata.xml'))
