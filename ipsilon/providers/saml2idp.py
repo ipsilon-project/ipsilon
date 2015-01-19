@@ -26,8 +26,10 @@ from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import cherrypy
+from datetime import timedelta
 import lasso
 import os
+import time
 
 
 class Redirect(AuthenticateRequest):
@@ -96,13 +98,37 @@ class SSO(ProviderPageBase):
         self.Continue = Continue(*args, **kwargs)
 
 
+# one week
+METADATA_RENEW_INTERVAL = 60 * 60 * 24 * 7
+# 30 days
+METADATA_VALIDITY_PERIOD = 30
+
+
 class Metadata(ProviderPageBase):
     def GET(self, *args, **kwargs):
-        with open(self.cfg.idp_metadata_file) as m:
-            body = m.read()
+
+        body = self._get_metadata()
         cherrypy.response.headers["Content-Type"] = "text/xml"
         cherrypy.response.headers["Content-Disposition"] = \
             'attachment; filename="metadata.xml"'
+        return body
+
+    def _get_metadata(self):
+        if os.path.isfile(self.cfg.idp_metadata_file):
+            s = os.stat(self.cfg.idp_metadata_file)
+            if s.st_mtime > time.time() - METADATA_RENEW_INTERVAL:
+                with open(self.cfg.idp_metadata_file) as m:
+                    return m.read()
+
+        # Otherwise generate and save
+        idp_cert = Certificate()
+        idp_cert.import_cert(self.cfg.idp_certificate_file,
+                             self.cfg.idp_key_file)
+        meta = IdpMetadataGenerator(self.instance_base_url(), idp_cert,
+                                    timedelta(METADATA_VALIDITY_PERIOD))
+        body = meta.output()
+        with open(self.cfg.idp_metadata_file, 'w+') as m:
+            m.write(body)
         return body
 
 
@@ -244,8 +270,8 @@ Provides SAML 2.0 authentication infrastructure. """
 
 class IdpMetadataGenerator(object):
 
-    def __init__(self, url, idp_cert):
-        self.meta = metadata.Metadata(metadata.IDP_ROLE)
+    def __init__(self, url, idp_cert, expiration=None):
+        self.meta = metadata.Metadata(metadata.IDP_ROLE, expiration)
         self.meta.set_entity_id('%s/saml2/metadata' % url)
         self.meta.add_certs(idp_cert, idp_cert)
         self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-post'],
@@ -292,7 +318,8 @@ class Installer(object):
         if opts['secure'].lower() == 'no':
             proto = 'http'
         url = '%s://%s/%s' % (proto, opts['hostname'], opts['instance'])
-        meta = IdpMetadataGenerator(url, cert)
+        meta = IdpMetadataGenerator(url, cert,
+                                    timedelta(METADATA_VALIDITY_PERIOD))
         if 'krb' in opts and opts['krb'] == 'yes':
             meta.meta.add_allowed_name_format(
                 lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS)

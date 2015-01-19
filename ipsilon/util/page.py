@@ -51,6 +51,14 @@ class Page(Log):
         self.default_headers = dict()
         self.auth_protect = False
 
+    def get_url(self):
+        return cherrypy.url(relative=False)
+
+    def instance_base_url(self):
+        url = self.get_url()
+        s = urlparse(unquote(url))
+        return '%s://%s%s' % (s.scheme, s.netloc, self.basepath)
+
     def _check_referer(self, referer, url):
         r = urlparse(unquote(referer))
         u = urlparse(unquote(url))
@@ -82,7 +90,7 @@ class Page(Log):
                 if callable(op):
                     # Basic CSRF protection
                     if cherrypy.request.method != 'GET':
-                        url = cherrypy.url(relative=False)
+                        url = self.get_url()
                         if 'referer' not in cherrypy.request.headers:
                             self._debug("Missing referer in %s request to %s"
                                         % (cherrypy.request.method, url))
