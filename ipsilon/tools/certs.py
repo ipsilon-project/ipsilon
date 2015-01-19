@@ -42,6 +42,10 @@ class Certificate(object):
         proc = Popen(command)
         proc.wait()
 
+    def import_cert(self, certfile, keyfile):
+        self.cert = certfile
+        self.key = keyfile
+
     def get_cert(self):
         if not self.cert:
             raise ValueError('Certificate unavailable')
