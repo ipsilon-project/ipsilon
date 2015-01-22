@@ -75,7 +75,7 @@ class Info(Log):
         self.debug('Available info providers: %s' % str(available))
 
         for item in plugins.enabled:
-            self.debug('Login plugin in enabled list: %s' % item)
+            self.debug('Info plugin in enabled list: %s' % item)
             if item not in plugins.available:
                 self.debug('Info Plugin %s not found' % item)
                 continue
