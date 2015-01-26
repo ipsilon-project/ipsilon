@@ -6,6 +6,7 @@ from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
 from ipsilon.providers.saml2.sessions import SAMLSessionsContainer
+from ipsilon.tools import saml2metadata as metadata
 from ipsilon.util.policy import Policy
 from ipsilon.util.user import UserSession
 from ipsilon.util.trans import Transaction
@@ -29,14 +30,29 @@ class AuthenticateRequest(ProviderPageBase):
         super(AuthenticateRequest, self).__init__(*args, **kwargs)
         self.stage = 'init'
         self.trans = None
+        self.binding = None
 
     def _preop(self, *args, **kwargs):
         try:
             # generate a new id or get current one
             self.trans = Transaction('saml2', **kwargs)
-            if self.trans.cookie.value != self.trans.provider:
-                self.debug('Invalid transaction, %s != %s' % (
-                           self.trans.cookie.value, self.trans.provider))
+
+            self.debug('self.binding=%s, transdata=%s' %
+                       (self.binding, self.trans.retrieve()))
+            if self.binding is None:
+                # SAML binding is unknown, try to get it from transaction
+                transdata = self.trans.retrieve()
+                self.binding = transdata.get('saml2_binding')
+            else:
+                # SAML binding known, store in transaction
+                data = {'saml2_binding': self.binding}
+                self.trans.store(data)
+
+            # Only check for cookie for those bindings which use one
+            if self.binding not in (metadata.SAML2_SERVICE_MAP['sso-soap'][1]):
+                if self.trans.cookie.value != self.trans.provider:
+                    self.debug('Invalid transaction, %s != %s' % (
+                        self.trans.cookie.value, self.trans.provider))
         except Exception, e:  # pylint: disable=broad-except
             self.debug('Transaction initialization failed: %s' % repr(e))
             raise cherrypy.HTTPError(400, 'Invalid transaction id')
@@ -302,6 +318,11 @@ class AuthenticateRequest(ProviderPageBase):
                 "submit": 'Return to application',
             }
             return self._template('saml2/post_response.html', **context)
+
+        elif login.protocolProfile == lasso.LOGIN_PROTOCOL_PROFILE_BRWS_LECP:
+            login.buildResponseMsg()
+            self.debug("Returning ECP: %s" % login.msgBody)
+            return login.msgBody
 
         else:
             raise cherrypy.HTTPError(500)

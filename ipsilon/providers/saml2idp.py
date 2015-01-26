@@ -10,6 +10,8 @@ from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
+from ipsilon.util.http import require_content_type
+from ipsilon.util.constants import SOAP_MEDIA_TYPE, XML_MEDIA_TYPE
 from ipsilon.util.user import UserSession
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
@@ -20,8 +22,53 @@ import os
 import time
 import uuid
 
+cherrypy.tools.require_content_type = cherrypy.Tool('before_request_body',
+                                                    require_content_type)
+
+
+def is_lasso_ecp_enabled():
+    # Full ECP support appeared in lasso version 2.4.2
+    return lasso.checkVersion(2, 4, 2, lasso.CHECK_VERSION_NUMERIC)
+
+
+class SSO_SOAP(AuthenticateRequest):
+
+    def __init__(self, *args, **kwargs):
+        super(SSO_SOAP, self).__init__(*args, **kwargs)
+        self.binding = metadata.SAML2_SERVICE_MAP['sso-soap'][1]
+
+    @cherrypy.tools.require_content_type(
+        required=[SOAP_MEDIA_TYPE, XML_MEDIA_TYPE])
+    @cherrypy.tools.accept(media=[SOAP_MEDIA_TYPE, XML_MEDIA_TYPE])
+    @cherrypy.tools.response_headers(
+        headers=[('Content-Type', 'SOAP_MEDIA_TYPE')])
+    def POST(self, *args, **kwargs):
+        self.debug("SSO_SOAP.POST() begin")
+
+        self.debug("SSO_SOAP transaction provider=%s id=%s" %
+                   (self.trans.provider, self.trans.transaction_id))
+
+        us = UserSession()
+        us.remote_login()
+        user = us.get_user()
+        self.debug("SSO_SOAP user=%s" % (user.name))
+
+        if not user:
+            raise cherrypy.HTTPError(403, 'No user specified for SSO_SOAP')
+
+        soap_xml_doc = cherrypy.request.rfile.read()
+        soap_xml_doc = soap_xml_doc.strip()
+        self.debug("SSO_SOAP soap_xml_doc=%s" % soap_xml_doc)
+        login = self.saml2login(soap_xml_doc)
+
+        return self.auth(login)
+
 
 class Redirect(AuthenticateRequest):
+
+    def __init__(self, *args, **kwargs):
+        super(Redirect, self).__init__(*args, **kwargs)
+        self.binding = metadata.SAML2_SERVICE_MAP['sso-redirect'][1]
 
     def GET(self, *args, **kwargs):
 
@@ -32,6 +79,10 @@ class Redirect(AuthenticateRequest):
 
 
 class POSTAuth(AuthenticateRequest):
+
+    def __init__(self, *args, **kwargs):
+        super(POSTAuth, self).__init__(*args, **kwargs)
+        self.binding = metadata.SAML2_SERVICE_MAP['sso-post'][1]
 
     def POST(self, *args, **kwargs):
 
@@ -98,6 +149,7 @@ class SSO(ProviderPageBase):
         self.Redirect = Redirect(*args, **kwargs)
         self.POST = POSTAuth(*args, **kwargs)
         self.Continue = Continue(*args, **kwargs)
+        self.SOAP = SSO_SOAP(*args, **kwargs)
 
 
 class SLO(ProviderPageBase):
@@ -118,7 +170,7 @@ class Metadata(ProviderPageBase):
     def GET(self, *args, **kwargs):
 
         body = self._get_metadata()
-        cherrypy.response.headers["Content-Type"] = "text/xml"
+        cherrypy.response.headers["Content-Type"] = XML_MEDIA_TYPE
         cherrypy.response.headers["Content-Disposition"] = \
             'attachment; filename="metadata.xml"'
         return body
@@ -368,6 +420,9 @@ class IdpMetadataGenerator(object):
                               '%s/saml2/SSO/POST' % url)
         self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
                               '%s/saml2/SSO/Redirect' % url)
+        if is_lasso_ecp_enabled():
+            self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-soap'],
+                                  '%s/saml2/SSO/SOAP' % url)
         self.meta.add_service(metadata.SAML2_SERVICE_MAP['logout-redirect'],
                               '%s/saml2/SLO/Redirect' % url)
         self.meta.add_allowed_name_format(
