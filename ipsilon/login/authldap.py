@@ -7,6 +7,7 @@ from ipsilon.util.log import Log
 from ipsilon.util import config as pconfig
 from ipsilon.info.infoldap import InfoProvider as LDAPInfo
 import ldap
+import subprocess
 
 
 class LDAP(LoginFormBase, Log):
@@ -201,3 +202,11 @@ class Installer(LoginManagerInstaller):
         # Update global config to add login plugin
         po.is_enabled = True
         po.save_enabled_state()
+
+        # For selinux enabled platforms permit httpd to connect to ldap,
+        # ignore if it fails
+        try:
+            subprocess.call(['/usr/sbin/setsebool', '-P',
+                             'httpd_can_connect_ldap=on'])
+        except Exception:  # pylint: disable=broad-except
+            pass

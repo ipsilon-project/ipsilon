@@ -8,6 +8,7 @@ from ipsilon.util.plugin import PluginObject
 from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
 import ldap
+import subprocess
 
 
 # TODO: fetch mapping from configuration
@@ -196,3 +197,11 @@ class Installer(InfoProviderInstaller):
         # Update global config to add info plugin
         po.is_enabled = True
         po.save_enabled_state()
+
+        # For selinux enabled platforms permit httpd to connect to ldap,
+        # ignore if it fails
+        try:
+            subprocess.call(['/usr/sbin/setsebool', '-P',
+                             'httpd_can_connect_ldap=on'])
+        except Exception:  # pylint: disable=broad-except
+            pass
