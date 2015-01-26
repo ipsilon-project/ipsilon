@@ -8,6 +8,7 @@ import inspect
 import os
 import traceback
 
+
 def log_request_response():
     '''Log the contents of the request and subsequent response.
 
@@ -81,7 +82,7 @@ def log_request_response():
 
     '''
 
-    #--- Begin local functions ---
+    # --- Begin local functions ---
 
     def indent_text(text, level=0, indent='    '):
         '''
@@ -170,7 +171,7 @@ def log_request_response():
         f.close()
         return string
 
-    #--- End local functions ---
+    # --- End local functions ---
 
     f = cStringIO.StringIO()
     request = cherrypy.serving.request
@@ -179,8 +180,8 @@ def log_request_response():
     #
     # Log the Request
     #
-    f.write(indent_text("<Request> [%s] %s\n" % \
-                      (remote.name or remote.ip, request.request_line), 0))
+    f.write(indent_text("<Request> [%s] %s\n" %
+                        (remote.name or remote.ip, request.request_line), 0))
 
     # Request Headers
     if request.headers:
@@ -197,12 +198,13 @@ def log_request_response():
             if isinstance(value, list):
                 for i, item in enumerate(value):
                     # Might be a multipart Part object, if so format it
-                    if isinstance(item, cherrypy._cpreqbody.Part):
+                    if getattr(item, "part_class", None):
                         f.write(indent_text("%s[%s]:\n" % (name, i), 2))
                         f.write(indent_text(print_part(item), 3))
                     else:
                         # Not a mulitpart, just write it as a string
-                        f.write(indent_text("%s[%s]: %s\n" % (name, i, item), 2))
+                        f.write(indent_text("%s[%s]: %s\n" %
+                                            (name, i, item), 2))
             else:
                 # Just a string value
                 f.write(indent_text("%s: %s\n" % (name, value), 2))
@@ -243,7 +245,8 @@ def log_request_response():
     f.close()
     print string
 
-cherrypy.tools.log_request_response = cherrypy.Tool('on_end_resource', log_request_response)
+cherrypy.tools.log_request_response = cherrypy.Tool('on_end_resource',
+                                                    log_request_response)
 
 
 class Log(object):
@@ -277,7 +280,7 @@ class Log(object):
         args, _, _, value_dict = inspect.getargvalues(frame_obj)
         # Is the functions first parameter named 'self'?
         if len(args) and args[0] == 'self':
-        # in that case, 'self' will be referenced in value_dict
+            # in that case, 'self' will be referenced in value_dict
             instance = value_dict.get('self', None)
             if instance:
                 # return its class
@@ -303,7 +306,6 @@ class Log(object):
         else:
             location = '%s:%s %s()' % (filename, line_number, func)
         return location
-
 
     def debug(self, fact):
         if cherrypy.config.get('debug', False):
