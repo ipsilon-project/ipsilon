@@ -136,6 +136,21 @@ def log_request_response():
         f.close()
         return string
 
+    def print_param(name, value):
+        f = cStringIO.StringIO()
+
+        # Might be a multipart Part object, if so format it
+        if isinstance(value, cherrypy._cpreqbody.Part):  # pylint:disable=W0212
+            f.write(indent_text("%s:\n" % (name)))
+            f.write(indent_text(print_part(value), 1))
+        else:
+            # Not a mulitpart, just write it as a string
+            f.write(indent_text("%s: %s\n" % (name, value)))
+
+        string = f.getvalue()
+        f.close()
+        return string
+
     def collapse_body(body):
         '''The cherrypy response body can be:
 
@@ -197,17 +212,10 @@ def log_request_response():
             # Multi-valued paramater is in a list
             if isinstance(value, list):
                 for i, item in enumerate(value):
-                    # Might be a multipart Part object, if so format it
-                    if getattr(item, "part_class", None):
-                        f.write(indent_text("%s[%s]:\n" % (name, i), 2))
-                        f.write(indent_text(print_part(item), 3))
-                    else:
-                        # Not a mulitpart, just write it as a string
-                        f.write(indent_text("%s[%s]: %s\n" %
-                                            (name, i, item), 2))
+                    f.write(indent_text(print_param("%s[%d]" % (name, i),
+                                                    item), 2))
             else:
-                # Just a string value
-                f.write(indent_text("%s: %s\n" % (name, value), 2))
+                f.write(indent_text(print_param(name, value), 2))
 
     # If the body is multipart format each of the parts
     if request.body.parts:
