@@ -1,26 +1,33 @@
-Name:		ipsilon
-Version:	0.3.0
-Release:	1%{?dist}
-Summary:	An Identity Provider Server
+# Bundling request for bootstrap/patternfly: https://fedorahosted.org/fpc/ticket/483
 
-Group:		System Environment/Base
-License:	GPLv3+
-URL:		https://fedorahosted.org/ipsilon/
-Source0:	ipsilon-%{version}.tar.gz
+Name:       ipsilon
+Version:    0.3.0
+Release:    5%{?dist}
+Summary:    An Identity Provider Server
 
-BuildRequires:	python2-devel
-BuildRequires:	python-setuptools
-BuildRequires:	lasso-python
+Group:      System Environment/Base
+License:    GPLv3+
+URL:        https://fedorahosted.org/ipsilon/
+Source0:    https://fedorahosted.org/released/ipsilon/ipsilon-%{version}.tar.gz
+BuildArch:  noarch
+
+
+BuildRequires:  python2-devel
+BuildRequires:  python-setuptools
+BuildRequires:  lasso-python
 BuildRequires:  python-openid, python-openid-cla, python-openid-teams
 BuildRequires:  m2crypto
+Requires:       httpd
+Requires:       mod_ssl
 Requires:       ipsilon-tools = %{version}-%{release}
 Requires:       ipsilon-provider = %{version}-%{release}
-Requires:	mod_wsgi
+Requires:       mod_wsgi
 Requires:       mod_intercept_form_submit
 Requires:       python-cherrypy
 Requires:       python-jinja2
 Requires:       python-lxml
 Requires:       python-sqlalchemy
+Requires:       open-sans-fonts
 Requires(pre):  shadow-utils
 Requires(post): %_sbindir/semanage, %_sbindir/restorecon
 Requires(postun): %_sbindir/semanage
@@ -37,11 +44,30 @@ Group:          System Environment/Base
 License:        GPLv3+
 Requires:       python-requests
 Requires:       python-lxml
-Requires:	lasso-python
-Requires:	mod_auth_mellon
+Requires:       lasso-python
+Requires:       mod_auth_mellon
+BuildArch:      noarch
 
 %description tools
 Convenience client install tools for the Ipsilon identity Provider
+
+
+%package tools-ipa
+summary:        IPA helpers
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       %{name}-tools = %{version}-%{release}
+%if 0%{?rhel}
+Requires:       ipa-client
+Requires:       ipa-admintools
+%else
+Requires:       freeipa-client
+Requires:       freeipa-admintools
+%endif
+BuildArch:      noarch
+
+%description tools-ipa
+Convenience client install tools for IPA support in the Ipsilon identity Provider
 
 
 %package saml2
@@ -49,7 +75,9 @@ Summary:        SAML2 provider plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Provides:       ipsilon-provider = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
 Requires:       lasso-python
+BuildArch:      noarch
 
 %description saml2
 Provides a SAML2 provider plugin for the Ipsilon identity Provider
@@ -60,9 +88,11 @@ Summary:        Openid provider plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Provides:       ipsilon-provider = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
 Requires:       python-openid
 Requires:       python-openid-cla
 Requires:       python-openid-teams
+BuildArch:      noarch
 
 %description openid
 Provides an OpenId provider plugin for the Ipsilon identity Provider
@@ -73,7 +103,9 @@ Summary:        Persona provider plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Provides:       ipsilon-provider = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
 Requires:       m2crypto
+BuildArch:      noarch
 
 %description persona
 Provides a Persona provider plugin for the Ipsilon identity Provider
@@ -83,27 +115,33 @@ Provides a Persona provider plugin for the Ipsilon identity Provider
 Summary:        Fedora Authentication System login plugin
 Group:          System Environment/Base
 License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
 Requires:       python-fedora
+BuildArch:      noarch
 
 %description authfas
-Provides a login plugin to authenticate agaist the Fedora Authentication System
+Provides a login plugin to authenticate against the Fedora Authentication System
 
 
 %package authpam
 Summary:        PAM based login plugin
 Group:          System Environment/Base
 License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
 Requires:       python-pam
+BuildArch:      noarch
 
 %description authpam
-Provides a login plugin to authenticate agaist the local PAM stack
+Provides a login plugin to authenticate against the local PAM stack
 
 
 %package authkrb
 Summary:        mod_auth_kerb based login plugin
 Group:          System Environment/Base
 License:        GPLv3+
-Requires:	mod_auth_kerb
+Requires:       %{name} = %{version}-%{release}
+Requires:       mod_auth_kerb
+BuildArch:      noarch
 
 %description authkrb
 Provides a login plugin to allow authentication via the mod_auth_kerb Apache
@@ -114,7 +152,9 @@ module.
 Summary:        mod_auth_kerb based login plugin
 Group:          System Environment/Base
 License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
 Requires:       python-ldap
+BuildArch:      noarch
 
 %description authldap
 Provides a login plugin to allow authentication and info retrieval via LDAP.
@@ -127,16 +167,25 @@ Provides a login plugin to allow authentication and info retrieval via LDAP.
 %build
 CFLAGS="%{optflags}" %{__python} setup.py build
 
+
 %install
 %{__python} setup.py install --skip-build --root %{buildroot}
 mkdir -p %{buildroot}%{_sbindir}
+mkdir -p %{buildroot}%{_defaultdocdir}
+# These 0700 permissions are because ipsilon will store private keys here
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
+install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_sbindir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
-install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
-mkdir -p %{buildroot}%{_defaultdocdir}
 mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
 rm -fr %{buildroot}%{python2_sitelib}/tests
+ln -s %{_datadir}/fonts %{buildroot}%{_datadir}/ipsilon/ui/fonts
+
+#%check
+# The test suite is not being run because:
+#  1. The last step of %%install removes the entire test suite
+#  2. It increases build time a lot
+#  3. It adds more build dependencies (namely postgresql server and client libraries)
 
 %pre
 getent group ipsilon >/dev/null || groupadd -r ipsilon
@@ -157,30 +206,41 @@ if [ $1 -eq 0 ]; then
     semanage fcontext -d -t httpd_var_lib_t '%{_sharedstatedir}/ipsilon(/.*)?' || :
 fi
 
+
 %files
 %{_defaultdocdir}/%{name}-%{version}
 %{python2_sitelib}/ipsilon-*.egg-info
-%{python2_sitelib}/ipsilon/admin/*
+%dir %{python2_sitelib}/ipsilon
+%{python2_sitelib}/ipsilon/admin
+%dir %{python2_sitelib}/ipsilon/login
 %{python2_sitelib}/ipsilon/login/__init__*
 %{python2_sitelib}/ipsilon/login/common*
 %{python2_sitelib}/ipsilon/login/authform*
 %{python2_sitelib}/ipsilon/login/authtest*
+%dir %{python2_sitelib}/ipsilon/info
 %{python2_sitelib}/ipsilon/info/__init__*
 %{python2_sitelib}/ipsilon/info/common*
 %{python2_sitelib}/ipsilon/info/nss*
+%dir %{python2_sitelib}/ipsilon/providers
 %{python2_sitelib}/ipsilon/providers/__init__*
 %{python2_sitelib}/ipsilon/providers/common*
 %{python2_sitelib}/ipsilon/root.py*
-%{python2_sitelib}/ipsilon/util/*
+%{python2_sitelib}/ipsilon/util
 %{_mandir}/man*/ipsilon*
+%dir %{_datadir}/ipsilon
+%dir %{_datadir}/ipsilon/templates
 %{_datadir}/ipsilon/templates/*.html
-%{_datadir}/ipsilon/templates/admin/*
+%{_datadir}/ipsilon/templates/admin
+%dir %{_datadir}/ipsilon/templates/login
 %{_datadir}/ipsilon/templates/login/index.html
 %{_datadir}/ipsilon/templates/login/form.html
+%dir %{_datadir}/ipsilon/templates/install
 %{_datadir}/ipsilon/templates/install/*.conf
-%{_datadir}/ipsilon/ui/css/*
-%{_datadir}/ipsilon/ui/img/*
-%{_datadir}/ipsilon/ui/js/*
+%dir %{_datadir}/ipsilon/ui
+%{_datadir}/ipsilon/ui/css
+%{_datadir}/ipsilon/ui/img
+%{_datadir}/ipsilon/ui/js
+%{_datadir}/ipsilon/ui/fonts
 %{_sbindir}/ipsilon
 %{_sbindir}/ipsilon-server-install
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
@@ -190,23 +250,28 @@ fi
 %doc COPYING README
 %{python2_sitelib}/ipsilon-*.egg-info
 %{python2_sitelib}/ipsilon/__init__.py*
-%{python2_sitelib}/ipsilon/tools/*
-%{python2_sitelib}/ipsilon/helpers/*
-%{_datadir}/ipsilon/templates/install/saml2/sp.conf
-%{_datadir}/ipsilon/ui/saml2sp/*
+%{python2_sitelib}/ipsilon/tools
+%dir %{python2_sitelib}/ipsilon/helpers
+%{python2_sitelib}/ipsilon/helpers/common.py*
+%{python2_sitelib}/ipsilon/helpers/__init__.py*
+%{_datadir}/ipsilon/templates/install/saml2
+%{_datadir}/ipsilon/ui/saml2sp
 %{_bindir}/ipsilon-client-install
+
+%files tools-ipa
+%{python2_sitelib}/ipsilon/helpers/ipa.py*
 
 %files saml2
 %{python2_sitelib}/ipsilon/providers/saml2*
-%{_datadir}/ipsilon/templates/saml2/*
+%{_datadir}/ipsilon/templates/saml2
 
 %files openid
 %{python2_sitelib}/ipsilon/providers/openid*
-%{_datadir}/ipsilon/templates/openid/*
+%{_datadir}/ipsilon/templates/openid
 
 %files persona
 %{python2_sitelib}/ipsilon/providers/persona*
-%{_datadir}/ipsilon/templates/persona/*
+%{_datadir}/ipsilon/templates/persona
 
 %files authfas
 %{python2_sitelib}/ipsilon/login/authfas*
@@ -221,3 +286,23 @@ fi
 %files authldap
 %{python2_sitelib}/ipsilon/login/authldap*
 %{python2_sitelib}/ipsilon/info/infoldap*
+
+
+%changelog
+* Wed Jan 28 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-5
+- Split IPA tools
+
+* Mon Jan 12 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-4
+- Add symlink to fonts directory
+
+* Tue Dec 16 2014 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-3
+- Fix typo
+- Add comments on why the test suite is not in check
+- The subpackages require the base package
+- Add link to FPC ticket for bundling exception request
+
+* Tue Dec 16 2014 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-2
+- Fix shebang removal
+
+* Tue Dec 16 2014 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-1
+- Initial packaging
