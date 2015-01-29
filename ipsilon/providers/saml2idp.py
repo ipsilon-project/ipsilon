@@ -278,6 +278,8 @@ class IdpMetadataGenerator(object):
                               '%s/saml2/SSO/POST' % url)
         self.meta.add_service(metadata.SAML2_SERVICE_MAP['sso-redirect'],
                               '%s/saml2/SSO/Redirect' % url)
+        self.meta.add_service(metadata.SAML2_SERVICE_MAP['logout-redirect'],
+                              '%s/saml2/SLO/Redirect' % url)
         self.meta.add_allowed_name_format(
             lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
         self.meta.add_allowed_name_format(
