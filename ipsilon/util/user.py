@@ -158,6 +158,22 @@ class UserSession(Log):
         self._debug('Saved user attrs')
         self.userattrs = userattrs
 
+    def _get_provider_attr_name(self, provider):
+        return '%s_data' % provider
+
+    def get_provider_data(self, provider):
+        attr = self._get_provider_attr_name(provider)
+        data = None
+        if attr in cherrypy.session:
+            data = cherrypy.session[attr]
+        return data
+
+    def save_provider_data(self, provider, data):
+        attr = self._get_provider_attr_name(provider)
+        cherrypy.session[attr] = data
+        cherrypy.session.save()
+        self._debug('Saved %s provider data' % provider)
+
     def save_data(self, facility, name, data):
         """ Save named data in the session so it can be retrieved later """
         if facility not in cherrypy.session:
