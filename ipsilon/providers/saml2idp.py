@@ -17,6 +17,7 @@
 
 from ipsilon.providers.common import ProviderBase, ProviderPageBase
 from ipsilon.providers.saml2.auth import AuthenticateRequest
+from ipsilon.providers.saml2.logout import LogoutRequest
 from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.tools.certs import Certificate
@@ -89,6 +90,19 @@ class Continue(AuthenticateRequest):
         return self.auth(login)
 
 
+class RedirectLogout(LogoutRequest):
+
+    def GET(self, *args, **kwargs):
+        query = cherrypy.request.query_string
+
+        relaystate = kwargs.get(lasso.SAML2_FIELD_RELAYSTATE)
+        response = kwargs.get(lasso.SAML2_FIELD_RESPONSE)
+
+        return self.logout(query,
+                           relaystate=relaystate,
+                           samlresponse=response)
+
+
 class SSO(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
@@ -96,6 +110,14 @@ class SSO(ProviderPageBase):
         self.Redirect = Redirect(*args, **kwargs)
         self.POST = POSTAuth(*args, **kwargs)
         self.Continue = Continue(*args, **kwargs)
+
+
+class SLO(ProviderPageBase):
+
+    def __init__(self, *args, **kwargs):
+        super(SLO, self).__init__(*args, **kwargs)
+        self._debug('SLO init')
+        self.Redirect = RedirectLogout(*args, **kwargs)
 
 
 # one week
@@ -138,6 +160,7 @@ class SAML2(ProviderPageBase):
         super(SAML2, self).__init__(*args, **kwargs)
         self.metadata = Metadata(*args, **kwargs)
         self.SSO = SSO(*args, **kwargs)
+        self.SLO = SLO(*args, **kwargs)
 
 
 class IdpProvider(ProviderBase):

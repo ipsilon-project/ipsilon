@@ -200,3 +200,9 @@ class IdentityProvider(Log):
 
     def get_providers(self):
         return self.server.get_providers()
+
+    def get_logout_handler(self, dump=None):
+        if dump:
+            return lasso.Logout.newFromDump(self.server, dump)
+        else:
+            return lasso.Logout(self.server)

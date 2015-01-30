@@ -20,6 +20,7 @@ from ipsilon.providers.common import AuthenticationError, InvalidRequest
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
+from ipsilon.providers.saml2.sessions import SAMLSessionsContainer
 from ipsilon.util.user import UserSession
 from ipsilon.util.trans import Transaction
 import cherrypy
@@ -238,6 +239,24 @@ class AuthenticateRequest(ProviderPageBase):
                 attrstat.attribute = attrstat.attribute + (attr,)
 
         self.debug('Assertion: %s' % login.assertion.dump())
+
+        saml_sessions = us.get_provider_data('saml2')
+        if saml_sessions is None:
+            saml_sessions = SAMLSessionsContainer()
+
+        session = saml_sessions.find_session_by_provider(
+            login.remoteProviderId)
+        if session:
+            # TODO: something...
+            self.debug('Login session for this user already exists!?')
+            session.dump()
+
+        lasso_session = lasso.Session()
+        lasso_session.addAssertion(login.remoteProviderId, login.assertion)
+        saml_sessions.add_session(login.assertion.id,
+                                  login.remoteProviderId,
+                                  lasso_session)
+        us.save_provider_data('saml2', saml_sessions)
 
     def saml2error(self, login, code, message):
         status = lasso.Samlp2Status()
