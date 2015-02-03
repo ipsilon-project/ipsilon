@@ -26,7 +26,7 @@ import cherrypy
 from ipsilon.util.data import AdminStore
 from ipsilon.util import page
 from ipsilon.root import Root
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, ChoiceLoader
 import ipsilon.util.sessions
 
 
@@ -62,12 +62,20 @@ admin_config = datastore.load_config()
 for option in admin_config:
     cherrypy.config[option] = admin_config[option]
 
-template_dir = cherrypy.config.get('template_dir', 'templates')
+template_loaders = []
+default_template_dir = 'templates'
+template_dir = cherrypy.config.get('template_dir', default_template_dir)
 if template_dir.startswith('/'):
-    templates = template_dir
+    template_loaders.append(FileSystemLoader(template_dir))
 else:
-    templates = os.path.join(cherrypy.config['base.dir'], template_dir)
-template_env = Environment(loader=FileSystemLoader(templates))
+    template_loaders.append(FileSystemLoader(
+        os.path.join(cherrypy.config['base.dir'],
+                     template_dir)))
+# Fall-back to the default templates
+template_loaders.append(FileSystemLoader(
+    os.path.join(cherrypy.config['base.dir'],
+                 default_template_dir)))
+template_env = Environment(loader=ChoiceLoader(template_loaders))
 
 if __name__ == "__main__":
     conf = {'/': {'tools.staticdir.root': os.getcwd()},
