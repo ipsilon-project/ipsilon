@@ -22,8 +22,6 @@ class IdpProvider(ProviderBase):
         self.server = None
         self.basepath = None
         self.extensions = LoadExtensions()
-        print self.extensions.available()
-        print self.extensions.available().keys()
         self.description = """
 Provides OpenID 2.0 authentication infrastructure. """
 
