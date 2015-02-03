@@ -35,7 +35,7 @@ setup(
                   (DATA+'templates/admin', glob('templates/admin/*.svg')),
                   (DATA+'templates/login', glob('templates/login/*.html')),
                   (DATA+'templates/saml2', glob('templates/saml2/*.html')),
-                  (DATA+'templates/openid', glob('templates/openid/*.html')),
+                  (DATA+'templates/openid', glob('templates/openid/*')),
                   (DATA+'templates/persona', glob('templates/persona/*.html')),
                   (DATA+'templates/install', glob('templates/install/*.conf')),
                   (DATA+'templates/install/saml2',
