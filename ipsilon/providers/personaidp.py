@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-from ipsilon.providers.common import ProviderBase
+from ipsilon.providers.common import ProviderBase, ProviderInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 from ipsilon.info.common import InfoMapping
@@ -74,11 +74,11 @@ Provides Persona authentication infrastructure. """
         self.init_idp()
 
 
-class Installer(object):
+class Installer(ProviderInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'persona'
-        self.ptype = 'provider'
         self.pargs = pargs
 
     def install_args(self, group):

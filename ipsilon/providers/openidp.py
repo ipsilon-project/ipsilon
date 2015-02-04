@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-from ipsilon.providers.common import ProviderBase
+from ipsilon.providers.common import ProviderBase, ProviderInstaller
 from ipsilon.providers.openid.store import OpenIDStore
 from ipsilon.providers.openid.auth import OpenID
 from ipsilon.providers.openid.extensions.common import LoadExtensions
@@ -131,11 +131,11 @@ Provides OpenID 2.0 authentication infrastructure. """
         self.extensions.enable(self._config['enabled extensions'].get_value())
 
 
-class Installer(object):
+class Installer(ProviderInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'openid'
-        self.ptype = 'provider'
         self.pargs = pargs
 
     def install_args(self, group):

@@ -292,6 +292,22 @@ class Cancel(Page):
             return op(*args, **kwargs)
 
 
+class LoginManagerInstaller(object):
+    def __init__(self):
+        self.facility = FACILITY
+        self.ptype = 'login'
+        self.name = None
+
+    def unconfigure(self, opts):
+        return
+
+    def install_args(self, group):
+        raise NotImplementedError
+
+    def configure(self, opts):
+        raise NotImplementedError
+
+
 class LoginMgrsInstall(object):
 
     def __init__(self):

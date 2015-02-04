@@ -1,6 +1,7 @@
 # Copyright (C) 2014  Ipsilon Contributors, see COPYING for license
 
-from ipsilon.login.common import LoginFormBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
+    LoginManagerInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.log import Log
 from ipsilon.util import config as pconfig
@@ -163,11 +164,11 @@ authentication. """
         return self.page
 
 
-class Installer(object):
+class Installer(LoginManagerInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'ldap'
-        self.ptype = 'login'
         self.pargs = pargs
 
     def install_args(self, group):

@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.login.common import LoginFormBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
+    LoginManagerInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import cherrypy
@@ -97,11 +98,11 @@ Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
         return self.page
 
 
-class Installer(object):
+class Installer(LoginManagerInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'testauth'
-        self.ptype = 'login'
         self.pargs = pargs
 
     def install_args(self, group):

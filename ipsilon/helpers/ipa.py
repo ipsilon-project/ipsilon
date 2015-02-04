@@ -22,6 +22,8 @@ import socket
 import subprocess
 import sys
 
+from ipsilon.helpers.common import EnvHelpersInstaller
+
 
 IPA_CONFIG_FILE = '/etc/ipa/default.conf'
 HTTPD_IPA_KEYTAB = '/etc/httpd/conf/ipa.keytab'
@@ -42,9 +44,10 @@ failure (see logs) and retry.
 """
 
 
-class Installer(object):
+class Installer(EnvHelpersInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'ipa'
         self.ptype = 'helper'
         self.logger = None

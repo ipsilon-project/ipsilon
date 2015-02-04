@@ -1,7 +1,8 @@
 # Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
 
 
-from ipsilon.login.common import LoginFormBase, LoginManagerBase
+from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
+    LoginManagerInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
@@ -170,11 +171,11 @@ Form based login Manager that uses the Fedora Authentication Server
         return self.page
 
 
-class Installer(object):
+class Installer(LoginManagerInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'fas'
-        self.ptype = 'login'
         self.pargs = pargs
 
     def install_args(self, group):

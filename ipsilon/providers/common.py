@@ -111,6 +111,22 @@ class ProviderPageBase(Page):
 FACILITY = 'provider_config'
 
 
+class ProviderInstaller(object):
+    def __init__(self):
+        self.facility = FACILITY
+        self.ptype = 'provider'
+        self.name = None
+
+    def unconfigure(self, opts):
+        return
+
+    def install_args(self, group):
+        raise NotImplementedError
+
+    def configure(self, opts):
+        raise NotImplementedError
+
+
 class LoadProviders(Log):
 
     def __init__(self, root, site):

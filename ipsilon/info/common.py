@@ -94,6 +94,9 @@ class InfoProviderInstaller(object):
     def install_args(self, group):
         raise NotImplementedError
 
+    def unconfigure(self, opts):
+        return
+
     def configure(self, opts):
         raise NotImplementedError
 

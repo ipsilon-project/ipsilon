@@ -206,9 +206,59 @@ def install(plugins, args):
     except Exception:  # pylint: disable=broad-except
         pass
 
+
 def uninstall(plugins, args):
     logger.info('Uninstallation initiated')
-    raise Exception('Not Implemented')
+    instance_conf = os.path.join(CONFDIR, args['instance'])
+
+    httpd_conf = os.path.join(HTTPDCONFD,
+                              'ipsilon-%s.conf' % args['instance'])
+    data_dir = os.path.join(DATADIR, args['instance'])
+
+    if not os.path.exists(instance_conf):
+        raise Exception('Could not find instance %s configuration'
+                        % args['instance'])
+    if not os.path.exists(httpd_conf):
+        raise Exception('Could not find instance %s httpd configuration'
+                        % args['instance'])
+    if not args['yes']:
+        sure = raw_input(('Are you certain you want to erase instance %s ' +
+                          '[yes/NO]: ')
+                         % args['instance'])
+        if sure != 'yes':
+            raise Exception('Aborting')
+
+    logger.info('Removing environment helpers')
+    for plugin_name in plugins['Environment Helpers']:
+        plugin = plugins['Environment Helpers'][plugin_name]
+        if plugin.unconfigure(args) == False:
+            print 'Removal of environment helper %s failed' % plugin_name
+
+    logger.info('Removing login managers')
+    for plugin_name in args['lm_order']:
+        plugin = plugins['Login Managers'][plugin_name]
+        if plugin.unconfigure(args) == False:
+            print 'Removal of login manager %s failed' % plugin_name
+
+    logger.info('Removing Info providers')
+    for plugin_name in plugins['Info Provider']:
+        plugin = plugins['Info Provider'][plugin_name]
+        if plugin.unconfigure(args) == False:
+            print 'Removal of info provider %s failed' % plugin_name
+
+    logger.info('Removing Authentication Providers')
+    for plugin_name in plugins['Auth Providers']:
+        plugin = plugins['Auth Providers'][plugin_name]
+        if plugin.unconfigure(args) == False:
+            print 'Removal of auth provider %s failed' % plugin_name
+
+    logger.info('Removing httpd configuration')
+    os.remove(httpd_conf)
+    logger.info('Erasing instance configuration')
+    shutil.rmtree(instance_conf)
+    logger.info('Erasing instance data')
+    shutil.rmtree(data_dir)
+    logger.info('Uninstalled instance %s' % args['instance'])
 
 
 def find_plugins():
@@ -273,6 +323,8 @@ def parse_args(plugins):
                         help="Enable debugging")
     parser.add_argument('--uninstall', action='store_true',
                         help="Uninstall the server and all data")
+    parser.add_argument('--yes', action='store_true',
+                        help="Always answer yes")
 
     lms = []
 
@@ -335,9 +387,12 @@ if __name__ == '__main__':
             logger.info('%s: %s', k, opts[k])
 
         if 'uninstall' in opts and opts['uninstall'] is True:
+            if not os.path.exists(os.path.join(CONFDIR, opts['instance'])):
+                print 'Instance %s could not be found' % opts['instance']
+                sys.exit(0)
             uninstall(fplugins, opts)
-
-        install(fplugins, opts)
+        else:
+            install(fplugins, opts)
     except Exception, e:  # pylint: disable=broad-except
         logger.exception(e)
         if 'uninstall' in opts and opts['uninstall'] is True:

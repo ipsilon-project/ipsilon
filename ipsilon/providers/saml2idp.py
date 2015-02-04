@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.providers.common import ProviderBase, ProviderPageBase
+from ipsilon.providers.common import ProviderBase, ProviderPageBase, \
+    ProviderInstaller
 from ipsilon.providers.saml2.auth import AuthenticateRequest
 from ipsilon.providers.saml2.logout import LogoutRequest
 from ipsilon.providers.saml2.admin import Saml2AdminPage
@@ -330,11 +331,11 @@ class IdpMetadataGenerator(object):
         return self.meta.output(path)
 
 
-class Installer(object):
+class Installer(ProviderInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'saml2'
-        self.ptype = 'provider'
         self.pargs = pargs
 
     def install_args(self, group):

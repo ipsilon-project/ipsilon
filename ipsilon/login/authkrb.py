@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ipsilon.login.common import LoginPageBase, LoginManagerBase
+from ipsilon.login.common import LoginPageBase, LoginManagerBase, \
+    LoginManagerInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.user import UserSession
 from string import Template
@@ -113,11 +114,11 @@ CONF_TEMPLATE = """
 """
 
 
-class Installer(object):
+class Installer(LoginManagerInstaller):
 
     def __init__(self, *pargs):
+        super(Installer, self).__init__()
         self.name = 'krb'
-        self.ptype = 'login'
         self.pargs = pargs
 
     def install_args(self, group):

@@ -21,6 +21,22 @@ from ipsilon.util.plugin import PluginInstaller
 FACILITY = 'environment_helpers'
 
 
+class EnvHelpersInstaller(object):
+    def __init__(self):
+        self.facility = FACILITY
+        self.ptype = 'helper'
+        self.name = None
+
+    def unconfigure(self, opts):
+        return
+
+    def install_args(self, group):
+        raise NotImplementedError
+
+    def configure_server(self, opts):
+        raise NotImplementedError
+
+
 class EnvHelpersInstall(object):
 
     def __init__(self):
