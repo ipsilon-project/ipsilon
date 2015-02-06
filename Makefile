@@ -1,6 +1,7 @@
 RPMBUILD = $(PWD)/dist/rpmbuild
 
-all: lint pep8
+all: lint pep8 test
+	echo "All tests passed"
 
 lint:
 	# Analyze code
@@ -62,7 +63,9 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=pgdb
 	PYTHONPATH=./ ./tests/tests.py --test=fconf
 
-test: lp-test tests
+test: lp-test unittests tests
+
+unittests:
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
 
 sdist:
