@@ -2,7 +2,7 @@
 
 Name:       ipsilon
 Version:    0.3.0
-Release:    5%{?dist}
+Release:    6%{?dist}
 Summary:    An Identity Provider Server
 
 Group:      System Environment/Base
@@ -159,6 +159,19 @@ BuildArch:      noarch
 %description authldap
 Provides a login plugin to allow authentication and info retrieval via LDAP.
 
+%package infosssd
+Summary:        SSSD & mod_lookup_identity-based identity plugin
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
+Requires:       mod_lookup_identity
+Requires:       libsss_simpleifp
+Requires;       sssd >= 1.12.4
+BuildArch:      noarch
+
+%description infosssd
+Provides an info plugin to allow retrieval via mod_lookup_identity and
+SSSD.
 
 %prep
 %setup -q
@@ -287,8 +300,13 @@ fi
 %{python2_sitelib}/ipsilon/login/authldap*
 %{python2_sitelib}/ipsilon/info/infoldap*
 
+%files infosssd
+%{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Thu Feb 12 2015 Rob Crittenden <rcritten@redhat.com> - 0.3.0-6
+- Add mod_identity_lookup info plugin package
+
 * Wed Jan 28 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-5
 - Split IPA tools
 
