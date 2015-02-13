@@ -177,22 +177,26 @@ def install(plugins, args):
     logger.info('Configuring environment helpers')
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
-        plugin.configure_server(args)
+        if plugin.configure_server(args) == False:
+            print 'Configuration of environment helper %s failed' % plugin_name
 
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
         plugin = plugins['Login Managers'][plugin_name]
-        plugin.configure(args)
+        if plugin.configure(args) == False:
+            print 'Configuration of login manager %s failed' % plugin_name
 
     logger.info('Configuring Info provider')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
-        plugin.configure(args)
+        if plugin.configure(args) == False:
+            print 'Configuration of info provider %s failed' % plugin_name
 
     logger.info('Configuring Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
-        plugin.configure(args)
+        if plugin.configure(args) == False:
+            print 'Configuration of auth provider %s failed' % plugin_name
 
     # Fixup permissions so only the ipsilon user can read these files
     files.fix_user_dirs(instance_conf, opts['system_user'])
