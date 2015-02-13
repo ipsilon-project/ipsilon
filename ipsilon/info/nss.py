@@ -92,6 +92,6 @@ class Installer(InfoProviderInstaller):
         po.wipe_data()
         po.wipe_config_values()
 
-        # Update global config to add login plugin
+        # Update global config to add info plugin
         po.is_enabled = True
         po.save_enabled_state()

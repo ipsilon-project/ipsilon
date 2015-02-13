@@ -194,6 +194,6 @@ class Installer(InfoProviderInstaller):
         config['tls'] = 'Demand'
         po.save_plugin_config(config)
 
-        # Update global config to add login plugin
+        # Update global config to add info plugin
         po.is_enabled = True
         po.save_enabled_state()
