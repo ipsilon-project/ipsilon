@@ -210,20 +210,13 @@ class AuthenticateRequest(ProviderPageBase):
         if not attrstat.attribute:
             attrstat.attribute = ()
 
-        attributes = dict()
-        userattrs = us.get_user_attrs()
-        for key, value in userattrs.get('userdata', {}).iteritems():
-            if type(value) is str:
-                attributes[key] = value
-        if 'groups' in userattrs:
-            attributes['group'] = userattrs['groups']
-        for _, info in userattrs.get('extras', {}).iteritems():
-            for key, value in info.items():
-                attributes[key] = value
+        attributes = us.get_user_attrs()
 
         for key in attributes:
             values = attributes[key]
-            if type(values) is not list:
+            if isinstance(values, dict):
+                continue
+            if not isinstance(values, list):
                 values = [values]
             for value in values:
                 attr = lasso.Saml2Attribute()

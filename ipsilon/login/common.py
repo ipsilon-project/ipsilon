@@ -44,27 +44,34 @@ class LoginManagerBase(PluginConfig, PluginObject):
     def auth_successful(self, trans, username, auth_type=None, userdata=None):
         session = UserSession()
 
+        # merge attributes from login plugin and info plugin
         if self.info:
-            userattrs = self.info.get_user_attrs(username)
-            if userdata:
-                userdata.update(userattrs.get('userdata', {}))
-            else:
-                userdata = userattrs.get('userdata', {})
+            infoattrs = self.info.get_user_attrs(username)
+        else:
+            infoattrs = dict()
 
-            # merge groups and extras from login plugin and info plugin
-            userdata['groups'] = list(set(userdata.get('groups', []) +
-                                          userattrs.get('groups', [])))
+        if userdata is None:
+            userdata = dict()
 
-            userdata['extras'] = userdata.get('extras', {})
-            userdata['extras'].update(userattrs.get('extras', {}))
+        if '_groups' in infoattrs:
+            userdata['_groups'] = list(set(userdata.get('_groups', []) +
+                                           infoattrs['_groups']))
+            del infoattrs['_groups']
 
-            self.debug("User %s attributes: %s" % (username, repr(userdata)))
+        if '_extras' in infoattrs:
+            userdata['_extras'] = userdata.get('_extras', {})
+            userdata['_extras'].update(infoattrs['_extras'])
+            del infoattrs['_extras']
+
+        userdata.update(infoattrs)
+
+        self.debug("User %s attributes: %s" % (username, repr(userdata)))
 
         if auth_type:
             if userdata:
-                userdata.update({'auth_type': auth_type})
+                userdata.update({'_auth_type': auth_type})
             else:
-                userdata = {'auth_type': auth_type}
+                userdata = {'_auth_type': auth_type}
 
         # create session login including all the userdata just gathered
         session.login(username, userdata)

@@ -82,18 +82,19 @@ class FAS(LoginFormBase):
         userdata, fas_extra = self.mapper.map_attrs(fas_data)
 
         # compute and store groups and cla groups
-        userdata['groups'] = []
-        userdata['extras'] = {'fas': fas_extra, 'cla': []}
+        userdata['_groups'] = []
+        userdata['_extras'] = {'fas': fas_extra, 'cla': []}
         for group in fas_data.get('approved_memberships', {}):
             if 'name' not in group:
                 continue
             if group.get('group_type') == 'cla':
                 if group['name'] in CLA_GROUPS:
-                    userdata['extras']['cla'].append(CLA_GROUPS[group['name']])
+                    group_name = CLA_GROUPS[group['name']]
                 else:
-                    userdata['extras']['cla'].append(group['name'])
+                    group_name = group['name']
+                userdata['_extras']['cla'].append(group_name)
             else:
-                userdata['groups'].append(group['name'])
+                userdata['_groups'].append(group['name'])
 
         return userdata
 

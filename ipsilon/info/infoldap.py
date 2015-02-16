@@ -129,9 +129,9 @@ Info plugin that uses LDAP to retrieve user data. """
             ldapattrs = self._get_user_data(conn, dn)
             userattrs, extras = self.mapper.map_attrs(ldapattrs)
             groups = self._get_user_groups(conn, dn, ldapattrs)
-            reply['userdata'] = userattrs
-            reply['groups'] = groups
-            reply['extras'] = {'ldap': extras}
+            reply = userattrs
+            reply['_groups'] = groups
+            reply['_extras'] = {'ldap': extras}
         except Exception, e:  # pylint: disable=broad-except
             self.error(e)
 

@@ -19,7 +19,7 @@ class OpenidExtension(OpenidExtensionBase):
         self.debug(req)
         if req is None:
             return {}
-        data = userdata['extras'].get('cla', [])
+        data = userdata['_extras'].get('cla', [])
         return cla.CLAResponse.extractResponse(req, data)
 
     def _display(self, request, userdata):

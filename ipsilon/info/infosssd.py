@@ -72,9 +72,9 @@ class InfoProvider(InfoProviderBase):
         try:
             attrs, groups = self._get_user_data(user)
             userattrs, extras = self.mapper.map_attrs(attrs)
-            reply['userdata'] = userattrs
-            reply['groups'] = groups
-            reply['extras'] = {'sssd': extras}
+            reply = userattrs
+            reply['_groups'] = groups
+            reply['_extras'] = {'sssd': extras}
 
         except KeyError:
             pass

@@ -62,15 +62,7 @@ class LDAP(LoginFormBase, Log):
 
         if username and password:
             try:
-                userdata = self._authenticate(username, password)
-                if userdata:
-                    userattrs = dict()
-                    for d, v in userdata.get('userdata', {}).items():
-                        userattrs[d] = v
-                    if 'groups' in userdata:
-                        userattrs['groups'] = userdata['groups']
-                    if 'extras' in userdata:
-                        userattrs['extras'] = userdata['extras']
+                userattrs = self._authenticate(username, password)
                 authed = True
             except Exception, e:  # pylint: disable=broad-except
                 errmsg = "Authentication failed"

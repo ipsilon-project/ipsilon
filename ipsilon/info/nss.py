@@ -61,9 +61,9 @@ class InfoProvider(InfoProviderBase):
             userattrs, extras = self.mapper.map_attrs(posix_user)
             groups = self._get_posix_groups(posix_user['username'],
                                             posix_user['gidNumber'])
-            reply['userdata'] = userattrs
-            reply['groups'] = groups
-            reply['extras'] = {'posix': extras}
+            reply = userattrs
+            reply['_groups'] = groups
+            reply['_extras'] = {'posix': extras}
 
         except KeyError:
             pass
