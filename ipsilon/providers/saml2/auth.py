@@ -21,6 +21,7 @@ from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
 from ipsilon.providers.saml2.sessions import SAMLSessionsContainer
+from ipsilon.util.policy import Policy
 from ipsilon.util.user import UserSession
 from ipsilon.util.trans import Transaction
 import cherrypy
@@ -201,7 +202,6 @@ class AuthenticateRequest(ProviderPageBase):
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
-        # TODO: filter user attributes as policy requires from 'usersession'
         if not login.assertion.attributeStatement:
             attrstat = lasso.Saml2AttributeStatement()
             login.assertion.attributeStatement = [attrstat]
@@ -210,7 +210,14 @@ class AuthenticateRequest(ProviderPageBase):
         if not attrstat.attribute:
             attrstat.attribute = ()
 
-        attributes = us.get_user_attrs()
+        # Check attribute policy and perform mapping and filtering
+        policy = Policy(self.cfg.default_attribute_mapping,
+                        self.cfg.default_allowed_attributes)
+        userattrs = us.get_user_attrs()
+        mappedattrs, _ = policy.map_attributes(userattrs)
+        attributes = policy.filter_attributes(mappedattrs)
+
+        self.debug("%s's attributes: %s" % (user.name, attributes))
 
         for key in attributes:
             values = attributes[key]

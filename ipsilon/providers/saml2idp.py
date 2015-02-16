@@ -209,6 +209,14 @@ Provides SAML 2.0 authentication infrastructure. """
                 'default email domain',
                 'Used for users missing the email property.',
                 'example.com'),
+            pconfig.MappingList(
+                'default attribute mapping',
+                'Defines how to map attributes before returning them to SPs',
+                [['*', '*']]),
+            pconfig.ComplexList(
+                'default allowed attributes',
+                'Defines a list of allowed attributes, applied after mapping',
+                ['*']),
         )
         if cherrypy.config.get('debug', False):
             import logging
@@ -252,6 +260,14 @@ Provides SAML 2.0 authentication infrastructure. """
     @property
     def default_email_domain(self):
         return self.get_config_value('default email domain')
+
+    @property
+    def default_attribute_mapping(self):
+        return self.get_config_value('default attribute mapping')
+
+    @property
+    def default_allowed_attributes(self):
+        return self.get_config_value('default allowed attributes')
 
     def get_tree(self, site):
         self.idp = self.init_idp()
