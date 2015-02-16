@@ -63,11 +63,7 @@ sp_a = {'hostname': '${ADDRESS}:${PORT}',
 
 def fixup_sp_httpd(httpdir):
     merge = """
-    MellonSetEnv "UID" "uidNumber"
-    MellonSetEnv "GID" "gidNumber"
-    MellonSetEnv "HOME" "homeDirectory"
-    MellonSetEnv "GECOS" "gecos"
-    MellonSetEnv "SHELL" "loginShell"
+    MellonSetEnv "FULLNAME" "fullname"
 </Location>"""
     with open(httpdir + '/conf.d/ipsilon-saml.conf', 'r') as f:
         conf = f.read()
@@ -89,7 +85,7 @@ Alias /sp ${HTTPDIR}/sp
     with open(httpdir + '/conf.d/ipsilon-saml.conf', 'a') as f:
         f.write(text)
 
-    index = """<!--#echo var="MELLON_UID" -->"""
+    index = """<!--#echo var="MELLON_FULLNAME" -->"""
     os.mkdir(httpdir + '/sp')
     with open(httpdir + '/sp/index.shtml', 'w') as f:
         f.write(index)
@@ -154,7 +150,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname,
                                'http://127.0.0.11:45081/sp/index.shtml')
-        page.expected_value('text()', str(userpwd[2]))
+        page.expected_value('text()', str(userpwd[4]))
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
