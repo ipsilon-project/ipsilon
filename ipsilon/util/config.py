@@ -1,6 +1,7 @@
 # Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
 
 from ipsilon.util.log import Log
+import json
 
 
 class Config(Log):
@@ -156,7 +157,7 @@ class List(Option):
     def __init__(self, name, description, default_list=None):
         super(List, self).__init__(name, description)
         if default_list:
-            self._default_value = list(default_list)
+            self._default_value = default_list
         else:
             self._default_value = []
 
@@ -172,6 +173,51 @@ class List(Option):
         if type(value) is not str:
             raise ValueError('Value (type: %s) must be string' % type(value))
         self._assigned_value = [x.strip() for x in value.split(',')]
+
+
+class ComplexList(List):
+
+    def _check_value(self, value):
+        if type(value) is not list:
+            raise ValueError('The value type must be a list, not "%s"' %
+                             type(value))
+
+    def set_value(self, value):
+        self._check_value(value)
+        self._assigned_value = value
+
+    def export_value(self):
+        if self._assigned_value:
+            return json.dumps(self._assigned_value)
+        return None
+
+    def import_value(self, value):
+        if type(value) is not str:
+            raise ValueError('The value type must be a string, not "%s"' %
+                             type(value))
+        jsonval = json.loads(value)
+        self.set_value(jsonval)
+
+
+class MappingList(ComplexList):
+
+    def _check_value(self, value):
+        if type(value) is not list:
+            raise ValueError('The value type must be a list, not "%s"' %
+                             type(value))
+        for v in value:
+            if type(v) is not list:
+                raise ValueError('Each element must be a list, not "%s"' %
+                                 type(v))
+            if len(v) != 2:
+                raise ValueError('Each element must contain 2 values,'
+                                 ' not %d' % len(v))
+
+    def import_value(self, value):
+        if type(value) is not str:
+            raise ValueError('Value (type: %s) must be string' % type(value))
+        jsonval = json.loads(value)
+        self.set_value(jsonval)
 
 
 class Choice(Option):
