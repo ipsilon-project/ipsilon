@@ -68,6 +68,7 @@ test: lp-test unittests tests
 
 unittests:
 	PYTHONPATH=./ ./ipsilon/tools/saml2metadata.py
+	PYTHONPATH=./ python ./ipsilon/util/policy.py
 
 sdist:
 	python setup.py sdist
