@@ -108,13 +108,13 @@ class AuthenticateRequest(ProviderPageBase):
         else:
             return self._respond(self.cfg.server.handleRequest(request))
 
-        # check if this is discovery or ned identity matching checks
+        # check if this is discovery or needs identity matching checks
         if not request.idSelect():
             idurl = self.cfg.identity_url_template % {'username': user.name}
             if request.identity != idurl:
                 raise AuthenticationError("User ID mismatch!", 401)
 
-        # check if the ralying party is trusted
+        # check if the relying party is trusted
         if request.trust_root in self.cfg.untrusted_roots:
             raise AuthenticationError("Untrusted Relying party", 401)
 
