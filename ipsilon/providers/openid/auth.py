@@ -4,6 +4,7 @@ from ipsilon.providers.common import ProviderPageBase
 from ipsilon.providers.common import AuthenticationError, InvalidRequest
 from ipsilon.providers.openid.meta import XRDSHandler, UserXRDSHandler
 from ipsilon.providers.openid.meta import IDHandler
+from ipsilon.util.policy import Policy
 from ipsilon.util.trans import Transaction
 from ipsilon.util.user import UserSession
 
@@ -59,6 +60,16 @@ class AuthenticateRequest(ProviderPageBase):
             if request is None:
                 raise cherrypy.HTTPError(e.code, e.msg)
             return self._respond(request.answer(False))
+
+    # get attributes, and apply policy mapping and filtering
+    def _source_attributes(self, session):
+        policy = Policy(self.cfg.default_attribute_mapping,
+                        self.cfg.default_allowed_attributes)
+        userattrs = session.get_user_attrs()
+        mappedattrs, _ = policy.map_attributes(userattrs)
+        attributes = policy.filter_attributes(mappedattrs)
+        self.debug('Filterd attributes: %s' % repr(attributes))
+        return attributes
 
     def _parse_request(self, **kwargs):
         request = None
@@ -165,7 +176,7 @@ class AuthenticateRequest(ProviderPageBase):
             ad = {
                 "Trust Root": request.trust_root,
             }
-            userattrs = us.get_user_attrs()
+            userattrs = self._source_attributes(us)
             for n, e in self.cfg.extensions.available().items():
                 data = e.get_display_data(request, userattrs)
                 self.debug('%s returned %s' % (n, repr(data)))
@@ -191,7 +202,7 @@ class AuthenticateRequest(ProviderPageBase):
             identity=identity_url,
             claimed_id=identity_url
         )
-        userattrs = session.get_user_attrs()
+        userattrs = self._source_attributes(session)
         for _, e in self.cfg.extensions.available().items():
             resp = e.get_response(request, userattrs)
             if resp is not None:

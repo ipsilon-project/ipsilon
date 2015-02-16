@@ -53,6 +53,14 @@ Provides OpenID 2.0 authentication infrastructure. """
                 'enabled extensions',
                 'Choose the extensions to enable',
                 self.extensions.available().keys()),
+            pconfig.MappingList(
+                'default attribute mapping',
+                'Defines how to map attributes before calling extensions',
+                [['*', '*']]),
+            pconfig.ComplexList(
+                'default allowed attributes',
+                'Defines a list of allowed attributes, applied after mapping',
+                ['*']),
         )
 
     @property
@@ -86,6 +94,14 @@ Provides OpenID 2.0 authentication infrastructure. """
     @property
     def enabled_extensions(self):
         return self.get_config_value('enabled extensions')
+
+    @property
+    def default_attribute_mapping(self):
+        return self.get_config_value('default attribute mapping')
+
+    @property
+    def default_allowed_attributes(self):
+        return self.get_config_value('default allowed attributes')
 
     def get_tree(self, site):
         self.init_idp()
