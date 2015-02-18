@@ -23,7 +23,7 @@
             <div class="form-group">
               <label class="col-sm-2" for="{{ v.name }}">{{ v.name }}:</label>
               <div class="col-sm-10">
-              {%- set value = v.get_value() -%}
+              {% set value = v.get_value() -%}
               {% if v.__class__.__name__ in ['String', 'Template'] -%}
                 <input type="text" class="form-control" name="{{ v.name }}"
                   {%- if value %}
@@ -68,6 +68,61 @@
                     checked="true"
                   {% endif -%}
                 >
+              {% elif v.__class__.__name__ == 'ComplexList' -%}
+                <table class="table table-striped">
+                <tr><th>#</th><th>Name</th><th>Delete</th></tr>
+                {% for line in value -%}
+                    {%- set basename = "%s %d-"|format(v.name, loop.index0) -%}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    <td>
+                      <input type="text" name="{{basename}}name"
+                        {%- if line.__class__.__name__ == 'list' -%}
+                          value="{{ line|join(' / ') }}"
+                        {%- else -%}
+                          value="{{ line }}"
+                        {%- endif -%}
+                      >
+                    </td>
+                    <td>
+                      <input type="checkbox" name="{{basename}}delete">
+                      <!-- Never cheked by default -->
+                    </td>
+                </tr>
+                {% endfor -%}
+                </table>
+              {% elif v.__class__.__name__ == 'MappingList' -%}
+                <table class="table table-striped">
+                <tr><th>#</th><th>From</th><th>To</th><th>Delete</th></tr>
+                {% for line in value -%}
+                    {%- set basename = "%s %d-"|format(v.name, loop.index0) -%}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    <td>
+                      <input type="text" name="{{basename}}from"
+                        {% if line[0].__class__.__name__ == 'list' -%}
+                          value="{{ line[0]|join(' / ') }}"
+                        {% else -%}
+                          value="{{ line[0] }}"
+                        {% endif -%}
+                      >
+                    </td>
+                    <td>
+                      <input type="text" name="{{basename}}to"
+                        {% if line[1].__class__.__name__ == 'list' -%}
+                          value="{{ line[1]|join(' / ') }}"
+                        {% else -%}
+                          value="{{ line[1] }}"
+                        {% endif -%}
+                      >
+                    </td>
+                    <td>
+                      <input type="checkbox" name="{{basename}}delete">
+                      <!-- Never cheked by default -->
+                    </td>
+                </tr>
+                {% endfor -%}
+                </table>
               {% else -%}
                 {{ v.__class__.__name__ }}
               {% endif -%}
