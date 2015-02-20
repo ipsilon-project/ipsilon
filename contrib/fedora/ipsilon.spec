@@ -166,7 +166,7 @@ License:        GPLv3+
 Requires:       %{name} = %{version}-%{release}
 Requires:       mod_lookup_identity
 Requires:       libsss_simpleifp
-Requires;       sssd >= 1.12.4
+Requires:       sssd >= 1.12.4
 BuildArch:      noarch
 
 %description infosssd
