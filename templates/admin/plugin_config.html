@@ -1,4 +1,30 @@
 {% extends "master-admin.html" %}
+{% block scripts %}
+    <script>
+        $( document ).on("click", ".add-field",
+            function() {
+                var buttonRow = $(this).parents(".add-row")
+                var ourTable = $(this).parents(".extensible-table")
+                var lastRow = $(ourTable).find(".list-field:last")
+                var newRow = $(lastRow).clone()
+                var lastIndex = parseInt(newRow.find("td:first").text())
+                newRow.find("td:first").text(lastIndex + 1)
+                var inputFields = newRow.find("input")
+                for (i = 0; i < inputFields.length; i++) {
+                    var separator = (lastIndex-1).toString()+"-"
+                    var nArr = $(inputFields[i]).attr("name").split(separator)
+                    var newidx = lastIndex.toString()+"-"
+                    if (nArr.length === 2) {
+                        $(inputFields[i]).attr("name", nArr[0]+newidx+nArr[1])
+                    }
+                    $(inputFields[i]).attr("value", "")
+                }
+                $(newRow).appendTo(ourTable)
+                $(buttonRow).appendTo(ourTable)
+            }
+        );
+    </script>
+{% endblock %}
 {% block main %}
 {% if user.is_admin %}
 
@@ -69,11 +95,11 @@
                   {% endif -%}
                 >
               {% elif v.__class__.__name__ == 'ComplexList' -%}
-                <table class="table table-striped">
+                <table class="table table-striped extensible-table">
                 <tr><th>#</th><th>Name</th><th>Delete</th></tr>
                 {% for line in value -%}
                     {%- set basename = "%s %d-"|format(v.name, loop.index0) -%}
-                <tr>
+                <tr class="list-field">
                     <td>{{loop.index}}</td>
                     <td>
                       <input type="text" name="{{basename}}name"
@@ -90,13 +116,17 @@
                     </td>
                 </tr>
                 {% endfor -%}
+                <tr class="add-row">
+                    <td><button class="btn add-field" type="button"> + </button></td>
+                    <td colspan=3 />
+                </tr>
                 </table>
               {% elif v.__class__.__name__ == 'MappingList' -%}
-                <table class="table table-striped">
+                <table class="table table-striped extensible-table">
                 <tr><th>#</th><th>From</th><th>To</th><th>Delete</th></tr>
                 {% for line in value -%}
                     {%- set basename = "%s %d-"|format(v.name, loop.index0) -%}
-                <tr>
+                <tr class="list-field">
                     <td>{{loop.index}}</td>
                     <td>
                       <input type="text" name="{{basename}}from"
@@ -122,6 +152,10 @@
                     </td>
                 </tr>
                 {% endfor -%}
+                <tr class="add-row">
+                    <td><button class="btn add-field" type="button"> + </button></td>
+                    <td colspan=3 />
+                </tr>
                 </table>
               {% else -%}
                 {{ v.__class__.__name__ }}
