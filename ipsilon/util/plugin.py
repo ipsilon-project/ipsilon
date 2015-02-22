@@ -183,7 +183,11 @@ class PluginObject(Log):
     def refresh_plugin_config(self):
         config = self.get_plugin_config()
         if config:
-            self.import_config(config)
+            try:
+                self.import_config(config)
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to refresh config for %s (%s)' %
+                           (self.name, e))
 
     def save_plugin_config(self, config=None):
         if config is None:
