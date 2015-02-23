@@ -4,33 +4,32 @@
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
-from ipsilon.info.common import InfoMapping
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
 import ldap
 
 
 # TODO: fetch mapping from configuration
-ldap_mapping = {
-    'cn': 'fullname',
-    'commonname': 'fullname',
-    'sn': 'surname',
-    'mail': 'email',
-    'destinationindicator': 'country',
-    'postalcode': 'postcode',
-    'st': 'state',
-    'statetorprovincename': 'state',
-    'streetaddress': 'street',
-    'telephonenumber': 'phone',
-}
+ldap_mapping = [
+    ['cn', 'fullname'],
+    ['commonname', 'fullname'],
+    ['sn', 'surname'],
+    ['mail', 'email'],
+    ['destinationindicator', 'country'],
+    ['postalcode', 'postcode'],
+    ['st', 'state'],
+    ['statetorprovincename', 'state'],
+    ['streetaddress', 'street'],
+    ['telephonenumber', 'phone'],
+]
 
 
 class InfoProvider(InfoProviderBase):
 
     def __init__(self, *pargs):
         super(InfoProvider, self).__init__(*pargs)
-        self.mapper = InfoMapping()
-        self.mapper.set_mapping(ldap_mapping)
+        self.mapper = Policy(ldap_mapping)
         self.name = 'ldap'
         self.description = """
 Info plugin that uses LDAP to retrieve user data. """
@@ -127,7 +126,7 @@ Info plugin that uses LDAP to retrieve user data. """
         reply = dict()
         try:
             ldapattrs = self._get_user_data(conn, dn)
-            userattrs, extras = self.mapper.map_attrs(ldapattrs)
+            userattrs, extras = self.mapper.map_attributes(ldapattrs)
             groups = self._get_user_groups(conn, dn, ldapattrs)
             reply = userattrs
             reply['_groups'] = groups

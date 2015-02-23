@@ -4,24 +4,23 @@
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
-from ipsilon.info.common import InfoMapping
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util.policy import Policy
 import grp
 import pwd
 import os
 
 
-posix_map = {
-    'gecos': 'fullname'
-}
+posix_map = [
+    ['gecos', 'fullname']
+]
 
 
 class InfoProvider(InfoProviderBase):
 
     def __init__(self, *pargs):
         super(InfoProvider, self).__init__(*pargs)
-        self.mapper = InfoMapping()
-        self.mapper.set_mapping(posix_map)
+        self.mapper = Policy(posix_map)
         self.name = 'nss'
         self.new_config(self.name)
 
@@ -58,7 +57,7 @@ class InfoProvider(InfoProviderBase):
         reply = dict()
         try:
             posix_user = self._get_posix_user(user)
-            userattrs, extras = self.mapper.map_attrs(posix_user)
+            userattrs, extras = self.mapper.map_attributes(posix_user)
             groups = self._get_posix_groups(posix_user['username'],
                                             posix_user['gidNumber'])
             reply = userattrs

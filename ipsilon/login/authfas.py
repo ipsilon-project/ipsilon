@@ -1,9 +1,9 @@
 # Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
 
 
-from ipsilon.info.common import InfoMapping
 from ipsilon.login.common import LoginFormBase, LoginManagerBase
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
 import cherrypy
 
@@ -27,22 +27,21 @@ try:
 except ImportError:
     CLA_GROUPS = dict()
 
-fas_mapping = {
-    'username': 'nickname',
-    'telephone': 'phone',
-    'country_code': 'country',
-    'human_name': 'fullname',
-    'email': 'email',
-    'timezone': 'timezone',
-}
+fas_mapping = [
+    ['username', 'nickname'],
+    ['telephone', 'phone'],
+    ['country_code', 'country'],
+    ['human_name', 'fullname'],
+    ['email', 'email'],
+    ['timezone', 'timezone'],
+]
 
 
 class FAS(LoginFormBase):
 
     def __init__(self, site, mgr, page):
         super(FAS, self).__init__(site, mgr, page)
-        self.mapper = InfoMapping()
-        self.mapper.set_mapping(fas_mapping)
+        self.mapper = Policy(fas_mapping)
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -79,7 +78,7 @@ class FAS(LoginFormBase):
         return self._template(self.formtemplate, **context)
 
     def make_userdata(self, fas_data):
-        userdata, fas_extra = self.mapper.map_attrs(fas_data)
+        userdata, fas_extra = self.mapper.map_attributes(fas_data)
 
         # compute and store groups and cla groups
         userdata['_groups'] = []

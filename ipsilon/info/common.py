@@ -37,26 +37,11 @@ class InfoMapping(Log):
             'language': 'Language',
             'timezone': 'Time Zone',
         }
-        self.mapping = dict()
-
-    def set_mapping(self, attrs_map):
-        self.mapping = attrs_map
 
     def display_name(self, name):
         if name in self.standard_attributes:
             return self.standard_attributes[name]
         return name
-
-    def map_attrs(self, attrs):
-        s = dict()
-        e = dict()
-        for a in attrs:
-            if a in self.mapping:
-                s[self.mapping[a]] = attrs[a]
-            else:
-                e[a] = attrs[a]
-
-        return s, e
 
 
 FACILITY = 'info_config'

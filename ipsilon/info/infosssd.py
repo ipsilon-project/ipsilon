@@ -7,8 +7,8 @@
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
-from ipsilon.info.common import InfoMapping
 from ipsilon.util.plugin import PluginObject
+from ipsilon.util.policy import Policy
 from string import Template
 import cherrypy
 import time
@@ -28,24 +28,23 @@ SSSD_ATTRS = ['mail',
 
 # Map the mod_lookup_identity env variables to Ipsilon. The inverse of
 # this is in the httpd template.
-sssd_mapping = {
-    'REMOTE_USER_GECOS': 'fullname',
-    'REMOTE_USER_EMAIL': 'email',
-    'REMOTE_USER_FIRSTNAME': 'givenname',
-    'REMOTE_USER_LASTNAME': 'surname',
-    'REMOTE_USER_STREET': 'street',
-    'REMOTE_USER_STATE': 'state',
-    'REMOTE_USER_POSTALCODE': 'postcode',
-    'REMOTE_USER_TELEPHONENUMBER': 'phone',
-}
+sssd_mapping = [
+    ['REMOTE_USER_GECOS', 'fullname'],
+    ['REMOTE_USER_EMAIL', 'email'],
+    ['REMOTE_USER_FIRSTNAME', 'givenname'],
+    ['REMOTE_USER_LASTNAME', 'surname'],
+    ['REMOTE_USER_STREET', 'street'],
+    ['REMOTE_USER_STATE', 'state'],
+    ['REMOTE_USER_POSTALCODE', 'postcode'],
+    ['REMOTE_USER_TELEPHONENUMBER', 'phone'],
+]
 
 
 class InfoProvider(InfoProviderBase):
 
     def __init__(self, *pargs):
         super(InfoProvider, self).__init__(*pargs)
-        self.mapper = InfoMapping()
-        self.mapper.set_mapping(sssd_mapping)
+        self.mapper = Policy(sssd_mapping)
         self.name = 'sssd'
         self.new_config(self.name)
 
@@ -71,7 +70,7 @@ class InfoProvider(InfoProviderBase):
         reply = dict()
         try:
             attrs, groups = self._get_user_data(user)
-            userattrs, extras = self.mapper.map_attrs(attrs)
+            userattrs, extras = self.mapper.map_attributes(attrs)
             reply = userattrs
             reply['_groups'] = groups
             reply['_extras'] = {'sssd': extras}
