@@ -65,7 +65,7 @@ class Policy(Log):
                                  type(allowed))
             self.allowed = allowed
 
-    def map_attributes(self, attributes):
+    def map_attributes(self, attributes, ignore_case=False):
 
         if not isinstance(attributes, dict):
             raise ValueError("Attributes must be dictionary, not %s" %
@@ -73,6 +73,17 @@ class Policy(Log):
 
         not_mapped = copy.deepcopy(attributes)
         mapped = dict()
+
+        # If ignore_case is True,
+        # then PD translates case insensitively prefixes
+        PD = dict()
+        for k in attributes.keys():
+            if ignore_case:
+                # note duplicates that differ only by case
+                # will be lost here, beware!
+                PD[k.lower()] = k
+            else:
+                PD[k] = k
 
         for (key, value) in self.mappings:
             if not isinstance(key, list):
@@ -93,36 +104,57 @@ class Policy(Log):
                 mapprefix = None
                 mapname = value[0]
 
+            if ignore_case:
+                if prefix:
+                    prefix = prefix.lower()
+                name = name.lower()
+
             if prefix:
-                if prefix in attributes:
-                    attr = attributes[prefix]
+                if prefix in PD:
+                    attr = attributes[PD[prefix]]
                 else:
                     # '*' in a prefix matches nothing
                     continue
+
+                # If ignore_case is True,
+                # then ND translates case insensitively names
+                ND = dict()
+                if isinstance(attr, list):
+                    klist = attr
+                else:
+                    klist = attr.keys()
+                for k in klist:
+                    if ignore_case:
+                        # note duplicates that differ only by case
+                        # will be lost here, beware!
+                        ND[k.lower()] = k
+                    else:
+                        ND[k] = k
             else:
                 attr = attributes
+                ND = PD
 
-            if name in attr:
+            if name in ND and ND[name] in attr:
                 if isinstance(attr, list):
                     if mapprefix:
                         if mapprefix not in mapped:
                             mapped[mapprefix] = list()
                         mapped[mapprefix].append(mapname)
                         if not_mapped:
-                            if prefix in not_mapped:
-                                while name in not_mapped[prefix]:
-                                    not_mapped[prefix].remove(name)
+                            if PD[prefix] in not_mapped:
+                                while ND[name] in not_mapped[PD[prefix]]:
+                                    not_mapped[PD[prefix]].remove(ND[name])
                     else:
                         if mapname not in mapped:
                             mapped[mapname] = list()
-                        mapped[mapname].append(attr[name])
+                        mapped[mapname].append(attr[ND[name]])
                         if not_mapped:
-                            if prefix in not_mapped:
-                                del not_mapped[prefix]
+                            if PD[prefix] in not_mapped:
+                                del not_mapped[PD[prefix]]
                 else:
-                    mapin = copy.deepcopy(attr[name])
+                    mapin = copy.deepcopy(attr[ND[name]])
                     if mapname == '*':
-                        mapname = name
+                        mapname = ND[name]
                     if mapprefix:
                         if mapprefix not in mapped:
                             mapped[mapprefix] = dict()
@@ -131,11 +163,11 @@ class Policy(Log):
                         mapped.update({mapname: mapin})
                     if not_mapped:
                         if prefix:
-                            if prefix in not_mapped:
-                                if name in not_mapped[prefix]:
-                                    del not_mapped[prefix][name]
-                        elif name in not_mapped:
-                            del not_mapped[name]
+                            if PD[prefix] in not_mapped:
+                                if ND[name] in not_mapped[PD[prefix]]:
+                                    del not_mapped[PD[prefix]][ND[name]]
+                        elif ND[name] in not_mapped:
+                            del not_mapped[ND[name]]
             elif name == '*':
                 mapin = copy.deepcopy(attr)
                 # mapname is ignored if name == '*'
@@ -147,8 +179,8 @@ class Policy(Log):
                 else:
                     mapped.update(mapin)
                 if not_mapped:
-                    if prefix in not_mapped:
-                        del not_mapped[prefix]
+                    if prefix and PD[prefix] in not_mapped:
+                        del not_mapped[PD[prefix]]
                     else:
                         not_mapped = None
             else:
@@ -315,5 +347,50 @@ if __name__ == '__main__':
     else:
         ret += 1
         print 'Expected %s\nObtained %s' % (f2_result, f)
+
+    # Case Insensitive matching
+    tci_attributes = {'oneNameone': 'onevalueone',
+                      'onenamEtwo': 'onevaluetwo',
+                      'Two': {'twonameone': 'twovalueone',
+                              'twonameTwo': 'twovaluetwo'},
+                      'thrEE': {'threeNAMEone': 'threevalueone',
+                                'thrEEnametwo': 'threevaluetwo'},
+                      'foUr': {'fournameone': 'fourvalueone',
+                               'fournametwo': 'fourvaluetwo'},
+                      'FIVE': ['one', 'two', 'three'],
+                      'six': ['ONE', 'two', 'three']}
+
+    tci_mappings = [[['onenameone'], 'onemappedone'],
+                    [['onenametwo'], 'onemappedtwo'],
+                    [['two', '*'], '*'],
+                    [['three', 'threenameone'], 'threemappedone'],
+                    [['three', 'threenameone'], 'threemappedbis'],
+                    [['four', '*'], ['Four', '*']],
+                    [['five'], 'listfive'],
+                    [['six', 'one'], ['six', 'mapone']]]
+
+    mci_result = {'onemappedone': 'onevalueone',
+                  'onemappedtwo': 'onevaluetwo',
+                  'twonameone': 'twovalueone',
+                  'twonameTwo': 'twovaluetwo',
+                  'threemappedone': 'threevalueone',
+                  'threemappedbis': 'threevalueone',
+                  'Four': {'fournameone': 'fourvalueone',
+                           'fournametwo': 'fourvaluetwo'},
+                  'listfive': ['one', 'two', 'three'],
+                  'six': ['mapone']}
+
+    nci_result = {'thrEE': {'thrEEnametwo': 'threevaluetwo'},
+                  'six': ['two', 'three']}
+
+    p = Policy(tci_mappings)
+    print 'Case insensitive attribute mapping'
+    m, n = p.map_attributes(tci_attributes, ignore_case=True)
+    if m == mci_result and n == nci_result:
+        print 'SUCCESS'
+    else:
+        ret += 1
+        print 'FAIL: Expected %s // %s\nObtained %s // %s' % \
+            (mci_result, nci_result, m, n)
 
     sys.exit(ret)
