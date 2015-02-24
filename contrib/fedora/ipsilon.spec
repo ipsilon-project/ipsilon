@@ -2,7 +2,7 @@
 
 Name:       ipsilon
 Version:    0.3.0
-Release:    6%{?dist}
+Release:    7%{?dist}
 Summary:    An Identity Provider Server
 
 Group:      System Environment/Base
@@ -316,6 +316,10 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Tue Feb 24 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 0.3.0-7
+- Split the installer into -tools
+- Split authform into -authform
+
 * Thu Feb 12 2015 Rob Crittenden <rcritten@redhat.com> - 0.3.0-6
 - Add mod_identity_lookup info plugin package
 
