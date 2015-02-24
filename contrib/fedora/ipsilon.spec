@@ -22,7 +22,6 @@ Requires:       mod_ssl
 Requires:       ipsilon-tools = %{version}-%{release}
 Requires:       ipsilon-provider = %{version}-%{release}
 Requires:       mod_wsgi
-Requires:       mod_intercept_form_submit
 Requires:       python-cherrypy
 Requires:       python-jinja2
 Requires:       python-lxml
@@ -121,6 +120,18 @@ BuildArch:      noarch
 
 %description authfas
 Provides a login plugin to authenticate against the Fedora Authentication System
+
+
+%package authform
+Summary:        mod_intercept_form_submit login plugin
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
+Requires:       mod_intercept_form_submit
+BuildArch:      noarch
+
+%description authform
+Provides a login plugin to authenticate with mod_intercept_form_submit
 
 
 %package authpam
@@ -228,7 +239,6 @@ fi
 %dir %{python2_sitelib}/ipsilon/login
 %{python2_sitelib}/ipsilon/login/__init__*
 %{python2_sitelib}/ipsilon/login/common*
-%{python2_sitelib}/ipsilon/login/authform*
 %{python2_sitelib}/ipsilon/login/authtest*
 %dir %{python2_sitelib}/ipsilon/info
 %{python2_sitelib}/ipsilon/info/__init__*
@@ -288,6 +298,9 @@ fi
 
 %files authfas
 %{python2_sitelib}/ipsilon/login/authfas*
+
+%files authform
+%{python2_sitelib}/ipsilon/login/authform*
 
 %files authpam
 %{python2_sitelib}/ipsilon/login/authpam*
