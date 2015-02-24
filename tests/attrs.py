@@ -41,7 +41,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'instance': '${NAME}',
          'secure': 'no',
          'testauth': 'yes',
-         'info_nss': 'yes',
          'pam': 'no',
          'krb': 'no',
          'ipa': 'no',
@@ -123,8 +122,7 @@ if __name__ == '__main__':
 
     idpname = 'idp1'
     spname = 'sp1'
-    userpwd = pwd.getpwuid(os.getuid())
-    user = userpwd[0]
+    user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
@@ -150,7 +148,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname,
                                'http://127.0.0.11:45081/sp/index.shtml')
-        page.expected_value('text()', str(userpwd[4]))
+        page.expected_value('text()', 'Test User %s' % user)
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
