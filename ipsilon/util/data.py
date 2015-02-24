@@ -136,6 +136,7 @@ class FileStore(Log):
         timestamp = stat.st_mtime
         if self._config is None or timestamp > self._timestamp:
             self._config = ConfigParser.RawConfigParser()
+            self._config.optionxform = str
             self._config.read(self._filename)
         return self._config
 
