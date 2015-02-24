@@ -48,7 +48,7 @@ Requires:       mod_auth_mellon
 BuildArch:      noarch
 
 %description tools
-Convenience client install tools for the Ipsilon identity Provider
+Convenience install tools for the Ipsilon identity Provider
 
 
 %package tools-ipa
@@ -257,15 +257,12 @@ fi
 %dir %{_datadir}/ipsilon/templates/login
 %{_datadir}/ipsilon/templates/login/index.html
 %{_datadir}/ipsilon/templates/login/form.html
-%dir %{_datadir}/ipsilon/templates/install
-%{_datadir}/ipsilon/templates/install/*.conf
 %dir %{_datadir}/ipsilon/ui
 %{_datadir}/ipsilon/ui/css
 %{_datadir}/ipsilon/ui/img
 %{_datadir}/ipsilon/ui/js
 %{_datadir}/ipsilon/ui/fonts
 %{_sbindir}/ipsilon
-%{_sbindir}/ipsilon-server-install
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
 
@@ -280,6 +277,9 @@ fi
 %{_datadir}/ipsilon/templates/install/saml2
 %{_datadir}/ipsilon/ui/saml2sp
 %{_bindir}/ipsilon-client-install
+%{_sbindir}/ipsilon-server-install
+%dir %{_datadir}/ipsilon/templates/install
+%{_datadir}/ipsilon/templates/install/*.conf
 
 %files tools-ipa
 %{python2_sitelib}/ipsilon/helpers/ipa.py*
