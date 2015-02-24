@@ -232,6 +232,7 @@ fi
 
 %files
 %{_defaultdocdir}/%{name}-%{version}
+%{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon-*.egg-info
 %dir %{python2_sitelib}/ipsilon
 %{python2_sitelib}/ipsilon/admin
@@ -267,8 +268,6 @@ fi
 
 %files tools
 %doc COPYING README
-%{python2_sitelib}/ipsilon-*.egg-info
-%{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon/tools
 %dir %{python2_sitelib}/ipsilon/helpers
 %{python2_sitelib}/ipsilon/helpers/common.py*
