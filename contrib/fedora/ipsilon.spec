@@ -19,7 +19,6 @@ BuildRequires:  python-openid, python-openid-cla, python-openid-teams
 BuildRequires:  m2crypto
 Requires:       httpd
 Requires:       mod_ssl
-Requires:       ipsilon-tools = %{version}-%{release}
 Requires:       ipsilon-provider = %{version}-%{release}
 Requires:       mod_wsgi
 Requires:       python-cherrypy
