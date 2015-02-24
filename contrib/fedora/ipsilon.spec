@@ -258,6 +258,9 @@ fi
 %{_datadir}/ipsilon/templates/login/index.html
 %{_datadir}/ipsilon/templates/login/form.html
 %dir %{_datadir}/ipsilon/ui
+%dir %{python2_sitelib}/ipsilon/tools
+%{python2_sitelib}/ipsilon/tools/__init__.py*
+%{python2_sitelib}/ipsilon/tools/files.py*
 %{_datadir}/ipsilon/ui/css
 %{_datadir}/ipsilon/ui/img
 %{_datadir}/ipsilon/ui/js
@@ -268,7 +271,6 @@ fi
 
 %files tools
 %doc COPYING README
-%{python2_sitelib}/ipsilon/tools
 %dir %{python2_sitelib}/ipsilon/helpers
 %{python2_sitelib}/ipsilon/helpers/common.py*
 %{python2_sitelib}/ipsilon/helpers/__init__.py*
@@ -283,6 +285,8 @@ fi
 %{python2_sitelib}/ipsilon/helpers/ipa.py*
 
 %files saml2
+%{python2_sitelib}/ipsilon/tools/certs.py*
+%{python2_sitelib}/ipsilon/tools/saml2metadata.py*
 %{python2_sitelib}/ipsilon/providers/saml2*
 %{_datadir}/ipsilon/templates/saml2
 
