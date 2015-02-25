@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
-from ipsilon.util.log import Log
+from ipsilon.util.endpoint import Endpoint
 from ipsilon.util.user import UserSession
 from ipsilon.util.trans import Transaction
 from urllib import unquote
@@ -40,8 +40,9 @@ def admin_protect(fn):
     return check
 
 
-class Page(Log):
+class Page(Endpoint):
     def __init__(self, site, form=False):
+        super(Page, self).__init__(site)
         if 'template_env' not in site:
             raise ValueError('Missing template environment')
         self._site = site
