@@ -19,6 +19,7 @@ from ipsilon.util.log import Log
 from ipsilon.util.plugin import PluginInstaller, PluginLoader
 from ipsilon.util.plugin import PluginObject, PluginConfig
 from ipsilon.util.page import Page
+from ipsilon.rest.common import RestPage
 import cherrypy
 
 
@@ -153,3 +154,43 @@ class ProvidersInstall(object):
     def __init__(self):
         pi = PluginInstaller(ProvidersInstall, FACILITY)
         self.plugins = pi.get_plugins()
+
+
+class RestProviderBase(RestPage):
+
+    def __init__(self, site, config):
+        super(RestProviderBase, self).__init__(site)
+        self.plugin_name = config.name
+        self.cfg = config
+
+    def GET(self, *args, **kwargs):
+        raise cherrypy.HTTPError(501)
+
+    def POST(self, *args, **kwargs):
+        raise cherrypy.HTTPError(501)
+
+    def DELETE(self, *args, **kwargs):
+        raise cherrypy.HTTPError(501)
+
+    def PUT(self, *args, **kwargs):
+        raise cherrypy.HTTPError(501)
+
+    def root(self, *args, **kwargs):
+        method = cherrypy.request.method
+
+        preop = getattr(self, 'pre_%s' % method, None)
+        if preop and callable(preop):
+            preop(*args, **kwargs)
+
+        op = getattr(self, method, self.GET)
+        if callable(op):
+            return op(*args, **kwargs)
+        else:
+            raise cherrypy.HTTPError(405)
+
+    def _debug(self, fact):
+        superfact = '%s: %s' % (self.plugin_name, fact)
+        super(RestProviderBase, self)._debug(superfact)
+
+    def _audit(self, fact):
+        cherrypy.log('%s: %s' % (self.plugin_name, fact))
