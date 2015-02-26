@@ -225,6 +225,10 @@ class LogoutRequest(ProviderPageBase):
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                             % e)
 
+            # Now set the full list of session indexes to log out
+            req = logout.get_request()
+            req.setSessionIndexes(tuple(set(session.session_indexes)))
+
             session.set_logoutstate(logout.msgUrl, logout.request.id, None)
             us.save_provider_data('saml2', saml_sessions)
 
