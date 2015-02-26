@@ -20,6 +20,7 @@ from ipsilon.providers.common import ProviderBase, ProviderPageBase, \
 from ipsilon.providers.saml2.auth import AuthenticateRequest
 from ipsilon.providers.saml2.logout import LogoutRequest
 from ipsilon.providers.saml2.admin import Saml2AdminPage
+from ipsilon.providers.saml2.rest import Saml2RestBase
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
@@ -169,6 +170,7 @@ class IdpProvider(ProviderBase):
     def __init__(self, *pargs):
         super(IdpProvider, self).__init__('saml2', 'saml2', *pargs)
         self.admin = None
+        self.rest = None
         self.page = None
         self.idp = None
         self.description = """
@@ -274,6 +276,7 @@ Provides SAML 2.0 authentication infrastructure. """
         self.idp = self.init_idp()
         self.page = SAML2(site, self)
         self.admin = Saml2AdminPage(site, self)
+        self.rest = Saml2RestBase(site, self)
         return self.page
 
     def init_idp(self):
