@@ -22,6 +22,8 @@ from lxml import html
 import requests
 import string
 import urlparse
+import json
+from urllib import urlencode
 
 
 class WrongPage(Exception):
@@ -236,18 +238,54 @@ class HttpSessions(object):
 
         return (idpuri, requests.get('%s/saml2/metadata' % spuri))
 
-    def add_sp_metadata(self, idp, sp):
+    def add_sp_metadata(self, idp, sp, rest=False):
+        expected_status = 200
         idpsrv = self.servers[idp]
         (idpuri, m) = self.get_sp_metadata(idp, sp)
         url = '%s/%s/admin/providers/saml2/admin/new' % (idpuri, idp)
-        metafile = {'metafile': m.content}
         headers = {'referer': url}
-        payload = {'name': sp}
-        r = idpsrv['session'].post(url, headers=headers,
-                                   data=payload, files=metafile)
-        if r.status_code != 200:
+        if rest:
+            expected_status = 201
+            payload = {'metadata': m.content}
+            headers['content-type'] = 'application/x-www-form-urlencoded'
+            url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, sp)
+            r = idpsrv['session'].post(url, headers=headers,
+                                       data=urlencode(payload))
+        else:
+            metafile = {'metafile': m.content}
+            payload = {'name': sp}
+            r = idpsrv['session'].post(url, headers=headers,
+                                       data=payload, files=metafile)
+        if r.status_code != expected_status:
             raise ValueError('Failed to post SP data [%s]' % repr(r))
 
-        page = PageTree(r)
-        page.expected_value('//div[@class="alert alert-success"]/p/text()',
-                            'SP Successfully added')
+        if not rest:
+            page = PageTree(r)
+            page.expected_value('//div[@class="alert alert-success"]/p/text()',
+                                'SP Successfully added')
+
+    def fetch_rest_page(self, idpname, uri):
+        """
+        idpname - the name of the IDP to fetch the page from
+        uri - the URI of the page to retrieve
+
+        The URL for the request is built from known-information in
+        the session.
+
+        returns dict if successful
+        returns ValueError if the output is unparseable
+        """
+        baseurl = self.servers[idpname].get('baseuri')
+        page = self.fetch_page(
+            idpname,
+            '%s%s' % (baseurl, uri)
+        )
+        return json.loads(page.text)
+
+    def get_rest_sp(self, idpname, spname=None):
+        if spname is None:
+            uri = '/%s/rest/providers/saml2/SPS/' % idpname
+        else:
+            uri = '/%s/rest/providers/saml2/SPS/%s' % (idpname, spname)
+
+        return self.fetch_rest_page(idpname, uri)
