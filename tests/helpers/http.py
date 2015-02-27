@@ -228,16 +228,21 @@ class HttpSessions(object):
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % srv['user'])
 
-    def add_sp_metadata(self, idp, sp):
+    def get_sp_metadata(self, idp, sp):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
+
         spuri = self.servers[sp]['baseuri']
 
+        return (idpuri, requests.get('%s/saml2/metadata' % spuri))
+
+    def add_sp_metadata(self, idp, sp):
+        idpsrv = self.servers[idp]
+        (idpuri, m) = self.get_sp_metadata(idp, sp)
         url = '%s/%s/admin/providers/saml2/admin/new' % (idpuri, idp)
+        metafile = {'metafile': m.content}
         headers = {'referer': url}
         payload = {'name': sp}
-        m = requests.get('%s/saml2/metadata' % spuri)
-        metafile = {'metafile': m.content}
         r = idpsrv['session'].post(url, headers=headers,
                                    data=payload, files=metafile)
         if r.status_code != 200:
