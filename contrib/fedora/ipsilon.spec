@@ -236,6 +236,7 @@ fi
 %{python2_sitelib}/ipsilon-*.egg-info
 %dir %{python2_sitelib}/ipsilon
 %{python2_sitelib}/ipsilon/admin
+%{python2_sitelib}/ipsilon/rest
 %dir %{python2_sitelib}/ipsilon/login
 %{python2_sitelib}/ipsilon/login/__init__*
 %{python2_sitelib}/ipsilon/login/common*
