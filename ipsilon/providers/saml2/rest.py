@@ -6,6 +6,7 @@ from ipsilon.providers.common import FACILITY
 from ipsilon.rest.common import rest_error, jsonout
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
+from ipsilon.util.page import admin_protect
 from lasso import ServerAddProviderFailedError
 
 
@@ -77,10 +78,12 @@ class SPS(RestProviderBase):
         return dict(result=results)
 
     @jsonout
+    @admin_protect
     def GET(self, *args, **kwargs):
         return self._get_sp(*args, **kwargs)
 
     @jsonout
+    @admin_protect
     def POST(self, *args, **kwargs):
         cherrypy.response.status = 201
 

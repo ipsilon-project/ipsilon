@@ -19,6 +19,7 @@ from ipsilon.util.log import Log
 from ipsilon.util.plugin import PluginInstaller, PluginLoader
 from ipsilon.util.plugin import PluginObject, PluginConfig
 from ipsilon.util.page import Page
+from ipsilon.util.page import admin_protect
 from ipsilon.rest.common import RestPage
 import cherrypy
 
@@ -163,15 +164,19 @@ class RestProviderBase(RestPage):
         self.plugin_name = config.name
         self.cfg = config
 
+    @admin_protect
     def GET(self, *args, **kwargs):
         raise cherrypy.HTTPError(501)
 
+    @admin_protect
     def POST(self, *args, **kwargs):
         raise cherrypy.HTTPError(501)
 
+    @admin_protect
     def DELETE(self, *args, **kwargs):
         raise cherrypy.HTTPError(501)
 
+    @admin_protect
     def PUT(self, *args, **kwargs):
         raise cherrypy.HTTPError(501)
 
