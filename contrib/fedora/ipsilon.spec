@@ -244,7 +244,7 @@ fi
 %dir %{python2_sitelib}/ipsilon/info
 %{python2_sitelib}/ipsilon/info/__init__*
 %{python2_sitelib}/ipsilon/info/common*
-%{python2_sitelib}/ipsilon/info/nss*
+%{python2_sitelib}/ipsilon/info/infonss*
 %dir %{python2_sitelib}/ipsilon/providers
 %{python2_sitelib}/ipsilon/providers/__init__*
 %{python2_sitelib}/ipsilon/providers/common*
