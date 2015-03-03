@@ -37,9 +37,12 @@ class LoginManagerBase(PluginConfig, PluginObject):
         self.path = '/'
         self.info = None
 
-    def redirect_to_path(self, path):
+    def redirect_to_path(self, path, trans=None):
         base = cherrypy.config.get('base.mount', "")
-        raise cherrypy.HTTPRedirect('%s/login/%s' % (base, path))
+        url = '%s/login/%s' % (base, path)
+        if trans:
+            url += '?%s' % trans.get_GET_arg()
+        raise cherrypy.HTTPRedirect(url)
 
     def auth_successful(self, trans, username, auth_type=None, userdata=None):
         session = UserSession()
@@ -100,7 +103,7 @@ class LoginManagerBase(PluginConfig, PluginObject):
         # try with next module
         next_login = self.next_login()
         if next_login:
-            return self.redirect_to_path(next_login.path)
+            return self.redirect_to_path(next_login.path, trans)
 
         # return to the caller if any
         session = UserSession()
