@@ -24,6 +24,7 @@ import os
 import pwd
 import shutil
 import signal
+import random
 from string import Template
 import subprocess
 
@@ -126,6 +127,8 @@ class IpsilonTestBase(object):
             f.write(auth)
 
     def start_http_server(self, conf, env):
+        env['MALLOC_CHECK_'] = '3'
+        env['MALLOC_PERTURB_'] = str(random.randint(0, 32767) % 255 + 1)
         p = subprocess.Popen(['/usr/sbin/httpd', '-DFOREGROUND', '-f', conf],
                              env=env, preexec_fn=os.setsid)
         self.processes.append(p)
