@@ -180,7 +180,7 @@ class HttpSessions(object):
         return [method, self.new_url(referer, action_url),
                 {'headers': headers, 'data': payload}]
 
-    def fetch_page(self, idp, target_url):
+    def fetch_page(self, idp, target_url, follow_redirect=True):
         url = target_url
         action = 'get'
         args = {}
@@ -188,6 +188,8 @@ class HttpSessions(object):
         while True:
             r = self.access(action, url, **args)  # pylint: disable=star-args
             if r.status_code == 303:
+                if not follow_redirect:
+                    return PageTree(r)
                 url = r.headers['location']
                 action = 'get'
                 args = {}

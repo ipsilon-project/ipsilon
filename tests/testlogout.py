@@ -60,6 +60,19 @@ sp_a = {'hostname': '${ADDRESS}:${PORT}',
         'httpd_user': '${TEST_USER}'}
 
 
+sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
+         'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
+         'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
+         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+
+
+sp2_a = {'hostname': '${ADDRESS}:${PORT}',
+         'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
+         'saml_secure_setup': 'False',
+         'saml_auth': '/sp',
+         'httpd_user': '${TEST_USER}'}
+
+
 def fixup_sp_httpd(httpdir):
     location = """
 
@@ -90,6 +103,24 @@ Alias /open ${HTTPDIR}/open
         f.write(logged_out)
 
 
+def ensure_logout(sess, idpname, url):
+    """
+    Fetch the secure page without following redirects. If we get
+    a 303 then we should be redirected to the IDP for authentication
+    which means we aren't logged in.
+
+    Returns nothing or raises exception on error
+    """
+    try:
+        page = sess.fetch_page(idpname, url, follow_redirect=False)
+        if page.result.status_code != 303:
+            raise ValueError('Still logged into url')
+    except ValueError:
+        raise
+
+    return True
+
+
 class IpsilonTest(IpsilonTestBase):
 
     def __init__(self):
@@ -117,16 +148,29 @@ class IpsilonTest(IpsilonTestBase):
         print "Starting SP's httpd server"
         self.start_http_server(conf, env)
 
+        print "Installing second SP server"
+        name = 'sp2'
+        addr = '127.0.0.10'
+        port = '45082'
+        sp2 = self.generate_profile(sp2_g, sp2_a, name, addr, port)
+        conf = self.setup_sp_server(sp2, name, addr, port, env)
+        fixup_sp_httpd(os.path.dirname(conf))
+
+        print "Starting SP's httpd server"
+        self.start_http_server(conf, env)
+
 
 if __name__ == '__main__':
 
     idpname = 'idp1'
     spname = 'sp1'
+    sp2name = 'sp2'
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'http://127.0.0.11:45081')
+    sess.add_server(sp2name, 'http://127.0.0.10:45082')
 
     print "testlogout: Authenticate to IDP ...",
     try:
@@ -139,6 +183,14 @@ if __name__ == '__main__':
     print "testlogout: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, spname)
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Add second SP Metadata to IDP ...",
+    try:
+        sess.add_sp_metadata(idpname, sp2name)
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -170,6 +222,70 @@ if __name__ == '__main__':
             'http://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Try logout again ...",
+    try:
+        page = sess.fetch_page(idpname, '%s/%s?%s' % (
+            'http://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+        page.expected_value('text()', 'Logged out')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Ensure logout ...",
+    try:
+        ensure_logout(sess, idpname, 'http://127.0.0.11:45081/sp/')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Access SP Protected Area of SP1...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Access SP Protected Area of SP2...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.10:45082/sp/')
+        page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Logout from both ...",
+    try:
+        page = sess.fetch_page(idpname, '%s/%s?%s' % (
+            'http://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+        page.expected_value('text()', 'Logged out')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Ensure logout of SP1 ...",
+    try:
+        ensure_logout(sess, idpname, 'http://127.0.0.11:45081/sp/')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Ensure logout of SP2 ...",
+    try:
+        ensure_logout(sess, idpname, 'http://127.0.0.10:45082/sp/')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
