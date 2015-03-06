@@ -138,9 +138,15 @@ class Page(Endpoint):
             # Try with kwargs first
             tid = t.find_tid(kwargs)
             if not tid:
-                # If no TID yet See if we have it in a referer
+                # If no TID yet See if we have it in a referer or in the
+                # environment in the REDIRECT_URL
+                url = None
                 if 'referer' in cherrypy.request.headers:
-                    r = urlparse(unquote(cherrypy.request.headers['referer']))
+                    url = cherrypy.request.headers['referer']
+                elif 'REQUEST_URI' in cherrypy.request.wsgi_environ:
+                    url = cherrypy.request.wsgi_environ['REQUEST_URI']
+                if url:
+                    r = urlparse(unquote(url))
                     if r.query:
                         tid = t.find_tid(parse_qs(r.query))
                 if not tid:
