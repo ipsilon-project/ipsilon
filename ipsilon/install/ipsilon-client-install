@@ -123,8 +123,12 @@ def saml2():
             psp = ''
 
         saml_secure = 'Off'
+        ssl_require = '#'
+        ssl_rewrite = '#'
         if args['saml_secure_setup']:
             saml_secure = 'On'
+            ssl_require = ''
+            ssl_rewrite = ''
 
         samlopts = {'saml_base': args['saml_base'],
                     'saml_protect': saml_protect,
@@ -135,6 +139,9 @@ def saml2():
                     'saml_sp': args['saml_sp'],
                     'saml_secure_on': saml_secure,
                     'saml_auth': saml_auth,
+                    'ssl_require': ssl_require,
+                    'ssl_rewrite': ssl_rewrite,
+                    'sp_hostname': args['hostname'],
                     'sp': psp}
         files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
 
