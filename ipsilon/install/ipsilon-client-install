@@ -115,6 +115,7 @@ def saml2():
             saml_protect = 'info'
             saml_auth = '<Location %s>\n' \
                         '    MellonEnable "auth"\n' \
+                        '    Header append Cache-Control "no-cache"\n' \
                         '</Location>\n' % args['saml_auth']
 
         psp = '# '
