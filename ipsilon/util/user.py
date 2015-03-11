@@ -154,7 +154,6 @@ class UserSession(Log):
 
     def save_user_attrs(self, userattrs):
         cherrypy.session['userattrs'] = userattrs
-        cherrypy.session.save()
         self._debug('Saved user attrs')
         self.userattrs = userattrs
 
@@ -171,7 +170,6 @@ class UserSession(Log):
     def save_provider_data(self, provider, data):
         attr = self._get_provider_attr_name(provider)
         cherrypy.session[attr] = data
-        cherrypy.session.save()
         self._debug('Saved %s provider data' % provider)
 
     def save_data(self, facility, name, data):
@@ -179,7 +177,6 @@ class UserSession(Log):
         if facility not in cherrypy.session:
             cherrypy.session[facility] = dict()
         cherrypy.session[facility][name] = data
-        cherrypy.session.save()
         self._debug('Saved session data named [%s:%s]' % (facility, name))
 
     def get_data(self, facility, name):
@@ -202,4 +199,3 @@ class UserSession(Log):
         else:
             del cherrypy.session[facility]
             self._debug('Nuked session facility [%s]' % (facility,))
-        cherrypy.session.save()
