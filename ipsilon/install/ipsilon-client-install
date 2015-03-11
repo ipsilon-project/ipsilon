@@ -270,6 +270,27 @@ def parse_args():
     if len(args['hostname'].split('.')) < 2:
         raise ValueError('Hostname: %s is not a FQDN.')
 
+    # Validate that all path options begin with '/'
+    path_args = ['saml_base', 'saml_auth', 'saml_sp', 'saml_sp_logout',
+                 'saml_sp_post']
+    for path_arg in path_args:
+        if not args[path_arg].startswith('/'):
+            raise ValueError('--%s must begin with a / character.' %
+                             path_arg.replace('_', '-'))
+
+    # The saml_sp setting must be a subpath of saml_base since it is
+    # used as the MellonEndpointPath.
+    if not args['saml_sp'].startswith(args['saml_base']):
+        raise ValueError('--saml-sp must be a subpath of --saml-base.')
+
+    # The saml_sp_logout and saml_sp_post settings must be subpaths
+    # of saml_sp (the mellon endpoint).
+    path_args = ['saml_sp_logout', 'saml_sp_post']
+    for path_arg in path_args:
+        if not args[path_arg].startswith(args['saml_sp']):
+            raise ValueError('--%s must be a subpath of --saml-sp' %
+                             path_arg.replace('_', '-'))
+
     # At least one on this list needs to be specified or we do nothing
     sp_list = ['saml']
     present = False
