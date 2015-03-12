@@ -143,9 +143,11 @@ class Page(Endpoint):
                 url = None
                 if 'referer' in cherrypy.request.headers:
                     url = cherrypy.request.headers['referer']
-                elif 'REQUEST_URI' in cherrypy.request.wsgi_environ:
+                    r = urlparse(unquote(url))
+                    if r.query:
+                        tid = t.find_tid(parse_qs(r.query))
+                if not tid and 'REQUEST_URI' in cherrypy.request.wsgi_environ:
                     url = cherrypy.request.wsgi_environ['REQUEST_URI']
-                if url:
                     r = urlparse(unquote(url))
                     if r.query:
                         tid = t.find_tid(parse_qs(r.query))
