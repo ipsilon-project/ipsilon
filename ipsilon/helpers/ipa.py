@@ -79,7 +79,7 @@ class Installer(EnvHelpersInstaller):
             self.server = ipaconfig.config.get_server()
 
         except Exception, e:  # pylint: disable=broad-except
-            logger.info('IPA tools installation found: [%s]', str(e))
+            logger.info('IPA tools installation found: [%s]', e)
             if opts['ipa'] == 'yes':
                 raise Exception('No IPA installation found!')
             return
@@ -115,37 +115,55 @@ class Installer(EnvHelpersInstaller):
         princ = 'HTTP/%s@%s' % (us, self.realm)
 
         # Check we have credentials to access server (for keytab)
-        from ipapython import ipaldap
+        from ipalib import api
         from ipalib import errors as ipaerrors
 
-        for srv in self.server:
-            msg = "Testing access to server: %s" % srv
-            print >> sys.stdout, msg,
-            try:
-                server = srv
-                c = ipaldap.IPAdmin(host=server)
-                c.do_sasl_gssapi_bind()
-                del c
-                print >> sys.stdout, "... Succeeded!"
-                break
-            except ipaerrors.ACIError, e:
-                # usually this error is returned when we have no
-                # good credentials, ask the user to kinit and retry
-                print >> sys.stderr, NO_CREDS_FOR_KEYTAB
-                logger.error('Invalid credentials: [%s]', repr(e))
-                raise Exception('Invalid credentials: [%s]', str(e))
-            except Exception, e:  # pylint: disable=broad-except
-                # for other exceptions let's try to fail later
-                pass
+        api.bootstrap(context='ipsilon_installer')
+        api.finalize()
 
         try:
-            subprocess.check_output([IPA_COMMAND, 'service-add', princ],
-                                    stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError, e:
-            # hopefully this means the service already exists
-            # otherwise we'll fail later again
-            logger.info('Error trying to create HTTP service:')
-            logger.info('Cmd> %s\n%s', e.cmd, e.output)
+            api.Backend.rpcclient.connect()
+            logger.debug('Try RPC connection')
+            api.Backend.rpcclient.forward('ping')
+            print >> sys.stdout, "... Succeeded!"
+        except ipaerrors.KerberosError as e:
+            print >> sys.stderr, NO_CREDS_FOR_KEYTAB
+            logger.error('Invalid credentials: [%s]', repr(e))
+            if api.Backend.rpcclient.isconnected():
+                api.Backend.rpcclient.disconnect()
+            raise Exception('Invalid credentials: [%s]' % e)
+        except ipaerrors.PublicError as e:
+            print >> sys.stderr, "Can't connect to any IPA server"
+            logger.error(
+                'Cannot connect to the server due to generic error: %s', e)
+            if api.Backend.rpcclient.isconnected():
+                api.Backend.rpcclient.disconnect()
+            raise Exception('Unable to connect to IPA server: %s' % e)
+
+        # Specify an older version to work on nearly any master. Force is
+        # set to True so a DNS A record is not required for adding the
+        # service.
+        try:
+            api.Backend.rpcclient.forward(
+                'service_add',
+                unicode(princ),
+                force=True,
+                version=u'2.0',
+            )
+        except ipaerrors.DuplicateEntry:
+            logger.debug('Principal %s already exists' % princ)
+        except ipaerrors.NotFound as e:
+            print >> sys.stderr, "%s" % e
+            logger.error('%s' % e)
+            raise Exception('%s' % e)
+        except ipaerrors.ACIError as e:
+            print >> sys.stderr, NO_CREDS_FOR_KEYTAB
+            logger.error('Invalid credentials: [%s]', repr(e))
+            raise Exception('Invalid credentials: [%s]' % e)
+        finally:
+            server = api.Backend.rpcclient.api.env.server
+            if api.Backend.rpcclient.isconnected():
+                api.Backend.rpcclient.disconnect()
 
         try:
             msg = "Trying to fetch keytab[%s] for %s" % (
@@ -160,7 +178,7 @@ class Installer(EnvHelpersInstaller):
             print >> sys.stderr, FAILED_TO_GET_KEYTAB
             logger.info('Error trying to get HTTP keytab:')
             logger.info('Cmd> %s\n%s', e.cmd, e.output)
-            raise Exception('Missing keytab: [%s]' % str(e))
+            raise Exception('Missing keytab: [%s]' % e)
 
         # Fixup permissions so only the ipsilon user can read these files
         pw = pwd.getpwnam(HTTPD_USER)
