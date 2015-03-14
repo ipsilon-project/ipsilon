@@ -88,7 +88,12 @@ def saml2():
     proto = 'https'
     if not args['saml_secure_setup']:
         proto = 'http'
-    url = '%s://%s' % (proto, args['hostname'])
+
+    port_str = ''
+    if args['port']:
+        port_str = ':%s' % args['port']
+
+    url = '%s://%s%s' % (proto, args['hostname'], port_str)
     url_sp = url + args['saml_sp']
     url_logout = url + args['saml_sp_logout']
     url_post = url + args['saml_sp_post']
@@ -126,6 +131,11 @@ def saml2():
         saml_secure = 'Off'
         ssl_require = '#'
         ssl_rewrite = '#'
+        if args['port']:
+            ssl_port = args['port']
+        else:
+            ssl_port = '443'
+
         if args['saml_secure_setup']:
             saml_secure = 'On'
             ssl_require = ''
@@ -142,7 +152,9 @@ def saml2():
                     'saml_auth': saml_auth,
                     'ssl_require': ssl_require,
                     'ssl_rewrite': ssl_rewrite,
+                    'ssl_port': ssl_port,
                     'sp_hostname': args['hostname'],
+                    'sp_port': port_str,
                     'sp': psp}
         files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
 
@@ -233,6 +245,8 @@ def parse_args():
                         action='version', version='%(prog)s 0.1')
     parser.add_argument('--hostname', default=socket.getfqdn(),
                         help="Machine's fully qualified host name")
+    parser.add_argument('--port', default=None,
+                        help="Port number that SP listens on")
     parser.add_argument('--admin-user', default='admin',
                         help="Account allowed to create a SP")
     parser.add_argument('--httpd-user', default='apache',
@@ -268,7 +282,10 @@ def parse_args():
         args = parse_config_profile(args)
 
     if len(args['hostname'].split('.')) < 2:
-        raise ValueError('Hostname: %s is not a FQDN.')
+        raise ValueError('Hostname: %s is not a FQDN.' % args['hostname'])
+
+    if args['port'] and not args['port'].isdigit():
+        raise ValueError('Port number: %s is not an integer.' % args['port'])
 
     # Validate that all path options begin with '/'
     path_args = ['saml_base', 'saml_auth', 'saml_sp', 'saml_sp_logout',
