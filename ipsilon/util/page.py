@@ -49,7 +49,6 @@ class Page(Endpoint):
         self.basepath = cherrypy.config.get('base.mount', "")
         self.user = None
         self._is_form_page = form
-        self.default_headers = dict()
         self.auth_protect = False
 
     def get_url(self):

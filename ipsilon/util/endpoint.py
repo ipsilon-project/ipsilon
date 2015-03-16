@@ -16,7 +16,10 @@ class Endpoint(Log):
         self._site = site
         self.basepath = cherrypy.config.get('base.mount', "")
         self.user = None
-        self.default_headers = dict()
+        self.default_headers = {
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+        }
         self.auth_protect = False
 
     def get_url(self):

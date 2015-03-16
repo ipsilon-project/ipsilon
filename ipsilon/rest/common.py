@@ -36,11 +36,6 @@ class RestPage(Endpoint):
 
     def __init__(self, *args, **kwargs):
         super(RestPage, self).__init__(*args, **kwargs)
-        self.default_headers.update({
-            'Cache-Control': 'no-cache, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-        })
         self.auth_protect = True
 
 

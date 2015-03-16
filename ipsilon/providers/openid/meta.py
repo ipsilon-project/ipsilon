@@ -9,11 +9,6 @@ class MetaHandler(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
         super(MetaHandler, self).__init__(*args, **kwargs)
-        self.default_headers.update({
-            'Cache-Control': 'no-cache, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': 'Thu, 01 Dec 1994 16:00:00 GMT',
-        })
         self._template_name = None
         self._take_args = False
 
