@@ -17,9 +17,25 @@ BuildRequires:  python-setuptools
 BuildRequires:  lasso-python
 BuildRequires:  python-openid, python-openid-cla, python-openid-teams
 BuildRequires:  m2crypto
+
+Requires:       python-requests
+Requires:       %{name}-base = %{version}-%{release}
+BuildArch:      noarch
+
+%description
+Ipsilon is a multi-protocol Identity Provider service. Its function is to
+bridge authentication providers and applications to achieve Single Sign On
+and Federation.
+
+
+%package base
+Summary:        Ipsilon base IDP server
+Group:          System Environment/Base
+License:        GPLv3+
 Requires:       httpd
 Requires:       mod_ssl
-Requires:       ipsilon-provider = %{version}-%{release}
+Requires:       %{name}-filesystem = %{version}-%{release}
+Requires:       %{name}-provider = %{version}-%{release}
 Requires:       mod_wsgi
 Requires:       python-cherrypy
 Requires:       python-jinja2
@@ -30,31 +46,40 @@ Requires(pre):  shadow-utils
 Requires(post): %_sbindir/semanage, %_sbindir/restorecon
 Requires(postun): %_sbindir/semanage
 
-%description
-Ipsilon is a multi-protocol Identiy Provider service. Its function is to
-bridge authentication providers and applications to achieve Single Sign On
-and Federation.
+
+%description base
+The Ipsilon IdP server without installer
 
 
-%package tools
-Summary:        Client tools for the Ipsilon IDP
+%package filesystem
+Summary:        Package providing files required by Ipsilon
 Group:          System Environment/Base
 License:        GPLv3+
-Requires:       python-requests
-Requires:       python-lxml
-Requires:       lasso-python
+
+%description filesystem
+Package providing basic directory structure required
+for all Ipsilon parts
+
+
+%package client
+Summary:        Tools for configuring Ipsilon clients
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       %{name}-filesystem = %{version}-%{release}
+Requires:       %{name}-saml2-base = %{version}-%{release}
 Requires:       mod_auth_mellon
 BuildArch:      noarch
 
-%description tools
-Convenience install tools for the Ipsilon identity Provider
+%description client
+Client install tools
 
 
 %package tools-ipa
 summary:        IPA helpers
 Group:          System Environment/Base
 License:        GPLv3+
-Requires:       %{name}-tools = %{version}-%{release}
+Requires:       %{name}-authkrb = %{version}-%{release}
+Requires:       %{name}-authform = %{version}-%{release}
 %if 0%{?rhel}
 Requires:       ipa-client
 Requires:       ipa-admintools
@@ -68,13 +93,25 @@ BuildArch:      noarch
 Convenience client install tools for IPA support in the Ipsilon identity Provider
 
 
+%package saml2-base
+Summary:        SAML2 base
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       lasso-python
+Requires:       python-lxml
+BuildArch:      noarch
+
+%description saml2-base
+Provides core SAML2 utilities
+
+
 %package saml2
 Summary:        SAML2 provider plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Provides:       ipsilon-provider = %{version}-%{release}
 Requires:       %{name} = %{version}-%{release}
-Requires:       lasso-python
+Requires:       %{name}-saml2-base = %{version}-%{release}
 BuildArch:      noarch
 
 %description saml2
@@ -230,11 +267,28 @@ if [ $1 -eq 0 ]; then
 fi
 
 
-%files
-%{_defaultdocdir}/%{name}-%{version}
+%files filesystem
+%doc COPYING README
+%dir %{_datadir}/ipsilon
+%dir %{_datadir}/ipsilon/templates
+%dir %{_datadir}/ipsilon/templates/install
+%dir %{python2_sitelib}/ipsilon
 %{python2_sitelib}/ipsilon/__init__.py*
 %{python2_sitelib}/ipsilon-*.egg-info
-%dir %{python2_sitelib}/ipsilon
+%dir %{python2_sitelib}/ipsilon/tools
+%{python2_sitelib}/ipsilon/tools/__init__.py*
+%{python2_sitelib}/ipsilon/tools/files.py*
+
+%files
+%{_sbindir}/ipsilon-server-install
+%{_datadir}/ipsilon/templates/install/*.conf
+%{_datadir}/ipsilon/ui/saml2sp
+%dir %{python2_sitelib}/ipsilon/helpers
+%{python2_sitelib}/ipsilon/helpers/common.py*
+%{python2_sitelib}/ipsilon/helpers/__init__.py*
+
+%files base
+%{_defaultdocdir}/%{name}-%{version}
 %{python2_sitelib}/ipsilon/admin
 %{python2_sitelib}/ipsilon/rest
 %dir %{python2_sitelib}/ipsilon/login
@@ -251,17 +305,12 @@ fi
 %{python2_sitelib}/ipsilon/root.py*
 %{python2_sitelib}/ipsilon/util
 %{_mandir}/man*/ipsilon*
-%dir %{_datadir}/ipsilon
-%dir %{_datadir}/ipsilon/templates
 %{_datadir}/ipsilon/templates/*.html
 %{_datadir}/ipsilon/templates/admin
 %dir %{_datadir}/ipsilon/templates/login
 %{_datadir}/ipsilon/templates/login/index.html
 %{_datadir}/ipsilon/templates/login/form.html
 %dir %{_datadir}/ipsilon/ui
-%dir %{python2_sitelib}/ipsilon/tools
-%{python2_sitelib}/ipsilon/tools/__init__.py*
-%{python2_sitelib}/ipsilon/tools/files.py*
 %{_datadir}/ipsilon/ui/css
 %{_datadir}/ipsilon/ui/img
 %{_datadir}/ipsilon/ui/js
@@ -270,24 +319,18 @@ fi
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
 
-%files tools
-%doc COPYING README
-%dir %{python2_sitelib}/ipsilon/helpers
-%{python2_sitelib}/ipsilon/helpers/common.py*
-%{python2_sitelib}/ipsilon/helpers/__init__.py*
-%{_datadir}/ipsilon/templates/install/saml2
-%{_datadir}/ipsilon/ui/saml2sp
+%files client
 %{_bindir}/ipsilon-client-install
-%{_sbindir}/ipsilon-server-install
-%dir %{_datadir}/ipsilon/templates/install
-%{_datadir}/ipsilon/templates/install/*.conf
+%{_datadir}/ipsilon/templates/install/saml2
 
 %files tools-ipa
 %{python2_sitelib}/ipsilon/helpers/ipa.py*
 
-%files saml2
-%{python2_sitelib}/ipsilon/tools/certs.py*
+%files saml2-base
 %{python2_sitelib}/ipsilon/tools/saml2metadata.py*
+%{python2_sitelib}/ipsilon/tools/certs.py*
+
+%files saml2
 %{python2_sitelib}/ipsilon/providers/saml2*
 %{_datadir}/ipsilon/templates/saml2
 
