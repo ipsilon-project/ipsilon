@@ -89,9 +89,14 @@ rpmdistdir:
 
 rpms: rpmroot rpmdistdir sdist
 	cp dist/ipsilon*.tar.gz $(RPMBUILD)/SOURCES/
-	rpmbuild --define "_topdir $(RPMBUILD)" -ba contrib/fedora/ipsilon.spec
+	rpmbuild --define "gittag .git`git rev-parse --short HEAD`" --define "builddate .`date +%Y%m%d%H%M`" --define "_topdir $(RPMBUILD)" -ba contrib/fedora/ipsilon.spec
 	mv $(RPMBUILD)/RPMS/*/ipsilon-*.rpm dist/rpms/
 	mv $(RPMBUILD)/SRPMS/ipsilon-*.src.rpm dist/srpms/
 	rm -rf $(RPMBUILD)
 
-rpms: sdist
+releaserpms: rpmroot rpmdistdir sdist
+	cp dist/ipsilon*.tar.gz $(RPMBUILD)/SOURCES/
+	rpmbuild --define "_topdir $(RPMBUILD)" -ba contrib/fedora/ipsilon.spec
+	mv $(RPMBUILD)/RPMS/*/ipsilon-*.rpm dist/rpms/
+	mv $(RPMBUILD)/SRPMS/ipsilon-*.src.rpm dist/srpms/
+	rm -rf $(RPMBUILD)

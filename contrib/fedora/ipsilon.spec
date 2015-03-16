@@ -2,7 +2,7 @@
 
 Name:       ipsilon
 Version:    0.4.0
-Release:    1%{?dist}
+Release:    1%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
 Group:      System Environment/Base
