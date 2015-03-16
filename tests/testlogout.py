@@ -103,7 +103,7 @@ Alias /open ${HTTPDIR}/open
         f.write(logged_out)
 
 
-def ensure_logout(sess, idpname, url):
+def ensure_logout(session, idp_name, spurl):
     """
     Fetch the secure page without following redirects. If we get
     a 303 then we should be redirected to the IDP for authentication
@@ -112,8 +112,9 @@ def ensure_logout(sess, idpname, url):
     Returns nothing or raises exception on error
     """
     try:
-        page = sess.fetch_page(idpname, url, follow_redirect=False)
-        if page.result.status_code != 303:
+        logout_page = session.fetch_page(idp_name, spurl,
+                                         follow_redirect=False)
+        if logout_page.result.status_code != 303:
             raise ValueError('Still logged into url')
     except ValueError:
         raise
