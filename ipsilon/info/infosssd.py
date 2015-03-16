@@ -160,6 +160,13 @@ class Installer(InfoProviderInstaller):
         sssdconfig.save_domain(domain)
         sssdconfig.write(SSSD_CONF)
 
+        # for selinux enabled platforms, ignore if it fails just report
+        try:
+            subprocess.call(['/usr/sbin/setsebool', '-P',
+                             'httpd_dbus_sssd=on'])
+        except Exception:  # pylint: disable=broad-except
+            pass
+
         try:
             subprocess.call(['/sbin/service', 'sssd', 'restart'])
         except Exception:  # pylint: disable=broad-except
