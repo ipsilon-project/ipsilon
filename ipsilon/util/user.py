@@ -121,6 +121,8 @@ class UserSession(Log):
 
     def login(self, username, userattrs=None):
         if self.user == username:
+            if userattrs and not self.get_user_attrs():
+                self.save_user_attrs(userattrs)
             return
 
         # REMOTE_USER changed, replace user
