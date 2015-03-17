@@ -217,9 +217,15 @@ class AuthenticateRequest(ProviderPageBase):
         mappedattrs, _ = policy.map_attributes(userattrs)
         attributes = policy.filter_attributes(mappedattrs)
 
+        if '_groups' in attributes and 'groups' not in attributes:
+            attributes['groups'] = attributes['_groups']
+
         self.debug("%s's attributes: %s" % (user.name, attributes))
 
         for key in attributes:
+            # skip internal info
+            if key[0] == '_':
+                continue
             values = attributes[key]
             if isinstance(values, dict):
                 continue
