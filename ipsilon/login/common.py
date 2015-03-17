@@ -122,6 +122,9 @@ class LoginManagerBase(PluginConfig, PluginObject):
 
         raise cherrypy.HTTPRedirect(transdata['login_return'])
 
+    def set_auth_error(self):
+        cherrypy.response.status = 401
+
     def get_tree(self, site):
         raise NotImplementedError
 

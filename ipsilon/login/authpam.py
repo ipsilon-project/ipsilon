@@ -61,6 +61,7 @@ class Pam(LoginFormBase):
             error_password=not password,
             error_username=not username
         )
+        self.lm.set_auth_error()
         # pylint: disable=star-args
         return self._template('login/form.html', **context)
 
