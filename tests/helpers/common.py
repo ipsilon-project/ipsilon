@@ -145,6 +145,26 @@ class IpsilonTestBase(object):
             cmd = ['/usr/bin/createdb', '-h', addr, '-p', port, d]
             subprocess.check_call(cmd, env=env)
 
+    def setup_ldap(self, env):
+        ldapdir = os.path.join(self.testdir, 'ldap')
+        os.mkdir(ldapdir)
+        with open(os.path.join(self.rootdir, 'tests/slapd.conf')) as f:
+            t = Template(f.read())
+            text = t.substitute({'ldapdir': ldapdir})
+        filename = os.path.join(ldapdir, 'slapd.conf')
+        with open(filename, 'w+') as f:
+            f.write(text)
+        subprocess.check_call(['/usr/sbin/slapadd', '-f', filename, '-l',
+                               'tests/ldapdata.ldif'], env=env)
+
+        return filename
+
+    def start_ldap_server(self, conf, addr, port, env):
+        p = subprocess.Popen(['/usr/sbin/slapd', '-d', '0', '-f', conf,
+                             '-h', 'ldap://%s:%s' % (addr, port)],
+                             env=env, preexec_fn=os.setsid)
+        self.processes.append(p)
+
     def wait(self):
         for p in self.processes:
             os.killpg(p.pid, signal.SIGTERM)

@@ -65,6 +65,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=trans
 	PYTHONPATH=./ ./tests/tests.py --test=pgdb
 	PYTHONPATH=./ ./tests/tests.py --test=fconf
+	PYTHONPATH=./ ./tests/tests.py --test=ldap
 
 test: lp-test unittests tests
 

@@ -209,7 +209,12 @@ class Installer(InfoProviderInstaller):
             config['user dn template'] = opts['info_ldap_user_dn_template']
         elif 'ldap_bind_dn_template' in opts:
             config['user dn template'] = opts['ldap_bind_dn_template']
-        config['tls'] = 'Demand'
+        if 'info_ldap_tls_level' in opts and opts['info_ldap_tls_level']:
+            config['tls'] = opts['info_ldap_tls_level']
+        elif 'ldap_tls_level' in opts and opts['ldap_tls_level']:
+            config['tls'] = opts['ldap_tls_level']
+        else:
+            config['tls'] = 'Demand'
         if 'info_ldap_base_dn' in opts and opts['info_ldap_base_dn']:
             config['base dn'] = opts['info_ldap_base_dn']
         elif 'ldap_base_dn' in opts and opts['ldap_base_dn']:

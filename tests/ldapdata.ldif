@@ -1,0 +1,45 @@
+dn: dc=example,dc=com
+dc: example
+description: tests tree
+objectClass: dcObject
+objectClass: organization
+o: Example
+
+dn: ou=People,dc=example,dc=com
+ou: People
+objectClass: organizationalUnit
+description: Test People
+
+dn: uid=tuser,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: tuser
+cn: Test User
+sn: Doe
+# password: tuser
+userPassword: {SSHA}g+LImPDfqn8HSf6LpJaN0Lpdp12OCbKf
+
+dn: uid=tuser2,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: tuser2
+cn: Test User 2
+sn: Doe
+# password: tuser
+userPassword: {SSHA}g+LImPDfqn8HSf6LpJaN0Lpdp12OCbKf
+
+dn: ou=Group,dc=example,dc=com
+ou: Group
+objectClass: organizationalUnit
+description: Groups of People
+
+dn: cn=Test Group,ou=Group,dc=example,dc=com
+cn: Test Group
+objectClass: posixGroup
+gidNumber: 100
+memberUid: tuser
+
+dn: cn=Test Group 2,ou=Group,dc=example,dc=com
+cn: Test Group 2
+objectClass: posixGroup
+gidNumber: 101
+memberUid: tuser
+memberUid: tuser2

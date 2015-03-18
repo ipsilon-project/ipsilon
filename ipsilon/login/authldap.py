@@ -190,6 +190,8 @@ class Installer(LoginManagerInstaller):
                            help='LDAP Server Url')
         group.add_argument('--ldap-bind-dn-template', action='store',
                            help='LDAP Bind DN Template')
+        group.add_argument('--ldap-tls-level', action='store', default=None,
+                           help='LDAP TLS level')
         group.add_argument('--ldap-base-dn', action='store',
                            help='LDAP Base DN')
 
@@ -208,7 +210,10 @@ class Installer(LoginManagerInstaller):
             config['server url'] = opts['ldap_server_url']
         if 'ldap_bind_dn_template' in opts:
             config['bind dn template'] = opts['ldap_bind_dn_template']
-        config['tls'] = 'Demand'
+        if 'ldap_tls_level' in opts and opts['ldap_tls_level'] is not None:
+            config['tls'] = opts['ldap_tls_level']
+        else:
+            config['tls'] = 'Demand'
         if 'ldap_base_dn' in opts and opts['ldap_base_dn'] is not None:
             config['base dn'] = opts['ldap_base_dn']
         po.save_plugin_config(config)
