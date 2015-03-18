@@ -27,6 +27,7 @@ from ipsilon.util.trans import Transaction
 import cherrypy
 import datetime
 import lasso
+import uuid
 
 
 class UnknownProvider(ProviderException):
@@ -185,8 +186,7 @@ class AuthenticateRequest(ProviderPageBase):
             # TODO map to something else ?
             nameid = provider.normalize_username(user.name)
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
-            # TODO map to something else ?
-            nameid = provider.normalize_username(user.name)
+            nameid = '_' + uuid.uuid4().hex
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
             nameid = us.get_data('user', 'krb_principal_name')
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
