@@ -56,6 +56,10 @@ Info plugin that uses LDAP to retrieve user data. """
             pconfig.String(
                 'bind password',
                 'Password to use for bind operation'),
+            pconfig.String(
+                'base dn',
+                'The base dn to look for users and groups',
+                'dc=example,dc=com'),
         )
 
     @property
@@ -77,6 +81,10 @@ Info plugin that uses LDAP to retrieve user data. """
     @property
     def user_dn_tmpl(self):
         return self.get_config_value('user dn template')
+
+    @property
+    def base_dn(self):
+        return self.get_config_value('base dn')
 
     def _ldap_bind(self):
 
@@ -116,19 +124,26 @@ Info plugin that uses LDAP to retrieve user data. """
             data[name] = value
         return data
 
-    def _get_user_groups(self, conn, dn, ldapattrs):
+    def _get_user_groups(self, conn, base, username):
         # TODO: fixme to support RFC2307bis schemas
-        if 'memberuid' in ldapattrs:
-            return ldapattrs['memberuid']
-        else:
+        results = conn.search_s(base, ldap.SCOPE_SUBTREE,
+                                filterstr='memberuid=%s' % username)
+        if results is None or results == []:
+            self.debug('No groups for %s' % username)
             return []
+        groups = []
+        for r in results:
+            if 'cn' in r[1]:
+                groups.append(r[1]['cn'][0])
+        return groups
 
-    def get_user_data_from_conn(self, conn, dn):
+    def get_user_data_from_conn(self, conn, dn, base, username):
         reply = dict()
         try:
             ldapattrs = self._get_user_data(conn, dn)
+            self.debug(ldapattrs)
             userattrs, extras = self.mapper.map_attributes(ldapattrs)
-            groups = self._get_user_groups(conn, dn, ldapattrs)
+            groups = self._get_user_groups(conn, base, username)
             reply = userattrs
             reply['_groups'] = groups
             reply['_extras'] = {'ldap': extras}
@@ -141,7 +156,8 @@ Info plugin that uses LDAP to retrieve user data. """
         try:
             conn = self._ldap_bind()
             dn = self.user_dn_tmpl % {'username': user}
-            return self.get_user_data_from_conn(conn, dn)
+            base = self.base_dn
+            return self.get_user_data_from_conn(conn, dn, base, user)
         except Exception, e:  # pylint: disable=broad-except
             self.error(e)
             return {}
@@ -165,6 +181,8 @@ class Installer(InfoProviderInstaller):
                            help='LDAP Bind Password')
         group.add_argument('--info-ldap-user-dn-template', action='store',
                            help='LDAP User DN Template')
+        group.add_argument('--info-ldap-base-dn', action='store',
+                           help='LDAP Base DN')
 
     def configure(self, opts):
         if opts['info_ldap'] != 'yes':
@@ -192,6 +210,10 @@ class Installer(InfoProviderInstaller):
         elif 'ldap_bind_dn_template' in opts:
             config['user dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
+        if 'info_ldap_base_dn' in opts and opts['info_ldap_base_dn']:
+            config['base dn'] = opts['info_ldap_base_dn']
+        elif 'ldap_base_dn' in opts and opts['ldap_base_dn']:
+            config['base dn'] = opts['ldap_base_dn']
         po.save_plugin_config(config)
 
         # Update global config to add info plugin

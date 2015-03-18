@@ -51,7 +51,9 @@ class LDAP(LoginFormBase, Log):
             if not self.ldap_info:
                 self.ldap_info = LDAPInfo(self._site)
 
-            return self.ldap_info.get_user_data_from_conn(conn, dn)
+            base = self.lm.base_dn
+            return self.ldap_info.get_user_data_from_conn(conn, dn, base,
+                                                          username)
 
         return None
 
@@ -110,6 +112,10 @@ authentication. """
                 'bind dn template',
                 'Template to turn username into DN.',
                 'uid=%(username)s,ou=People,dc=example,dc=com'),
+            pconfig.String(
+                'base dn',
+                'The base dn to look for users and groups',
+                'dc=example,dc=com'),
             pconfig.Condition(
                 'get user info',
                 'Get user info via ldap using user credentials',
@@ -161,6 +167,10 @@ authentication. """
     def bind_dn_tmpl(self):
         return self.get_config_value('bind dn template')
 
+    @property
+    def base_dn(self):
+        return self.get_config_value('base dn')
+
     def get_tree(self, site):
         self.page = LDAP(site, self, 'login/ldap')
         return self.page
@@ -180,6 +190,8 @@ class Installer(LoginManagerInstaller):
                            help='LDAP Server Url')
         group.add_argument('--ldap-bind-dn-template', action='store',
                            help='LDAP Bind DN Template')
+        group.add_argument('--ldap-base-dn', action='store',
+                           help='LDAP Base DN')
 
     def configure(self, opts):
         if opts['ldap'] != 'yes':
@@ -197,6 +209,8 @@ class Installer(LoginManagerInstaller):
         if 'ldap_bind_dn_template' in opts:
             config['bind dn template'] = opts['ldap_bind_dn_template']
         config['tls'] = 'Demand'
+        if 'ldap_base_dn' in opts and opts['ldap_base_dn'] is not None:
+            config['base dn'] = opts['ldap_base_dn']
         po.save_plugin_config(config)
 
         # Update global config to add login plugin
