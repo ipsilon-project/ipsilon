@@ -143,3 +143,13 @@ if __name__ == '__main__':
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
+
+    print "test1: Try authentication failure ...",
+    newsess = HttpSessions()
+    newsess.add_server(idpname, 'http://127.0.0.10:45080', user, 'wrong')
+    try:
+        newsess.auth_to_idp(idpname)
+        print >> sys.stderr, " ERROR: Authentication should have failed"
+        sys.exit(1)
+    except Exception, e:  # pylint: disable=broad-except
+        print " SUCCESS"
