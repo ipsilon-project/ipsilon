@@ -202,14 +202,6 @@ class AuthenticateRequest(ProviderPageBase):
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
-        if not login.assertion.attributeStatement:
-            attrstat = lasso.Saml2AttributeStatement()
-            login.assertion.attributeStatement = [attrstat]
-        else:
-            attrstat = login.assertion.attributeStatement[0]
-        if not attrstat.attribute:
-            attrstat.attribute = ()
-
         # Check attribute policy and perform mapping and filtering
         policy = Policy(self.cfg.default_attribute_mapping,
                         self.cfg.default_allowed_attributes)
@@ -221,6 +213,17 @@ class AuthenticateRequest(ProviderPageBase):
             attributes['groups'] = attributes['_groups']
 
         self.debug("%s's attributes: %s" % (user.name, attributes))
+
+        # The saml-core-2.0-os specification section 2.7.3 requires
+        # the AttributeStatement element to be non-empty.
+        if attributes:
+            if not login.assertion.attributeStatement:
+                attrstat = lasso.Saml2AttributeStatement()
+                login.assertion.attributeStatement = [attrstat]
+            else:
+                attrstat = login.assertion.attributeStatement[0]
+            if not attrstat.attribute:
+                attrstat.attribute = ()
 
         for key in attributes:
             # skip internal info
