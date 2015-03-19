@@ -106,6 +106,7 @@ def saml2():
     m.add_certs(c)
     m.add_service(SAML2_SERVICE_MAP['logout-redirect'], url_logout)
     m.add_service(SAML2_SERVICE_MAP['response-post'], url_post, index="0")
+    m.add_allowed_name_format(SAML2_NAMEID_MAP[args['saml_nameid']])
     sp_metafile = os.path.join(path, 'metadata.xml')
     m.output(sp_metafile)
 
@@ -269,6 +270,9 @@ def parse_args():
                         help="Post response URL")
     parser.add_argument('--saml-secure-setup', action='store_true',
                         default=True, help="Turn on all security checks")
+    parser.add_argument('--saml-nameid', default='unspecified',
+                        choices=SAML2_NAMEID_MAP.keys(),
+                        help="SAML NameID format to use")
     parser.add_argument('--debug', action='store_true', default=False,
                         help="Turn on script debugging")
     parser.add_argument('--config-profile', default=None,
