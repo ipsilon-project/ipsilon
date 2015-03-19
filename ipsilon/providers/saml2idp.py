@@ -33,6 +33,7 @@ from datetime import timedelta
 import lasso
 import os
 import time
+import uuid
 
 
 class Redirect(AuthenticateRequest):
@@ -194,6 +195,10 @@ Provides SAML 2.0 authentication infrastructure. """
                 'idp key file',
                 'The IdP Certificate Key genearated at install time.',
                 'certificate.key'),
+            pconfig.String(
+                'idp nameid salt',
+                'The salt used for persistent Name IDs.',
+                None),
             pconfig.Condition(
                 'allow self registration',
                 'Allow authenticated users to register applications.',
@@ -251,6 +256,10 @@ Provides SAML 2.0 authentication infrastructure. """
     def idp_key_file(self):
         return os.path.join(self.idp_storage_path,
                             self.get_config_value('idp key file'))
+
+    @property
+    def idp_nameid_salt(self):
+        return self.get_config_value('idp nameid salt')
 
     @property
     def default_allowed_nameids(self):
@@ -324,9 +333,9 @@ class IdpMetadataGenerator(object):
         self.meta.add_service(metadata.SAML2_SERVICE_MAP['logout-redirect'],
                               '%s/saml2/SLO/Redirect' % url)
         self.meta.add_allowed_name_format(
-            lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
-        self.meta.add_allowed_name_format(
             lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT)
+        self.meta.add_allowed_name_format(
+            lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT)
         self.meta.add_allowed_name_format(
             lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL)
 
@@ -379,7 +388,8 @@ class Installer(ProviderInstaller):
         config = {'idp storage path': path,
                   'idp metadata file': 'metadata.xml',
                   'idp certificate file': cert.cert,
-                  'idp key file': cert.key}
+                  'idp key file': cert.key,
+                  'idp nameid salt': uuid.uuid4().hex}
         po.save_plugin_config(config)
 
         # Update global config to add login plugin

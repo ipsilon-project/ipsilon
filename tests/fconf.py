@@ -25,6 +25,7 @@ import os
 import pwd
 import sys
 from string import Template
+import uuid
 
 
 idpname = 'idp1'
@@ -66,6 +67,7 @@ saml2 idp key file = ${TESTDIR}/lib/${NAME}/saml2/idp.key
 saml2 idp storage path = ${TESTDIR}/lib/${NAME}/saml2
 saml2 idp metadata file = metadata.xml
 saml2 idp certificate file = ${TESTDIR}/lib/${NAME}/saml2/idp.pem
+saml2 idp nameid salt = ${IDPSALT}
 [saml2_data]
 811d0231-9362-46c9-a105-a01a64818904 id = http://${SPADDR}:${SPPORT}/saml2
 811d0231-9362-46c9-a105-a01a64818904 type = SP
@@ -116,10 +118,12 @@ def fixup_idp_conf(testdir):
 
     idpuri = "http://%s:%s/%s" % (idpaddr, idpport, idpname)
 
+    idpsalt = uuid.uuid4().hex
     t = Template(idp_file_conf)
     text = t.substitute({'NAME': idpname, 'IDPURI': idpuri,
                          'SPNAME': spname, 'SPADDR': spaddr, 'SPPORT': spport,
-                         'SPMETA': spmeta, 'TESTDIR': testdir})
+                         'SPMETA': spmeta, 'TESTDIR': testdir,
+                         'IDPSALT': idpsalt})
 
     adminconf = os.path.join(testdir, 'etc/admin.conf')
     with open(adminconf, 'w+') as f:

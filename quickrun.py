@@ -80,7 +80,8 @@ def config(workdir):
                          'sesstype': 'file',
                          'sessopt': 'path',
                          'sessval': os.path.join(workdir, 'sessions'),
-                         'secure': 'False'})
+                         'secure': 'False',
+                        })
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
         f.write(text)

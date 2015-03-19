@@ -28,6 +28,7 @@ import cherrypy
 import datetime
 import lasso
 import uuid
+import hashlib
 
 
 class UnknownProvider(ProviderException):
@@ -183,8 +184,16 @@ class AuthenticateRequest(ProviderPageBase):
 
         nameid = None
         if nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
-            # TODO map to something else ?
-            nameid = provider.normalize_username(user.name)
+            idpsalt = self.cfg.idp_nameid_salt
+            if idpsalt is None:
+                raise AuthenticationError(
+                    "idp nameid salt is not set in configuration"
+                )
+            value = hashlib.sha512()
+            value.update(idpsalt)
+            value.update(login.remoteProviderId)
+            value.update(user.name)
+            nameid = '_' + value.hexdigest()
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
             nameid = '_' + uuid.uuid4().hex
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:

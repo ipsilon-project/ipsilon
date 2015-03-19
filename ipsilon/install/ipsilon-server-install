@@ -116,7 +116,8 @@ def install(plugins, args):
                 'transdb': args['database_url'] % {
                     'datadir': args['data_dir'], 'dbname': 'transactions'},
                 'secure': "False" if args['secure'] == "no" else "True",
-                'debugging': "True" if args['server_debugging'] else "False"}
+                'debugging': "True" if args['server_debugging'] else "False",
+               }
     # Testing database sessions
     if 'session_type' in args:
         confopts['sesstype'] = args['session_type']
