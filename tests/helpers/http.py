@@ -266,6 +266,22 @@ class HttpSessions(object):
             page.expected_value('//div[@class="alert alert-success"]/p/text()',
                                 'SP Successfully added')
 
+    def set_sp_default_nameids(self, idp, sp, nameids):
+        """
+        nameids is a list of Name ID formats to enable
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+        url = '%s/%s/admin/providers/saml2/admin/sp/%s' % (idpuri, idp, sp)
+        headers = {'referer': url}
+        headers['content-type'] = 'application/x-www-form-urlencoded'
+        payload = {'submit': 'Submit',
+                   'allowed_nameids': ', '.join(nameids)}
+        r = idpsrv['session'].post(url, headers=headers,
+                                   data=payload)
+        if r.status_code != 200:
+            raise ValueError('Failed to post SP data [%s]' % repr(r))
+
     def fetch_rest_page(self, idpname, uri):
         """
         idpname - the name of the IDP to fetch the page from

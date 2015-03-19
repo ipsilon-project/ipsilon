@@ -55,7 +55,8 @@ class IpsilonTestBase(object):
         os.mkdir(os.path.join(self.testdir, 'lib', test.name))
         os.mkdir(os.path.join(self.testdir, 'log'))
 
-    def generate_profile(self, global_opts, args_opts, name, addr, port):
+    def generate_profile(self, global_opts, args_opts, name, addr, port,
+                         nameid='unspecified'):
         newconf = ConfigParser.ConfigParser()
         newconf.add_section('globals')
         for k in global_opts.keys():
@@ -71,6 +72,7 @@ class IpsilonTestBase(object):
         text = t.substitute({'NAME': name, 'ADDRESS': addr, 'PORT': port,
                              'TESTDIR': self.testdir,
                              'ROOTDIR': self.rootdir,
+                             'NAMEID': nameid,
                              'TEST_USER': self.testuser})
 
         filename = os.path.join(self.testdir, '%s_profile.cfg' % name)

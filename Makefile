@@ -60,6 +60,7 @@ wrappers:
 tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=test1
 	PYTHONPATH=./ ./tests/tests.py --test=testlogout
+	PYTHONPATH=./ ./tests/tests.py --test=testnameid
 	PYTHONPATH=./ ./tests/tests.py --test=testrest
 	PYTHONPATH=./ ./tests/tests.py --test=attrs
 	PYTHONPATH=./ ./tests/tests.py --test=trans
