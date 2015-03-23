@@ -202,6 +202,8 @@ class AuthenticateRequest(ProviderPageBase):
             nameid = us.get_user().email
             if not nameid:
                 nameid = '%s@%s' % (user.name, self.cfg.default_email_domain)
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
+            nameid = provider.normalize_username(user.name)
 
         if nameid:
             login.assertion.subject.nameId.format = nameidfmt

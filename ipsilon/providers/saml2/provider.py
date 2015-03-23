@@ -116,8 +116,6 @@ class ServiceProvider(Log):
         self._debug('Requested NameId [%s]' % (nip.format,))
         if nip.format is None:
             return SAML2_NAMEID_MAP[self.default_nameid]
-        elif nip.format == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
-            return SAML2_NAMEID_MAP[self.default_nameid]
         else:
             allowed = self.allowed_nameids
             self._debug('Allowed NameIds %s' % (repr(allowed)))
