@@ -207,12 +207,13 @@ Provides SAML 2.0 authentication infrastructure. """
                 'default allowed nameids',
                 'Default Allowed NameIDs for Service Providers.',
                 metadata.SAML2_NAMEID_MAP.keys(),
-                ['persistent', 'transient', 'email', 'kerberos', 'x509']),
+                ['unspecified', 'persistent', 'transient', 'email',
+                 'kerberos', 'x509']),
             pconfig.Pick(
                 'default nameid',
                 'Default NameID used by Service Providers.',
                 metadata.SAML2_NAMEID_MAP.keys(),
-                'persistent'),
+                'unspecified'),
             pconfig.String(
                 'default email domain',
                 'Used for users missing the email property.',
