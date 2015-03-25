@@ -80,15 +80,14 @@ class LogoutRequest(ProviderPageBase):
                 self.error('loading session failed: %s' % e)
                 raise cherrypy.HTTPError(400, 'Invalid logout session')
         else:
-            self.error('Logout attempt without being loggged in.')
-            raise cherrypy.HTTPError(400, 'Not logged in')
+            return self._not_logged_in(logout, message)
 
         try:
             logout.validateRequest()
         except lasso.ProfileSessionNotFoundError, e:
             self.error('Logout failed. No sessions for %s' %
                        logout.remoteProviderId)
-            raise cherrypy.HTTPError(400, 'Not logged in')
+            return self._not_logged_in(logout, message)
         except lasso.LogoutUnsupportedProfileError:
             self.error('Logout failed. Unsupported profile %s' %
                        logout.remoteProviderId)
@@ -156,10 +155,47 @@ class LogoutRequest(ProviderPageBase):
                             (user.name, user.fullname,
                              logout.remoteProviderId))
             else:
-                self.error('Logout attempt without being loggged in.')
-                raise cherrypy.HTTPError(400, 'Not logged in')
+                return self._not_logged_in(logout, message)
 
         return
+
+    def _not_logged_in(self, logout, message):
+        """
+        The user requested a logout but isn't logged in, or we can't
+        find a session for the user. Try to be nice and redirect them
+        back to the RelayState in the logout request.
+
+        We are only nice in the case of a valid logout request. If the
+        request is invalid (not signed, unknown SP, etc) then an
+        exception is raised.
+        """
+        self.error('Logout attempt without being logged in.')
+
+        if logout.msgRelayState is not None:
+            raise cherrypy.HTTPRedirect(logout.msgRelayState)
+
+        try:
+            logout.processRequestMsg(message)
+        except (lasso.ServerProviderNotFoundError,
+                lasso.ProfileUnknownProviderError) as e:
+            msg = 'Invalid SP [%s] (%r [%r])' % (logout.remoteProviderId,
+                                                 e, message)
+            self.error(msg)
+            raise UnknownProvider(msg)
+        except (lasso.ProfileInvalidProtocolprofileError,
+                lasso.DsError), e:
+            msg = 'Invalid SAML Request: %r (%r [%r])' % (logout.request,
+                                                          e, message)
+            self.error(msg)
+            raise InvalidRequest(msg)
+        except lasso.Error, e:
+            self.error('SLO unknown error: %s' % message)
+            raise cherrypy.HTTPError(400, 'Invalid logout request')
+
+        if logout.msgRelayState:
+            raise cherrypy.HTTPRedirect(logout.msgRelayState)
+        else:
+            raise cherrypy.HTTPError(400, 'Not logged in')
 
     def logout(self, message, relaystate=None, samlresponse=None):
         """
@@ -186,8 +222,7 @@ class LogoutRequest(ProviderPageBase):
         saml_sessions = us.get_provider_data('saml2')
         if saml_sessions is None:
             # No sessions means nothing to log out
-            self.error('Logout attempt without being loggged in.')
-            raise cherrypy.HTTPError(400, 'Not logged in')
+            return self._not_logged_in(logout, message)
 
         self.debug('%d sessions loaded' % saml_sessions.count())
         saml_sessions.dump()
@@ -244,8 +279,7 @@ class LogoutRequest(ProviderPageBase):
 
         saml_sessions = us.get_provider_data('saml2')
         if saml_sessions is None or saml_sessions.count() == 0:
-            self.error('Logout attempt without being loggged in.')
-            raise cherrypy.HTTPError(400, 'Not logged in')
+            return self._not_logged_in(logout, message)
 
         try:
             session = saml_sessions.get_last_session()
