@@ -109,7 +109,7 @@ class Installer(InfoProviderInstaller):
                            default='no',
                            help='Use mod_lookup_identity and SSSD to populate'
                                 ' user attrs')
-        group.add_argument('--info-sssd-domain', action='store',
+        group.add_argument('--info-sssd-domain', action='append',
                            help='SSSD domain to enable mod_lookup_identity'
                                 ' for')
 
@@ -117,9 +117,7 @@ class Installer(InfoProviderInstaller):
         if opts['info_sssd'] != 'yes':
             return
 
-        if not opts['info_sssd_domain']:
-            print 'info-identity-domain is required'
-            return False
+        configured = 0
 
         confopts = {'instance': opts['instance']}
 
@@ -137,13 +135,28 @@ class Installer(InfoProviderInstaller):
             print 'Loading SSSD config failed: %s' % e
             return False
 
-        try:
-            domain = sssdconfig.get_domain(opts['info_sssd_domain'])
-        except SSSDConfig.NoDomainError:
-            print 'No domain %s' % opts['info_sssd_domain']
-            return False
+        if not opts['info_sssd_domain']:
+            domains = sssdconfig.list_domains()
+        else:
+            domains = opts['info_sssd_domain']
 
-        domain.set_option('ldap_user_extra_attrs', ', '.join(SSSD_ATTRS))
+        for domain in domains:
+            try:
+                sssd_domain = sssdconfig.get_domain(domain)
+            except SSSDConfig.NoDomainError:
+                print 'No SSSD domain %s' % domain
+                continue
+            else:
+                sssd_domain.set_option(
+                    'ldap_user_extra_attrs', ', '.join(SSSD_ATTRS)
+                )
+                sssdconfig.save_domain(sssd_domain)
+                configured += 1
+                print "Configured SSSD domain %s" % domain
+
+        if configured == 0:
+            print 'No SSSD domains configured'
+            return False
 
         try:
             sssdconfig.new_service('ifp')
@@ -157,7 +170,6 @@ class Installer(InfoProviderInstaller):
         ifp.set_option('user_attributes', '+' + ', +'.join(SSSD_ATTRS))
 
         sssdconfig.save_service(ifp)
-        sssdconfig.save_domain(domain)
         sssdconfig.write(SSSD_CONF)
 
         # for selinux enabled platforms, ignore if it fails just report
