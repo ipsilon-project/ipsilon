@@ -33,6 +33,9 @@ class EnvHelpersInstaller(object):
     def install_args(self, group):
         raise NotImplementedError
 
+    def validate_args(self, args):
+        return
+
     def configure_server(self, opts):
         raise NotImplementedError
 

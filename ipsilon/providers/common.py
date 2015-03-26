@@ -125,6 +125,9 @@ class ProviderInstaller(object):
     def install_args(self, group):
         raise NotImplementedError
 
+    def validate_args(self, args):
+        return
+
     def configure(self, opts):
         raise NotImplementedError
 

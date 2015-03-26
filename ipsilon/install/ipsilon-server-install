@@ -348,6 +348,11 @@ def parse_args(plugins):
     if len(args['hostname'].split('.')) < 2:
         raise ConfigurationError('Hostname: %s is not a FQDN')
 
+    for plugin_group in plugins:
+        for plugin_name in plugins[plugin_group]:
+            plugin = plugins[plugin_group][plugin_name]
+            plugin.validate_args(args)
+
     try:
         pwd.getpwnam(args['system_user'])
     except KeyError:
