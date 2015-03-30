@@ -36,6 +36,7 @@ idp_g = {'TEMPLATES': '${TESTDIR}/templates/install',
 
 
 idp_a = {'hostname': '${ADDRESS}:${PORT}',
+         'users_dburi': 'postgresql://@127.0.0.10:45432/users',
          'database_url': 'postgresql://@127.0.0.10:45432/%(dbname)s',
          'session_type': 'sql',
          'session_dburi': 'postgresql://@127.0.0.10:45432/sessions',

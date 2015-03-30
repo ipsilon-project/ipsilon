@@ -398,6 +398,7 @@ class Store(Log):
             self.error("Failed to delete data from %s: [%s]" % (table, e))
 
     def _reset_data(self, table):
+        q = None
         try:
             q = self._query(self._db, table, UNIQUE_DATA_COLUMNS)
             q.drop()

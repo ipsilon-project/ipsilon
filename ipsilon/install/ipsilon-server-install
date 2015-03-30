@@ -109,15 +109,14 @@ def install(plugins, args):
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
-                'admindb': args['database_url'] % {
+                'admindb': args['admin_dburi'] or args['database_url'] % {
                     'datadir': args['data_dir'], 'dbname': 'adminconfig'},
-                'usersdb': args['database_url'] % {
+                'usersdb': args['users_dburi'] or args['database_url'] % {
                     'datadir': args['data_dir'], 'dbname': 'userprefs'},
-                'transdb': args['database_url'] % {
-                    'datadir': args['data_dir'], 'dbname': 'transactions'},
+                'transdb': args['transaction_dburi'] or args['database_url'] %
+                {'datadir': args['data_dir'], 'dbname': 'transactions'},
                 'secure': "False" if args['secure'] == "no" else "True",
-                'debugging': "True" if args['server_debugging'] else "False",
-               }
+                'debugging': "True" if args['server_debugging'] else "False"}
     # Testing database sessions
     if 'session_type' in args:
         confopts['sesstype'] = args['session_type']
@@ -129,7 +128,7 @@ def install(plugins, args):
     else:
         confopts['sessopt'] = 'path'
         confopts['sessval'] = os.path.join(args['data_dir'], 'sessions')
-    # Whetehr to disable security (for testing)
+    # Whether to disable security (for testing)
     if args['secure'] == 'no':
         confopts['secure'] = "False"
         confopts['sslrequiressl'] = ""
@@ -326,6 +325,13 @@ def parse_args(plugins):
                         help="Uninstall the server and all data")
     parser.add_argument('--yes', action='store_true',
                         help="Always answer yes")
+    parser.add_argument('--admin-dburi',
+                        help='Configuration database URI (override template)')
+    parser.add_argument('--users-dburi',
+                        help='User configuration database URI (override '
+                             'template)')
+    parser.add_argument('--transaction-dburi',
+                        help='Transaction database URI (override template)')
 
     lms = []
 
