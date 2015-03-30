@@ -291,3 +291,80 @@ if __name__ == '__main__':
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
+
+    # Test IdP-initiated logout
+    print "testlogout: Access SP Protected Area of SP1...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Access SP Protected Area of SP2...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.10:45082/sp/')
+        page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Access the IdP...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/%s' % idpname)
+        page.expected_value('//div[@id="welcome"]/p/text()',
+                            'Welcome %s!' % user)
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: IdP-initiated logout ...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'http://127.0.0.10:45080/%s/logout' % idpname)
+        page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Ensure logout of SP1 ...",
+    try:
+        ensure_logout(sess, idpname, 'http://127.0.0.11:45081/sp/')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Ensure logout of SP2 ...",
+    try:
+        ensure_logout(sess, idpname, 'http://127.0.0.10:45082/sp/')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: Access the IdP...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'http://127.0.0.10:45080/%s/login' % idpname)
+        page.expected_value('//div[@id="welcome"]/p/text()',
+                            'Welcome %s!' % user)
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "testlogout: IdP-initiated logout with no SP sessions...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'http://127.0.0.10:45080/%s/logout' % idpname)
+        page.expected_value('//div[@id="logout"]/p//text()',
+                            'Successfully logged out.')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"

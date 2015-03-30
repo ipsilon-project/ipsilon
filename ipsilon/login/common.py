@@ -273,10 +273,27 @@ class Login(Page):
 
 
 class Logout(Page):
+    def __init__(self, *args, **kwargs):
+        super(Logout, self).__init__(*args, **kwargs)
+        self.handlers = {}
 
     def root(self, *args, **kwargs):
-        UserSession().logout(self.user)
+        us = UserSession()
+
+        for provider in self.handlers:
+            self.debug("Calling logout for provider %s" % provider)
+            obj = self.handlers[provider]
+            obj()
+
+        us.logout(self.user)
         return self._template('logout.html', title='Logout')
+
+    def add_handler(self, provider, handler):
+        """
+        Providers can register a logout handler here that is called
+        when the IdP logout link is accessed.
+        """
+        self.handlers[provider] = handler
 
 
 class Cancel(Page):

@@ -140,11 +140,15 @@ class SAMLSessionsContainer(Log):
 
         self.sessions_logging_out[session.provider_id] = session
 
-    def get_next_logout(self):
+    def get_next_logout(self, remove=True):
         """
         Get the next session in the logged-in state and move
         it to the logging_out state.  Return the session that is
         found.
+
+        :param remove: for IdP-initiated logout we can't remove the
+                       session otherwise when the request comes back
+                       in the user won't be seen as being logged-on.
 
         Return None if no more sessions in login state.
         """
@@ -153,7 +157,10 @@ class SAMLSessionsContainer(Log):
         except IndexError:
             return None
 
-        session = self.sessions.pop(provider_id)
+        if remove:
+            session = self.sessions.pop(provider_id)
+        else:
+            session = self.sessions.itervalues().next()
 
         if provider_id in self.sessions_logging_out:
             self.sessions_logging_out.pop(provider_id)

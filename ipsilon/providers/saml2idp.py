@@ -298,6 +298,8 @@ Provides SAML 2.0 authentication infrastructure. """
             self._debug('Failed to init SAML2 provider: %r' % e)
             return None
 
+        self._root.logout.add_handler(self.name, self.idp_initiated_logout)
+
         # Import all known applications
         data = self.get_data()
         for idval in data:
@@ -319,6 +321,45 @@ Provides SAML 2.0 authentication infrastructure. """
         if hasattr(self, 'admin'):
             if self.admin:
                 self.admin.add_sps()
+
+    def idp_initiated_logout(self):
+        """
+        Logout all SP sessions when the logout comes from the IdP.
+
+        For the current user only.
+        """
+        self._debug("IdP-initiated SAML2 logout")
+        us = UserSession()
+
+        saml_sessions = us.get_provider_data('saml2')
+        if saml_sessions is None:
+            self._debug("No SAML2 sessions to logout")
+            return
+        session = saml_sessions.get_next_logout(remove=False)
+        if session is None:
+            return
+
+        # Add a fake session to indicate where the user should
+        # be redirected to when all SP's are logged out.
+        idpurl = self._root.instance_base_url()
+        saml_sessions.add_session("_idp_initiated_logout",
+                                  idpurl,
+                                  "")
+        init_session = saml_sessions.find_session_by_provider(idpurl)
+        init_session.set_logoutstate(idpurl, "idp_initiated_logout", None)
+        saml_sessions.start_logout(init_session)
+
+        logout = self.idp.get_logout_handler()
+        logout.setSessionFromDump(session.session.dump())
+        logout.initRequest(session.provider_id)
+        try:
+            logout.buildRequestMsg()
+        except lasso.Error, e:
+            self.error('failure to build logout request msg: %s' % e)
+            raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
+                                        % e)
+
+        raise cherrypy.HTTPRedirect(logout.msgUrl)
 
 
 class IdpMetadataGenerator(object):
