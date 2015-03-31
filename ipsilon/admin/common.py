@@ -262,7 +262,8 @@ class AdminPluginConfig(AdminPage):
                 self._po.save_plugin_config(new_db_values)
                 message = "New configuration saved."
                 message_type = ADMIN_STATUS_OK
-            except Exception:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
+                self.error('Failed to save data: %s' % e)
                 message = "Failed to save data!"
                 message_type = ADMIN_STATUS_ERROR
 
@@ -334,7 +335,8 @@ class AdminPluginsOrder(AdminPage):
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
 
-                except Exception, e:  # pylint: disable=broad-except
+                except Exception as e:  # pylint: disable=broad-except
+                    self.error('Failed to save data: %s' % e)
                     message = "Failed to save data!"
                     message_type = ADMIN_STATUS_ERROR
 

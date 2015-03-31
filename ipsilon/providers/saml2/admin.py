@@ -255,7 +255,8 @@ class SPAdminPage(AdminPage):
                     self.parent.rename_sp(rename[0], rename[1])
                 message = "Properties successfully changed"
                 message_type = ADMIN_STATUS_OK
-            except Exception:  # pylint: disable=broad-except
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to save data: %s' % e)
                 message = "Failed to save data!"
                 message_type = ADMIN_STATUS_ERROR
 
