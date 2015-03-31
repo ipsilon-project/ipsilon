@@ -21,6 +21,7 @@ from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
 from ipsilon.admin.common import Admin
 from ipsilon.providers.common import LoadProviders
+from ipsilon.admin.loginstack import LoginStack
 from ipsilon.admin.info import InfoPlugins
 from ipsilon.admin.login import LoginPlugins
 from ipsilon.admin.providers import ProviderPlugins
@@ -57,8 +58,9 @@ class Root(Page):
         # after all plugins are setup we can instantiate the admin pages
         self.admin = Admin(self._site, 'admin')
         self.rest = Rest(self._site, 'rest')
-        InfoPlugins(self._site, self.admin)
-        LoginPlugins(self._site, self.admin)
+        self.stack = LoginStack(self._site, self.admin)
+        LoginPlugins(self._site, self.stack)
+        InfoPlugins(self._site, self.stack)
         ProviderPlugins(self._site, self.admin)
         RestProviderPlugins(self._site, self.rest)
 

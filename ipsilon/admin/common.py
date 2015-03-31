@@ -218,6 +218,9 @@ class AdminPlugins(AdminPage):
         self.order = None
         parent.add_subtree(name, self)
 
+        if self._site[facility] is None:
+            return
+
         for plugin in self._site[facility].available:
             cherrypy.log.error('Admin info plugin: %s' % plugin)
             obj = self._site[facility].available[plugin]

@@ -541,7 +541,7 @@ rect:hover { fill-opacity:0;stroke-opacity:1.0; }
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cscccsccc" />
     <a
-       xlink:href="{{ info_url }}"
+       xlink:href="{{ loginstack_url }}"
        style="fill-opacity:0;stroke-opacity:0"
        target="_parent"
        id="info_plugins">
@@ -645,7 +645,7 @@ rect:hover { fill-opacity:0;stroke-opacity:1.0; }
          y="490" />
     </a>
     <a
-       xlink:href="{{ login_url }}"
+       xlink:href="{{ loginstack_url }}"
        style="fill-opacity:0;stroke-opacity:0"
        target="_parent"
        id="login_plugins">

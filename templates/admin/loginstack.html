@@ -1,0 +1,117 @@
+{% extends "master-admin.html" %}
+{% block main %}
+{% if user.is_admin %}
+
+    <div class = "row">
+        <div class="col-md-6 col-sm-6 col-xs-6" role="alert">
+          {% if message and message_type != 'success' %}
+            <div class="alert alert-{{message_type}}">
+                <p>{{ message }}</p>
+            </div>
+          {% endif %}
+        </div>
+    </div>
+
+  {% for s in sections %}
+    <div class = "row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <h2>{{ s["title"] }}</h2>
+        </div>
+    </div>
+    {% for p in s["enabled"] %}
+      {% set highlight = "hl-enabled" %}
+      {% if p in s["changed"] %}
+        {% if s["changed"][p] == 'enabled' %}
+        {% set highlight = "hl-enabled-new" %}
+        {% elif s["changed"][p] == 'reordered' %}
+        {% set highlight = "hl-enabled-flash" %}
+        {% endif %}
+      {% endif %}
+      <div class="row ipsilon-row {{ highlight }}">
+        <div class="col-md-3 col-sm-3 col-xs-5">
+          <p><strong>{{ p }}</strong></p>
+        </div>
+        <div class="col-md-7 col-sm-7 col-xs-5">
+          <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-12">
+              <p class="text-info"><a href="{{ s["baseurl"] }}/disable/{{ p }}">Disable</a></p>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-12">
+            {%- if s["available"][p].get_config_obj() %}
+              <p class="text-primary"><a href="{{ s["baseurl"] }}/{{ p }}">Configure</a></p>
+            {% endif %}
+          </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-1">
+          {%- if not (loop.first and loop.last) %}
+          <form role="form" id="{{ s["order_name"] }}" action="{{ s["order_action"] }}" method="post" enctype="application/x-www-form-urlencoded">
+            {%- set outer_loop = loop %}
+            {%- for move in ['&uarr;', '&darr;'] %}
+              {%- if move == '&uarr;' %}
+                {%- if outer_loop.first %}
+                  {%- set state='disabled' %}
+                {%- else %}
+                  {%- set state='btn-default' %}
+                  {%- set idx0=outer_loop.index0-1 %}
+                  {%- set idx1=outer_loop.index0 %}
+                {%- endif %}
+              {%- else %}
+                {%- if outer_loop.last %}
+                  {%- set state='disabled' %}
+                {%- else %}
+                  {%- set state='btn-default' %}
+                  {%- set idx0=outer_loop.index0 %}
+                  {%- set idx1=outer_loop.index0+1 %}
+                {%- endif %}
+              {%- endif %}
+              <button id="submit" class="btn {{ state }}" name="order" type="submit" value="
+              {%- for i in range(s["enabled"]|length) %}
+                {%- if i == idx0 -%}
+                  {{- s["enabled"][idx1] -}}
+                {%- elif i == idx1 -%}
+                  {{- s["enabled"][idx0] -}}
+                {%- else -%}
+                  {{- s["enabled"][i] -}}
+                {%- endif -%}
+                {%- if not loop.last -%},{%- endif -%}
+              {%- endfor -%}
+              ">{{ move }}</button>
+            {%- endfor %}
+          </form>
+          {%- endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+    {% for p in s["available"] if not p in s["enabled"] %}
+      {% set highlight = "hl-disabled" %}
+      {% if p in s["changed"] %}
+        {% if s["changed"][p] == 'disabled' %}
+        {% set highlight = "hl-disabled-new" %}
+        {% endif %}
+      {% endif %}
+      <div class="row ipsilon-row {{ highlight }}">
+        <div class="col-md-3 col-sm-3 col-xs-5">
+            <strong>{{ p }}</strong>
+        </div>
+        <div class="col-md-7 col-sm-7 col-xs-6">
+          <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-12">
+              <a class="text-info" href="{{ s["baseurl"] }}/enable/{{ p }}">Enable</a>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-12">
+            {%- if s["available"][p].get_config_obj() %}
+              <span class="text-muted">Configure</span>
+            {% endif %}
+          </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-2 col-xs-1">
+        </div>
+      </div>
+    {% endfor %}
+  {% endfor %}
+
+{% endif %}
+{% endblock %}
