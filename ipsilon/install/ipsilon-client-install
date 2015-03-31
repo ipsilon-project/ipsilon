@@ -22,8 +22,11 @@ from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 from ipsilon.tools.saml2metadata import SAML2_SERVICE_MAP
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import files
+from urllib import urlencode
 import argparse
 import ConfigParser
+import getpass
+import json
 import logging
 import os
 import pwd
@@ -58,7 +61,11 @@ def saml2():
 
     if args['saml_idp_metadata'] is None:
         #TODO: detect via SRV records ?
-        raise ValueError('An IDP metadata file/url is required.')
+        if args['saml_idp_url']:
+            args['saml_idp_metadata'] = ('%s/saml2/metadata' %
+                                         args['saml_idp_url'].rstrip('/'))
+        else:
+            raise ValueError('An IDP URL or metadata file/URL is required.')
 
     idpmeta = None
 
@@ -109,6 +116,44 @@ def saml2():
     m.add_allowed_name_format(SAML2_NAMEID_MAP[args['saml_nameid']])
     sp_metafile = os.path.join(path, 'metadata.xml')
     m.output(sp_metafile)
+
+    # Register with the IDP if the IDP URL was provided
+    if args['saml_idp_url']:
+        if args['admin_password']:
+            if args['admin_password'] == '-':
+                admin_password = sys.stdin.readline().rstrip('\n')
+            else:
+                try:
+                    with open(args['admin_password']) as f:
+                        admin_password = f.read().rstrip('\n')
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.error("Failed to read password file!\n" +
+                                 "Error: [%s]" % e)
+                    raise
+        else:
+            admin_password = getpass.getpass('%s password: ' %
+                                             args['admin_user'])
+
+        # Read our metadata
+        sp_metadata = ''
+        try:
+            with open(sp_metafile) as f:
+                for line in f:
+                    sp_metadata += line.strip()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Failed to read SP Metadata file!\n" +
+                         "Error: [%s]" % e)
+            raise
+
+        # Register the SP
+        try:
+            saml2_register_sp(args['saml_idp_url'], args['admin_user'],
+                              admin_password, args['saml_sp_name'],
+                              sp_metadata)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Failed to register SP with IDP!\n" +
+                         "Error: [%s]" % e)
+            raise
 
     if not args['saml_no_httpd']:
         idp_metafile = os.path.join(path, 'idp-metadata.xml')
@@ -168,6 +213,34 @@ def saml2():
         logger.info('SAML Service Provider configuration ready.')
         logger.info('Use the certificate, key and metadata.xml files to' +
                     ' configure your Service Provider')
+
+
+def saml2_register_sp(url, user, password, sp_name, sp_metadata):
+    s = requests.Session()
+
+    # Authenticate to the IdP
+    form_auth_url = '%s/login/form' % url.rstrip('/')
+    test_auth_url = '%s/login/testauth' % url.rstrip('/')
+    auth_data = {'login_name': user,
+                 'login_password': password}
+
+    r = s.post(form_auth_url, data=auth_data)
+    if r.status_code == 404:
+        r = s.post(test_auth_url, data=auth_data)
+
+    if r.status_code != 200:
+        raise Exception('Unable to authenticate to IdP (%d)' % r.status_code)
+
+    # Add the SP
+    sp_url = '%s/rest/providers/saml2/SPS/%s' % (url.rstrip('/'), sp_name)
+    sp_headers = {'Content-type': 'application/x-www-form-urlencoded',
+                  'Referer': sp_url}
+    sp_data = urlencode({'metadata': sp_metadata})
+
+    r = s.post(sp_url, headers=sp_headers, data=sp_data)
+    if r.status_code != 201:
+        message = json.loads(r.text)['message']
+        raise Exception('%s' % message)
 
 
 def install():
@@ -250,10 +323,15 @@ def parse_args():
                         help="Port number that SP listens on")
     parser.add_argument('--admin-user', default='admin',
                         help="Account allowed to create a SP")
+    parser.add_argument('--admin-password', default=None,
+                        help="File containing the password for the account " +
+                             "used to create a SP (- to read from stdin)")
     parser.add_argument('--httpd-user', default='apache',
                         help="Web server account used to read certs")
     parser.add_argument('--saml', action='store_true', default=True,
                         help="Whether to install a saml2 SP")
+    parser.add_argument('--saml-idp-url', default=None,
+                        help="A URL of the IDP to register the SP with")
     parser.add_argument('--saml-idp-metadata', default=None,
                         help="A URL pointing at the IDP Metadata (FILE or HTTP)")
     parser.add_argument('--saml-no-httpd', action='store_true', default=False,
@@ -273,6 +351,8 @@ def parse_args():
     parser.add_argument('--saml-nameid', default='unspecified',
                         choices=SAML2_NAMEID_MAP.keys(),
                         help="SAML NameID format to use")
+    parser.add_argument('--saml-sp-name', default=None,
+                        help="The SP name to register with the IdP")
     parser.add_argument('--debug', action='store_true', default=False,
                         help="Turn on script debugging")
     parser.add_argument('--config-profile', default=None,
@@ -311,6 +391,12 @@ def parse_args():
         if not args[path_arg].startswith(args['saml_sp']):
             raise ValueError('--%s must be a subpath of --saml-sp' %
                              path_arg.replace('_', '-'))
+
+    # If saml_idp_url if being used, we require saml_sp_name to
+    # use when registering the SP.
+    if args['saml_idp_url'] and not args['saml_sp_name']:
+        raise ValueError('--saml-sp-name must be specified when using' +
+                         '--saml-idp-url')
 
     # At least one on this list needs to be specified or we do nothing
     sp_list = ['saml']

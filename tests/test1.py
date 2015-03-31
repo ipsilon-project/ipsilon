@@ -25,7 +25,6 @@ import pwd
 import sys
 from string import Template
 
-
 idp_g = {'TEMPLATES': '${TESTDIR}/templates/install',
          'CONFDIR': '${TESTDIR}/etc',
          'DATADIR': '${TESTDIR}/lib',
@@ -58,6 +57,20 @@ sp_a = {'hostname': '${ADDRESS}:${PORT}',
         'saml_secure_setup': 'False',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
+
+sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
+         'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
+         'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
+         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+
+sp2_a = {'hostname': '${ADDRESS}:${PORT}',
+         'saml_idp_url': 'http://127.0.0.10:45080/idp1',
+         'admin_user': '${TEST_USER}',
+         'admin_password': '${TESTDIR}/pw.txt',
+         'saml_sp_name': 'sp2',
+         'saml_secure_setup': 'False',
+         'saml_auth': '/sp',
+         'httpd_user': '${TEST_USER}'}
 
 
 def fixup_sp_httpd(httpdir):
@@ -97,7 +110,7 @@ class IpsilonTest(IpsilonTestBase):
         print "Starting IDP's httpd server"
         self.start_http_server(conf, env)
 
-        print "Installing SP server"
+        print "Installing first SP server"
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -105,19 +118,35 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting SP's httpd server"
+        print "Starting first SP's httpd server"
+        self.start_http_server(conf, env)
+
+        print "Installing second SP server"
+        name = 'sp2'
+        addr = '127.0.0.11'
+        port = '45082'
+        sp = self.generate_profile(sp2_g, sp2_a, name, addr, port)
+        with open(os.path.dirname(sp) + '/pw.txt', 'a') as f:
+            f.write('ipsilon')
+        conf = self.setup_sp_server(sp, name, addr, port, env)
+        os.remove(os.path.dirname(sp) + '/pw.txt')
+        fixup_sp_httpd(os.path.dirname(conf))
+
+        print "Starting second SP's httpd server"
         self.start_http_server(conf, env)
 
 
 if __name__ == '__main__':
 
     idpname = 'idp1'
-    spname = 'sp1'
+    sp1name = 'sp1'
+    sp2name = 'sp2'
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(spname, 'http://127.0.0.11:45081')
+    sess.add_server(sp1name, 'http://127.0.0.11:45081')
+    sess.add_server(sp2name, 'http://127.0.0.11:45082')
 
     print "test1: Authenticate to IDP ...",
     try:
@@ -127,17 +156,26 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Add SP Metadata to IDP ...",
+    print "test1: Add first SP Metadata to IDP ...",
     try:
-        sess.add_sp_metadata(idpname, spname)
+        sess.add_sp_metadata(idpname, sp1name)
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Access SP Protected Area ...",
+    print "test1: Access first SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "test1: Access second SP Protected Area ...",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
