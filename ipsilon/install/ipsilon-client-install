@@ -330,8 +330,8 @@ if __name__ == '__main__':
 
         if 'uninstall' in args and args['uninstall'] is True:
             uninstall()
-
-        install()
+        else:
+            install()
     except Exception, e:  # pylint: disable=broad-except
         log_exception(e)
         if 'uninstall' in args and args['uninstall'] is True:
