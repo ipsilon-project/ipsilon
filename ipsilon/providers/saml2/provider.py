@@ -19,6 +19,10 @@ from ipsilon.providers.common import ProviderException
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 from ipsilon.util.log import Log
 import lasso
+import re
+
+
+VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 
 
 class InvalidProviderId(ProviderException):
@@ -136,6 +140,11 @@ class ServiceProvider(Log):
             return username.split('@', 1)[0]
         return username
 
+    def is_valid_name(self, value):
+        if re.search(VALID_IN_NAME, value):
+            return False
+        return True
+
     def is_valid_nameid(self, value):
         if value in SAML2_NAMEID_MAP:
             return True
@@ -152,6 +161,10 @@ class ServiceProviderCreator(object):
 
     def create_from_buffer(self, name, metabuf):
         '''Test and add data'''
+
+        if re.search(VALID_IN_NAME, name):
+            raise InvalidProviderId("Name must contain only "
+                                    "numbers and letters")
 
         test = lasso.Server()
         test.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP, metabuf)

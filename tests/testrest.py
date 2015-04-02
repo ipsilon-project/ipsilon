@@ -56,6 +56,18 @@ sp2_a = {'hostname': '${ADDRESS}:${PORT}',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
+sp3_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
+         'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
+         'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
+         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+
+
+sp3_a = {'hostname': '${ADDRESS}:${PORT}',
+         'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
+         'saml_secure_setup': 'False',
+         'saml_auth': '/sp',
+         'httpd_user': '${TEST_USER}'}
+
 
 def fixup_sp_httpd(httpdir, alias):
     location = """
@@ -116,18 +128,31 @@ class IpsilonTest(IpsilonTestBase):
         print "Starting SP's httpd server"
         self.start_http_server(conf, env)
 
+        print "Installing third SP server"
+        name = 'sp3.invalid'
+        addr = '127.0.0.10'
+        port = '45083'
+        sp3 = self.generate_profile(sp3_g, sp3_a, name, addr, port)
+        conf = self.setup_sp_server(sp3, name, addr, port, env)
+        fixup_sp_httpd(os.path.dirname(conf), name)
+
+        print "Starting SP's httpd server"
+        self.start_http_server(conf, env)
+
 
 if __name__ == '__main__':
 
     idpname = 'idp1'
     spname = 'sp1'
     sp2name = 'sp2'
+    sp3name = 'sp3.invalid'
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'http://127.0.0.11:45081')
     sess.add_server(sp2name, 'http://127.0.0.10:45082')
+    sess.add_server(sp3name, 'http://127.0.0.10:45083')
 
     print "testrest: Authenticate to IDP ...",
     try:
@@ -212,6 +237,16 @@ if __name__ == '__main__':
     print " SUCCESS"
 
     # Now for some negative testing
+
+    print "testrest: Add illegally named Service Provider via REST ...",
+    try:
+        sess.add_sp_metadata(idpname, sp3name, rest=True)
+    except ValueError, e:
+        print " SUCCESS"
+    else:
+        print >> sys.stderr, "ERROR: " \
+            "Adding SP with invalid name should have failed and it didn't"
+        sys.exit(1)
 
     print "testrest: Fetch non-existent REST endpoint ...",
     try:

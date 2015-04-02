@@ -23,11 +23,7 @@ from ipsilon.admin.common import ADMIN_STATUS_WARN
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
-import re
 import requests
-
-
-VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 
 
 class NewSPAdminPage(AdminPage):
@@ -68,12 +64,6 @@ class NewSPAdminPage(AdminPage):
                             cherrypy.request.content_type,))
             for key, value in kwargs.iteritems():
                 if key == 'name':
-                    if re.search(VALID_IN_NAME, value):
-                        message = "Invalid name!" \
-                                  " Use only numbers and letters"
-                        message_type = ADMIN_STATUS_ERROR
-                        return self.form_new(message, message_type)
-
                     name = value
                 elif key == 'metatext':
                     if len(value) > 0:
@@ -156,7 +146,7 @@ class SPAdminPage(AdminPage):
             return False
 
         if self.user.is_admin or self.user.name == self.sp.owner:
-            if re.search(VALID_IN_NAME, value):
+            if not self.sp.is_valid_name(value):
                 err = "Invalid name! Use only numbers and letters"
                 raise InvalidValueFormat(err)
 
