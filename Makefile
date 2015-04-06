@@ -1,7 +1,37 @@
 RPMBUILD = $(PWD)/dist/rpmbuild
 
-all: lint pep8 test
+all: testdeps lint pep8 test
 	echo "All tests passed"
+
+testdeps:
+	# Determine if test deps are installed
+	# First, some binaries
+	which lessc
+	which pylint
+	which pep8
+	which httpd
+	which postgres
+	which openssl
+	which slapd
+	# Now, python libraries
+	python -c 'import openid'
+	python -c 'import openid_teams'
+	python -c 'import openid_cla'
+	python -c 'import cherrypy'
+	python -c 'import M2Crypto'
+	python -c 'import lasso'
+	python -c 'import sqlalchemy'
+	python -c 'import ldap'
+	python -c 'import pam'
+	python -c 'import fedora'
+	python -c 'import ipapython'
+	python -c 'import jinja2'
+	python -c 'import psycopg2'
+	# And now everything else
+	ls /usr/share/doc/sssd
+	ls /usr/lib64/libsss_simpleifp.so.0
+	ls /usr/lib64/httpd/modules/mod_wsgi.so
+	ls /usr/libexec/mod_auth_mellon
 
 lint:
 	# Analyze code
