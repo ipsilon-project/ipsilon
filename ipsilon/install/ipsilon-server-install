@@ -318,7 +318,7 @@ def parse_args(plugins):
     parser.add_argument('--secure', choices=['yes', 'no'], default='yes',
                         help="Turn on all security checks")
     parser.add_argument('--config-profile', default=None,
-                        help="File containing install options")
+                        help=argparse.SUPPRESS)
     parser.add_argument('--server-debugging', action='store_true',
                         help="Enable debugging")
     parser.add_argument('--uninstall', action='store_true',
