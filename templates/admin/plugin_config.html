@@ -7,6 +7,11 @@
                 var ourTable = $(this).parents(".extensible-table")
                 var lastRow = $(ourTable).find(".list-field:last")
                 var newRow = $(lastRow).clone()
+                lastRow.show()
+                var inputFields = lastRow.find("input")
+                for (i = 0; i < inputFields.length; i++) {
+                    $(inputFields[i]).prop("disabled", false)
+                }
                 var lastIndex = parseInt(newRow.find("td:first").text())
                 newRow.find("td:first").text(lastIndex + 1)
                 var inputFields = newRow.find("input")
@@ -112,10 +117,24 @@
                     </td>
                     <td>
                       <input type="checkbox" name="{{basename}}delete">
-                      <!-- Never cheked by default -->
+                      <!-- Never checked by default -->
                     </td>
                 </tr>
                 {% endfor -%}
+                <!-- Template for new row -->
+                {%- set basename = "%s %d-"|format(v.name, value|length) -%}
+                <tr class="list-field" style="display:none">
+                    <td>{{value|length + 1}}</td>
+                    <td>
+                      <input type="text" name="{{basename}}name" value=""
+                             disabled="disabled">
+                    </td>
+                    <td>
+                      <input type="checkbox" name="{{basename}}delete"
+                             disabled="disabled">
+                    </td>
+                </tr>
+                <!-- End of Template -->
                 <tr class="add-row">
                     <td><button class="btn add-field" type="button"> + </button></td>
                     <td colspan=3 />
@@ -148,10 +167,29 @@
                     </td>
                     <td>
                       <input type="checkbox" name="{{basename}}delete">
-                      <!-- Never cheked by default -->
+                      <!-- Never checked by default -->
                     </td>
                 </tr>
                 {% endfor -%}
+                <!-- Template for new row -->
+                {%- set basename = "%s %d-"|format(v.name, value|length) -%}
+                <tr class="list-field" style="display:none">
+                    <td>{{value|length + 1}}</td>
+                    <td>
+                      <input type="text" name="{{basename}}from" value=""
+                             disabled="disabled">
+                    </td>
+                    <td>
+                      <input type="text" name="{{basename}}to"
+                             disabled="disabled">
+                    </td>
+                    <td>
+                      <input type="checkbox" name="{{basename}}delete"
+                             disabled="disabled">
+                      <!-- Never checked by default -->
+                    </td>
+                </tr>
+                <!-- End of Template -->
                 <tr class="add-row">
                     <td><button class="btn add-field" type="button"> + </button></td>
                     <td colspan=3 />
