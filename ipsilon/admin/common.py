@@ -61,146 +61,6 @@ class AdminPluginConfig(AdminPage):
                                                          self._po.name),
                               config=self._po.get_config_obj())
 
-    def get_complex_list_value(self, name, old_value, **kwargs):
-        delete = list()
-        change = dict()
-        for key, val in kwargs.iteritems():
-            if not key.startswith(name):
-                continue
-            n = key[len(name):]
-            if len(n) == 0 or n[0] != ' ':
-                continue
-            try:
-                index, field = n[1:].split('-')
-            except ValueError:
-                continue
-            if field == 'delete':
-                delete.append(int(index))
-            elif field == 'name':
-                change[int(index)] = val
-
-        if len(delete) == 0 and len(change) == 0:
-            return None
-
-        value = old_value
-
-        # remove unwanted changes
-        for i in delete:
-            if i in change:
-                del change[i]
-
-        # perform requested changes
-        for index, val in change.iteritems():
-            val_list = val.split('/')
-            stripped = list()
-            for v in val_list:
-                stripped.append(v.strip())
-            if len(stripped) == 1:
-                stripped = stripped[0]
-            if len(value) <= index:
-                value.extend([None]*(index + 1 - len(value)))
-            value[index] = stripped
-
-            if len(value[index]) == 0:
-                value[index] = None
-
-        # the previous loop may add 'None' entries
-        # if any still exists mark them to be deleted
-        for i in xrange(0, len(value)):
-            if value[i] is None:
-                delete.append(i)
-
-        # remove duplicates and set in reverse order
-        delete = list(set(delete))
-        delete.sort(reverse=True)
-
-        for i in delete:
-            if len(value) > i:
-                del value[i]
-
-        if len(value) == 0:
-            value = None
-        return value
-
-    def get_mapping_list_value(self, name, old_value, **kwargs):
-        delete = list()
-        change = dict()
-        for key, val in kwargs.iteritems():
-            if not key.startswith(name):
-                continue
-            n = key[len(name):]
-            if len(n) == 0 or n[0] != ' ':
-                continue
-            try:
-                index, field = n[1:].split('-')
-            except ValueError:
-                continue
-            if field == 'delete':
-                delete.append(int(index))
-            else:
-                i = int(index)
-                if i not in change:
-                    change[i] = dict()
-                change[i][field] = val
-
-        if len(delete) == 0 and len(change) == 0:
-            return None
-
-        value = old_value
-
-        # remove unwanted changes
-        for i in delete:
-            if i in change:
-                del change[i]
-
-        # perform requested changes
-        for index, fields in change.iteritems():
-            for k in 'from', 'to':
-                if k in fields:
-                    val = fields[k]
-                    val_list = val.split('/')
-                    stripped = list()
-                    for v in val_list:
-                        stripped.append(v.strip())
-                    if len(stripped) == 1:
-                        stripped = stripped[0]
-                    if len(value) <= index:
-                        value.extend([None]*(index + 1 - len(value)))
-                    if value[index] is None:
-                        value[index] = [None, None]
-                    if k == 'from':
-                        i = 0
-                    else:
-                        i = 1
-                    value[index][i] = stripped
-
-            # eliminate incomplete/incorrect entries
-            if value[index] is not None:
-                if ((len(value[index]) != 2 or
-                     value[index][0] is None or
-                     len(value[index][0]) == 0 or
-                     value[index][1] is None or
-                     len(value[index][1]) == 0)):
-                    value[index] = None
-
-        # the previous loop may add 'None' entries
-        # if any still exists mark them to be deleted
-        for i in xrange(0, len(value)):
-            if value[i] is None:
-                delete.append(i)
-
-        # remove duplicates and set in reverse order
-        delete = list(set(delete))
-        delete.sort(reverse=True)
-
-        for i in delete:
-            if len(value) > i:
-                del value[i]
-
-        if len(value) == 0:
-            value = None
-        return value
-
     @admin_protect
     def GET(self, *args, **kwargs):
         return self.root_with_msg()
@@ -236,15 +96,15 @@ class AdminPluginConfig(AdminPage):
                         if aname in kwargs:
                             value.append(a)
                 elif type(option) is pconfig.ComplexList:
-                    value = self.get_complex_list_value(name,
-                                                        option.get_value(),
-                                                        **kwargs)
+                    value = get_complex_list_value(name,
+                                                   option.get_value(),
+                                                   **kwargs)
                     if value is None:
                         continue
                 elif type(option) is pconfig.MappingList:
-                    value = self.get_mapping_list_value(name,
-                                                        option.get_value(),
-                                                        **kwargs)
+                    value = get_mapping_list_value(name,
+                                                   option.get_value(),
+                                                   **kwargs)
                     if value is None:
                         continue
                 else:
@@ -480,3 +340,145 @@ class Admin(AdminPage):
         # pylint: disable=star-args
         return str(self._template('admin/ipsilon-scheme.svg', **urls))
     scheme.public_function = True
+
+
+def get_complex_list_value(name, old_value, **kwargs):
+    delete = list()
+    change = dict()
+    for key, val in kwargs.iteritems():
+        if not key.startswith(name):
+            continue
+        n = key[len(name):]
+        if len(n) == 0 or n[0] != ' ':
+            continue
+        try:
+            index, field = n[1:].split('-')
+        except ValueError:
+            continue
+        if field == 'delete':
+            delete.append(int(index))
+        elif field == 'name':
+            change[int(index)] = val
+
+    if len(delete) == 0 and len(change) == 0:
+        return None
+
+    value = old_value
+
+    # remove unwanted changes
+    for i in delete:
+        if i in change:
+            del change[i]
+
+    # perform requested changes
+    for index, val in change.iteritems():
+        val_list = val.split('/')
+        stripped = list()
+        for v in val_list:
+            stripped.append(v.strip())
+        if len(stripped) == 1:
+            stripped = stripped[0]
+        if len(value) <= index:
+            value.extend([None]*(index + 1 - len(value)))
+        value[index] = stripped
+
+        if len(value[index]) == 0:
+            value[index] = None
+
+    # the previous loop may add 'None' entries
+    # if any still exists mark them to be deleted
+    for i in xrange(0, len(value)):
+        if value[i] is None:
+            delete.append(i)
+
+    # remove duplicates and set in reverse order
+    delete = list(set(delete))
+    delete.sort(reverse=True)
+
+    for i in delete:
+        if len(value) > i:
+            del value[i]
+
+    if len(value) == 0:
+        value = None
+    return value
+
+
+def get_mapping_list_value(name, old_value, **kwargs):
+    delete = list()
+    change = dict()
+    for key, val in kwargs.iteritems():
+        if not key.startswith(name):
+            continue
+        n = key[len(name):]
+        if len(n) == 0 or n[0] != ' ':
+            continue
+        try:
+            index, field = n[1:].split('-')
+        except ValueError:
+            continue
+        if field == 'delete':
+            delete.append(int(index))
+        else:
+            i = int(index)
+            if i not in change:
+                change[i] = dict()
+            change[i][field] = val
+
+    if len(delete) == 0 and len(change) == 0:
+        return None
+
+    value = old_value
+
+    # remove unwanted changes
+    for i in delete:
+        if i in change:
+            del change[i]
+
+    # perform requested changes
+    for index, fields in change.iteritems():
+        for k in 'from', 'to':
+            if k in fields:
+                val = fields[k]
+                val_list = val.split('/')
+                stripped = list()
+                for v in val_list:
+                    stripped.append(v.strip())
+                if len(stripped) == 1:
+                    stripped = stripped[0]
+                if len(value) <= index:
+                    value.extend([None]*(index + 1 - len(value)))
+                if value[index] is None:
+                    value[index] = [None, None]
+                if k == 'from':
+                    i = 0
+                else:
+                    i = 1
+                value[index][i] = stripped
+
+        # eliminate incomplete/incorrect entries
+        if value[index] is not None:
+            if ((len(value[index]) != 2 or
+                 value[index][0] is None or
+                 len(value[index][0]) == 0 or
+                 value[index][1] is None or
+                 len(value[index][1]) == 0)):
+                value[index] = None
+
+    # the previous loop may add 'None' entries
+    # if any still exists mark them to be deleted
+    for i in xrange(0, len(value)):
+        if value[i] is None:
+            delete.append(i)
+
+    # remove duplicates and set in reverse order
+    delete = list(set(delete))
+    delete.sort(reverse=True)
+
+    for i in delete:
+        if len(value) > i:
+            del value[i]
+
+    if len(value) == 0:
+        value = None
+    return value
