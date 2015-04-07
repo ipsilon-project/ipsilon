@@ -125,8 +125,8 @@ class SLO(ProviderPageBase):
 
 # one week
 METADATA_RENEW_INTERVAL = 60 * 60 * 24 * 7
-# 30 days
-METADATA_VALIDITY_PERIOD = 30
+# five years (approximately)
+METADATA_DEFAULT_VALIDITY_PERIOD = 365 * 5
 
 
 class Metadata(ProviderPageBase):
@@ -149,8 +149,10 @@ class Metadata(ProviderPageBase):
         idp_cert = Certificate()
         idp_cert.import_cert(self.cfg.idp_certificate_file,
                              self.cfg.idp_key_file)
+
+        validity = int(self.cfg.idp_metadata_validity)
         meta = IdpMetadataGenerator(self.instance_base_url(), idp_cert,
-                                    timedelta(METADATA_VALIDITY_PERIOD))
+                                    timedelta(validity))
         body = meta.output()
         with open(self.cfg.idp_metadata_file, 'w+') as m:
             m.write(body)
@@ -185,15 +187,20 @@ Provides SAML 2.0 authentication infrastructure. """
                 '/var/lib/ipsilon/saml2'),
             pconfig.String(
                 'idp metadata file',
-                'The IdP Metadata file genearated at install time.',
+                'The IdP Metadata file generated at install time.',
                 'metadata.xml'),
             pconfig.String(
+                'idp metadata validity',
+                'The IdP Metadata validity period (in days) to use when '
+                'generating new metadata.',
+                METADATA_DEFAULT_VALIDITY_PERIOD),
+            pconfig.String(
                 'idp certificate file',
-                'The IdP PEM Certificate genearated at install time.',
+                'The IdP PEM Certificate generated at install time.',
                 'certificate.pem'),
             pconfig.String(
                 'idp key file',
-                'The IdP Certificate Key genearated at install time.',
+                'The IdP Certificate Key generated at install time.',
                 'certificate.key'),
             pconfig.String(
                 'idp nameid salt',
@@ -247,6 +254,10 @@ Provides SAML 2.0 authentication infrastructure. """
     def idp_metadata_file(self):
         return os.path.join(self.idp_storage_path,
                             self.get_config_value('idp metadata file'))
+
+    @property
+    def idp_metadata_validity(self):
+        return self.get_config_value('idp metadata validity')
 
     @property
     def idp_certificate_file(self):
@@ -395,6 +406,11 @@ class Installer(ProviderInstaller):
     def install_args(self, group):
         group.add_argument('--saml2', choices=['yes', 'no'], default='yes',
                            help='Configure SAML2 Provider')
+        group.add_argument('--saml2-metadata-validity',
+                           default=METADATA_DEFAULT_VALIDITY_PERIOD,
+                           help=('Metadata validity period in days '
+                                 '(default - %d)' %
+                                 METADATA_DEFAULT_VALIDITY_PERIOD))
 
     def configure(self, opts):
         if opts['saml2'] != 'yes':
@@ -414,8 +430,9 @@ class Installer(ProviderInstaller):
         if opts['secure'].lower() == 'no':
             proto = 'http'
         url = '%s://%s/%s' % (proto, opts['hostname'], opts['instance'])
+        validity = int(opts['saml2_metadata_validity'])
         meta = IdpMetadataGenerator(url, cert,
-                                    timedelta(METADATA_VALIDITY_PERIOD))
+                                    timedelta(validity))
         if 'krb' in opts and opts['krb'] == 'yes':
             meta.meta.add_allowed_name_format(
                 lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS)
@@ -431,7 +448,8 @@ class Installer(ProviderInstaller):
                   'idp metadata file': 'metadata.xml',
                   'idp certificate file': cert.cert,
                   'idp key file': cert.key,
-                  'idp nameid salt': uuid.uuid4().hex}
+                  'idp nameid salt': uuid.uuid4().hex,
+                  'idp metadata validity': opts['saml2_metadata_validity']}
         po.save_plugin_config(config)
 
         # Update global config to add login plugin
