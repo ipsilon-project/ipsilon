@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ipsilon.providers.common import ProviderException
+from ipsilon.util import config as pconfig
+from ipsilon.util.plugin import PluginConfig
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 from ipsilon.util.log import Log
 import lasso
@@ -44,9 +46,15 @@ class NameIdNotAllowed(Exception):
         return repr(self.message)
 
 
-class ServiceProvider(Log):
+class ServiceProviderConfig(PluginConfig):
+    def __init__(self):
+        super(ServiceProviderConfig, self).__init__()
+
+
+class ServiceProvider(ServiceProviderConfig):
 
     def __init__(self, config, provider_id):
+        super(ServiceProvider, self).__init__()
         self.cfg = config
         data = self.cfg.get_data(name='id', value=provider_id)
         if len(data) != 1:
@@ -55,6 +63,42 @@ class ServiceProvider(Log):
         data = self.cfg.get_data(idval=idval)
         self._properties = data[idval]
         self._staging = dict()
+        self.load_config()
+
+    def load_config(self):
+        self.new_config(
+            self.provider_id,
+            pconfig.String(
+                'Name',
+                'A nickname used to easily identify the Service Provider.'
+                ' Only alphanumeric characters [A-Z,a-z,0-9] and spaces are'
+                '  accepted.',
+                self.name),
+            pconfig.Pick(
+                'Default NameID',
+                'Default NameID used by Service Providers.',
+                SAML2_NAMEID_MAP.keys(),
+                self.default_nameid),
+            pconfig.Choice(
+                'Allowed NameIDs',
+                'Allowed NameIDs for this Service Provider.',
+                SAML2_NAMEID_MAP.keys(),
+                self.allowed_nameids),
+            pconfig.String(
+                'User Owner',
+                'The user that owns this Service Provider',
+                self.owner),
+            pconfig.MappingList(
+                'Attribute Mapping',
+                'Defines how to map attributes before returning them to'
+                ' the SP. Setting this overrides the global values.',
+                self.attribute_mappings),
+            pconfig.ComplexList(
+                'Allowed Attributes',
+                'Defines a list of allowed attributes, applied after mapping.'
+                ' Setting this overrides the global values.',
+                self.allowed_attributes),
+        )
 
     @property
     def provider_id(self):
@@ -104,6 +148,44 @@ class ServiceProvider(Log):
     def default_nameid(self, value):
         self._staging['default nameid'] = value
 
+    @property
+    def attribute_mappings(self):
+        if 'attribute mappings' in self._properties:
+            attr_map = pconfig.MappingList('temp', 'temp', None)
+            attr_map.import_value(str(self._properties['attribute mappings']))
+            return attr_map.get_value()
+        else:
+            return None
+
+    @attribute_mappings.setter
+    def attribute_mappings(self, attr_map):
+        if isinstance(attr_map, pconfig.MappingList):
+            value = attr_map.export_value()
+        else:
+            temp = pconfig.MappingList('temp', 'temp', None)
+            temp.set_value(attr_map)
+            value = temp.export_value()
+        self._staging['attribute mappings'] = value
+
+    @property
+    def allowed_attributes(self):
+        if 'allowed_attributes' in self._properties:
+            attr_map = pconfig.ComplexList('temp', 'temp', None)
+            attr_map.import_value(str(self._properties['allowed_attributes']))
+            return attr_map.get_value()
+        else:
+            return None
+
+    @allowed_attributes.setter
+    def allowed_attributes(self, attr_map):
+        if isinstance(attr_map, pconfig.ComplexList):
+            value = attr_map.export_value()
+        else:
+            temp = pconfig.ComplexList('temp', 'temp', None)
+            temp.set_value(attr_map)
+            value = temp.export_value()
+        self._staging['allowed_attributes'] = value
+
     def save_properties(self):
         data = self.cfg.get_data(name='id', value=self.provider_id)
         if len(data) != 1:
@@ -115,6 +197,14 @@ class ServiceProvider(Log):
         data = self.cfg.get_data(idval=idval)
         self._properties = data[idval]
         self._staging = dict()
+
+    def refresh_config(self):
+        """
+        Create a new config object for displaying in the UI based on
+        the current set of properties.
+        """
+        del self._config
+        self.load_config()
 
     def get_valid_nameid(self, nip):
         self._debug('Requested NameId [%s]' % (nip.format,))
