@@ -213,9 +213,20 @@ class AuthenticateRequest(ProviderPageBase):
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
-        # Check attribute policy and perform mapping and filtering
-        policy = Policy(self.cfg.default_attribute_mapping,
-                        self.cfg.default_allowed_attributes)
+        # Check attribute policy and perform mapping and filtering.
+        # If the SP has its own mapping or filtering policy use that
+        # instead of the global policy.
+        if (provider.attribute_mappings is not None and
+                len(provider.attribute_mappings) > 0):
+            attribute_mappings = provider.attribute_mappings
+        else:
+            attribute_mappings = self.cfg.default_attribute_mapping
+        if (provider.allowed_attributes is not None and
+                len(provider.allowed_attributes) > 0):
+            allowed_attributes = provider.allowed_attributes
+        else:
+            allowed_attributes = self.cfg.default_allowed_attributes
+        policy = Policy(attribute_mappings, allowed_attributes)
         userattrs = us.get_user_attrs()
         mappedattrs, _ = policy.map_attributes(userattrs)
         attributes = policy.filter_attributes(mappedattrs)

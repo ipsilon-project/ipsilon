@@ -16,13 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
+from ipsilon.util import config as pconfig
 from ipsilon.admin.common import AdminPage
 from ipsilon.admin.common import ADMIN_STATUS_OK
 from ipsilon.admin.common import ADMIN_STATUS_ERROR
 from ipsilon.admin.common import ADMIN_STATUS_WARN
+from ipsilon.admin.common import get_mapping_list_value
+from ipsilon.admin.common import get_complex_list_value
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
+from copy import deepcopy
 import requests
 
 
@@ -32,7 +36,7 @@ class NewSPAdminPage(AdminPage):
         super(NewSPAdminPage, self).__init__(site, form=True)
         self.parent = parent
         self.title = 'New Service Provider'
-        self.backurl = parent.url
+        self.back = parent.url
         self.url = '%s/new' % (parent.url,)
 
     def form_new(self, message=None, message_type=None):
@@ -41,7 +45,7 @@ class NewSPAdminPage(AdminPage):
                               message=message,
                               message_type=message_type,
                               name='saml2_sp_new_form',
-                              backurl=self.backurl, action=self.url)
+                              back=self.back, action=self.url)
 
     def GET(self, *args, **kwargs):
         return self.form_new()
@@ -92,7 +96,7 @@ class NewSPAdminPage(AdminPage):
                     sp_page = self.parent.add_sp(name, sp)
                     message = "SP Successfully added"
                     message_type = ADMIN_STATUS_OK
-                    return sp_page.form_standard(message, message_type)
+                    return sp_page.root_with_msg(message, message_type)
                 except InvalidProviderId, e:
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
@@ -125,142 +129,134 @@ class SPAdminPage(AdminPage):
         self.parent = parent
         self.sp = sp
         self.title = sp.name
-        self.backurl = parent.url
         self.url = '%s/sp/%s' % (parent.url, sp.name)
+        self.menu = [parent]
+        self.back = parent.url
 
-    def form_standard(self, message=None, message_type=None, newurl=None):
-        return self._template('admin/providers/saml2_sp.html',
-                              message=message,
-                              message_type=message_type,
-                              title=self.title,
-                              name='saml2_sp_%s_form' % self.sp.name,
-                              backurl=self.backurl, action=self.url,
-                              data=self.sp, newurl=newurl)
+    def root_with_msg(self, message=None, message_type=None):
+        return self._template('admin/option_config.html', title=self.title,
+                              menu=self.menu, action=self.url, back=self.back,
+                              message=message, message_type=message_type,
+                              name='saml2_sp_%s_form' % (self.sp.name),
+                              config=self.sp.get_config_obj())
 
     def GET(self, *args, **kwargs):
-        return self.form_standard()
-
-    def change_name(self, key, value):
-
-        if value == self.sp.name:
-            return False
-
-        if self.user.is_admin or self.user.name == self.sp.owner:
-            if not self.sp.is_valid_name(value):
-                err = "Invalid name! Use only numbers and letters"
-                raise InvalidValueFormat(err)
-
-            self._debug("Replacing %s: %s -> %s" % (key, self.sp.name, value))
-            return {'name': value, 'rename': [self.sp.name, value]}
-        else:
-            raise UnauthorizedUser("Unauthorized to rename Service Provider")
-
-    def change_owner(self, key, value):
-        if value == self.sp.owner:
-            return False
-
-        if self.user.is_admin:
-            self._debug("Replacing %s: %s -> %s" % (key, self.sp.owner, value))
-            return {'owner': value}
-        else:
-            raise UnauthorizedUser("Unauthorized to set owner value")
-
-    def change_default_nameid(self, key, value):
-        if value == self.sp.default_nameid:
-            return False
-
-        if self.user.is_admin:
-            self._debug("Replacing %s: %s -> %s" % (key,
-                                                    self.sp.default_nameid,
-                                                    value))
-            if not self.sp.is_valid_nameid(value):
-                raise InvalidValueFormat('Invalid default nameid value')
-            return {'default_nameid': value}
-        else:
-            raise UnauthorizedUser("Unauthorized to set default nameid value")
-
-    def change_allowed_nameids(self, key, value):
-        v = set([x.strip() for x in value.split(',')])
-        if v == set(self.sp.allowed_nameids):
-            return False
-
-        if self.user.is_admin:
-            self._debug("Replacing %s: %s -> %s" % (key,
-                                                    self.sp.allowed_nameids,
-                                                    list(v)))
-            for x in v:
-                if not self.sp.is_valid_nameid(x):
-                    l = ', '.join(self.sp.valid_nameids())
-                    err = 'Invalid nameid [%s]. Available [%s].' % (x, l)
-                    raise InvalidValueFormat(err)
-            return {'allowed_nameids': list(v)}
-        else:
-            raise UnauthorizedUser("Unauthorized to set alowed nameids values")
+        return self.root_with_msg()
 
     def POST(self, *args, **kwargs):
 
         message = "Nothing was modified."
         message_type = "info"
-        results = dict()
+        new_db_values = dict()
 
-        try:
-            for key, value in kwargs.iteritems():
-                if key == 'name':
-                    r = self.change_name(key, value)
-                    if r:
-                        results.update(r)
-                elif key == 'owner':
-                    r = self.change_owner(key, value)
-                    if r:
-                        results.update(r)
+        conf = self.sp.get_config_obj()
 
-                elif key == 'default_nameid':
-                    r = self.change_default_nameid(key, value)
-                    if r:
-                        results.update(r)
+        for name, option in conf.iteritems():
+            if name in kwargs:
+                value = kwargs[name]
+                if isinstance(option, pconfig.List):
+                    value = [x.strip() for x in value.split('\n')]
+                elif isinstance(option, pconfig.Condition):
+                    value = True
+            else:
+                if isinstance(option, pconfig.Condition):
+                    value = False
+                elif isinstance(option, pconfig.Choice):
+                    value = list()
+                    for a in option.get_allowed():
+                        aname = '%s_%s' % (name, a)
+                        if aname in kwargs:
+                            value.append(a)
+                elif type(option) is pconfig.ComplexList:
+                    current = deepcopy(option.get_value())
+                    value = get_complex_list_value(name,
+                                                   current,
+                                                   **kwargs)
+                    if value is None:
+                        continue
+                elif type(option) is pconfig.MappingList:
+                    current = deepcopy(option.get_value())
+                    value = get_mapping_list_value(name,
+                                                   current,
+                                                   **kwargs)
+                    if value is None:
+                        continue
+                else:
+                    continue
 
-                elif key == 'allowed_nameids':
-                    r = self.change_allowed_nameids(key, value)
-                    if r:
-                        results.update(r)
+            if value != option.get_value():
+                if (type(option) is pconfig.List and
+                        set(value) == set(option.get_value())):
+                    continue
+                cherrypy.log.error("Storing %s = %s" %
+                                   (name, value))
+                new_db_values[name] = value
 
-        except InvalidValueFormat, e:
-            message = str(e)
-            message_type = ADMIN_STATUS_WARN
-            return self.form_standard(message, message_type)
-        except UnauthorizedUser, e:
-            message = str(e)
-            message_type = ADMIN_STATUS_ERROR
-            return self.form_standard(message, message_type)
-        except Exception, e:  # pylint: disable=broad-except
-            self._debug("Error: %s" % repr(e))
-            message = "Internal Error"
-            message_type = ADMIN_STATUS_ERROR
-            return self.form_standard(message, message_type)
-
-        if len(results) > 0:
+        if len(new_db_values) != 0:
             try:
-                if 'name' in results:
-                    self.sp.name = results['name']
-                if 'owner' in results:
-                    self.sp.owner = results['owner']
-                if 'default_nameid' in results:
-                    self.sp.default_nameid = results['default_nameid']
-                if 'allowed_nameids' in results:
-                    self.sp.allowed_nameids = results['allowed_nameids']
+                # Validate user can make these changes
+                for (key, value) in new_db_values.iteritems():
+                    if key == 'Name':
+                        if (not self.user.is_admin and
+                                self.user.name != self.sp.owner):
+                            raise UnauthorizedUser("Unauthorized to set owner")
+                    elif key in ['Owner', 'Default NameID', 'Allowed NameIDs',
+                                 'Attribute Mapping', 'Allowed Attributes']:
+                        if not self.user.is_admin:
+                            raise UnauthorizedUser(
+                                "Unauthorized to set %s" % key
+                            )
+
+                # Make changes in current config
+                for name, option in conf.iteritems():
+                    value = new_db_values.get(name, False)
+                    if value:
+                        if name == 'Name':
+                            if not self.sp.is_valid_name(value):
+                                raise InvalidValueFormat(
+                                    'Invalid name! Use only numbers and'
+                                    ' letters'
+                                )
+                            self.sp.name = value
+                            self.url = '%s/sp/%s' % (self.parent.url, value)
+                            self.parent.rename_sp(option.get_value(), value)
+                        elif name == 'User Owner':
+                            self.sp.owner = value
+                        elif name == 'Default NameID':
+                            self.sp.default_nameid = value
+                        elif name == 'Allowed NameIDs':
+                            self.sp.allowed_nameids = value
+                        elif name == 'Attribute Mapping':
+                            self.sp.attribute_mappings = value
+                        elif name == 'Allowed Attributes':
+                            self.sp.allowed_attributes = value
+            except InvalidValueFormat, e:
+                message = str(e)
+                message_type = ADMIN_STATUS_WARN
+                return self.root_with_msg(message, message_type)
+            except UnauthorizedUser, e:
+                message = str(e)
+                message_type = ADMIN_STATUS_ERROR
+                return self.root_with_msg(message, message_type)
+            except Exception as e:  # pylint: disable=broad-except
+                self._debug("Error: %s" % repr(e))
+                message = "Internal Error"
+                message_type = ADMIN_STATUS_ERROR
+                return self.root_with_msg(message, message_type)
+
+            try:
                 self.sp.save_properties()
-                if 'rename' in results:
-                    rename = results['rename']
-                    self.url = '%s/sp/%s' % (self.parent.url, rename[1])
-                    self.parent.rename_sp(rename[0], rename[1])
                 message = "Properties successfully changed"
                 message_type = ADMIN_STATUS_OK
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to save data: %s' % e)
                 message = "Failed to save data!"
                 message_type = ADMIN_STATUS_ERROR
+            else:
+                self.sp.refresh_config()
 
-        return self.form_standard(message, message_type, self.url)
+        return self.root_with_msg(message=message,
+                                  message_type=message_type)
 
     def delete(self):
         self.parent.del_sp(self.sp.name)
