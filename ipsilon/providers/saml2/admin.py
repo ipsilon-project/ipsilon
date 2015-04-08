@@ -172,15 +172,21 @@ class SPAdminPage(AdminPage):
                     value = get_complex_list_value(name,
                                                    current,
                                                    **kwargs)
+                    # if current value is None do nothing
                     if value is None:
-                        continue
+                        if option.get_value() is None:
+                            continue
+                        # else pass and let it continue as None
                 elif type(option) is pconfig.MappingList:
                     current = deepcopy(option.get_value())
                     value = get_mapping_list_value(name,
                                                    current,
                                                    **kwargs)
+                    # if current value is None do nothing
                     if value is None:
-                        continue
+                        if option.get_value() is None:
+                            continue
+                        # else pass and let it continue as None
                 else:
                     continue
 
@@ -210,26 +216,28 @@ class SPAdminPage(AdminPage):
                 # Make changes in current config
                 for name, option in conf.iteritems():
                     value = new_db_values.get(name, False)
-                    if value:
-                        if name == 'Name':
-                            if not self.sp.is_valid_name(value):
-                                raise InvalidValueFormat(
-                                    'Invalid name! Use only numbers and'
-                                    ' letters'
-                                )
-                            self.sp.name = value
-                            self.url = '%s/sp/%s' % (self.parent.url, value)
-                            self.parent.rename_sp(option.get_value(), value)
-                        elif name == 'User Owner':
-                            self.sp.owner = value
-                        elif name == 'Default NameID':
-                            self.sp.default_nameid = value
-                        elif name == 'Allowed NameIDs':
-                            self.sp.allowed_nameids = value
-                        elif name == 'Attribute Mapping':
-                            self.sp.attribute_mappings = value
-                        elif name == 'Allowed Attributes':
-                            self.sp.allowed_attributes = value
+                    # A value of None means remove from the data store
+                    if value is False or value == []:
+                        continue
+                    if name == 'Name':
+                        if not self.sp.is_valid_name(value):
+                            raise InvalidValueFormat(
+                                'Invalid name! Use only numbers and'
+                                ' letters'
+                            )
+                        self.sp.name = value
+                        self.url = '%s/sp/%s' % (self.parent.url, value)
+                        self.parent.rename_sp(option.get_value(), value)
+                    elif name == 'User Owner':
+                        self.sp.owner = value
+                    elif name == 'Default NameID':
+                        self.sp.default_nameid = value
+                    elif name == 'Allowed NameIDs':
+                        self.sp.allowed_nameids = value
+                    elif name == 'Attribute Mapping':
+                        self.sp.attribute_mappings = value
+                    elif name == 'Allowed Attributes':
+                        self.sp.allowed_attributes = value
             except InvalidValueFormat, e:
                 message = str(e)
                 message_type = ADMIN_STATUS_WARN

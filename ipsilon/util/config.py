@@ -178,6 +178,8 @@ class List(Option):
 class ComplexList(List):
 
     def _check_value(self, value):
+        if value is None:
+            return
         if type(value) is not list:
             raise ValueError('The value type must be a list, not "%s"' %
                              type(value))
@@ -202,6 +204,8 @@ class ComplexList(List):
 class MappingList(ComplexList):
 
     def _check_value(self, value):
+        if value is None:
+            return
         if type(value) is not list:
             raise ValueError('The value type must be a list, not "%s"' %
                              type(value))

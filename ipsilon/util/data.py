@@ -377,10 +377,14 @@ class Store(Log):
                 datum = data[uid]
                 for name in datum:
                     if name in curvals:
-                        q.update({'value': datum[name]},
-                                 {'uuid': uid, 'name': name})
+                        if datum[name] is None:
+                            q.delete({'uuid': uid, 'name': name})
+                        else:
+                            q.update({'value': datum[name]},
+                                     {'uuid': uid, 'name': name})
                     else:
-                        q.insert((uid, name, datum[name]))
+                        if datum[name] is not None:
+                            q.insert((uid, name, datum[name]))
 
             q.commit()
         except Exception, e:  # pylint: disable=broad-except
