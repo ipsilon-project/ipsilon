@@ -19,7 +19,6 @@ import os
 import imp
 import cherrypy
 import inspect
-from ipsilon.util.config import Config
 from ipsilon.util.data import AdminStore
 from ipsilon.util.log import Log
 
@@ -213,41 +212,3 @@ class PluginObject(Log):
 
     def wipe_data(self):
         self._data.wipe_data(self.name)
-
-
-class PluginConfig(Log):
-
-    def __init__(self):
-        self._config = None
-
-    def new_config(self, name, *config_args):
-        self._config = Config(name, *config_args)
-
-    def get_config_obj(self):
-        if self._config is None:
-            raise AttributeError('Config not initialized')
-        return self._config
-
-    def import_config(self, config):
-        if not self._config:
-            raise AttributeError('Config not initialized, cannot import')
-
-        for key, value in config.iteritems():
-            if key in self._config:
-                self._config[key].import_value(str(value))
-
-    def export_config(self):
-        config = dict()
-        for name, option in self._config.iteritems():
-            config[name] = option.export_value()
-        return config
-
-    def get_config_value(self, name):
-        if not self._config:
-            raise AttributeError('Config not initialized')
-        return self._config[name].get_value()
-
-    def set_config_value(self, name, value):
-        if not self._config:
-            raise AttributeError('Config not initialized')
-        return self._config[name].set_value(value)

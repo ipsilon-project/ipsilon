@@ -4,13 +4,14 @@
 
 from ipsilon.util.log import Log
 from ipsilon.util.plugin import PluginInstaller, PluginLoader
-from ipsilon.util.plugin import PluginObject, PluginConfig
+from ipsilon.util.plugin import PluginObject
+from ipsilon.util.config import ConfigHelper
 
 
-class InfoProviderBase(PluginConfig, PluginObject):
+class InfoProviderBase(ConfigHelper, PluginObject):
 
     def __init__(self, *pargs):
-        PluginConfig.__init__(self)
+        ConfigHelper.__init__(self)
         PluginObject.__init__(self, *pargs)
 
     def get_user_attrs(self, user):

@@ -17,7 +17,8 @@
 
 from ipsilon.util.log import Log
 from ipsilon.util.plugin import PluginInstaller, PluginLoader
-from ipsilon.util.plugin import PluginObject, PluginConfig
+from ipsilon.util.plugin import PluginObject
+from ipsilon.util.config import ConfigHelper
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
 from ipsilon.rest.common import RestPage
@@ -49,10 +50,10 @@ class InvalidRequest(ProviderException):
         self._debug(message)
 
 
-class ProviderBase(PluginConfig, PluginObject):
+class ProviderBase(ConfigHelper, PluginObject):
 
     def __init__(self, name, path, *pargs):
-        PluginConfig.__init__(self)
+        ConfigHelper.__init__(self)
         PluginObject.__init__(self, *pargs)
         self.name = name
         self._root = None

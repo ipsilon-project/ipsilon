@@ -54,7 +54,7 @@ class AdminPluginConfig(AdminPage):
         self.back = parent.url
 
     def root_with_msg(self, message=None, message_type=None):
-        return self._template('admin/plugin_config.html', title=self.title,
+        return self._template('admin/option_config.html', title=self.title,
                               menu=self.menu, action=self.url, back=self.back,
                               message=message, message_type=message_type,
                               name='admin_%s_%s_form' % (self.facility,

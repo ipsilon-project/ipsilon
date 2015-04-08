@@ -17,7 +17,7 @@
 
 from ipsilon.providers.common import ProviderException
 from ipsilon.util import config as pconfig
-from ipsilon.util.plugin import PluginConfig
+from ipsilon.util.config import ConfigHelper
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 from ipsilon.util.log import Log
 import lasso
@@ -46,7 +46,7 @@ class NameIdNotAllowed(Exception):
         return repr(self.message)
 
 
-class ServiceProviderConfig(PluginConfig):
+class ServiceProviderConfig(ConfigHelper):
     def __init__(self):
         super(ServiceProviderConfig, self).__init__()
 
