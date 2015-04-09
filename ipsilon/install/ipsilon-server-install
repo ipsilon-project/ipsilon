@@ -413,6 +413,9 @@ if __name__ == '__main__':
             print 'Installation aborted.'
         print 'See log file %s for details' % LOGFILE
         out = 1
+    except SystemExit:
+        out = 1
+        raise
     finally:
         if out == 0:
             if 'uninstall' in opts and opts['uninstall'] is True:
