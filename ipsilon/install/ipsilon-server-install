@@ -182,7 +182,10 @@ def install(plugins, args):
 
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
-        plugin = plugins['Login Managers'][plugin_name]
+        try:
+            plugin = plugins['Login Managers'][plugin_name]
+        except KeyError:
+            sys.exit('Login provider %s not installed' % plugin_name)
         if plugin.configure(args) == False:
             print 'Configuration of login manager %s failed' % plugin_name
 
@@ -235,7 +238,7 @@ def uninstall(plugins, args):
             print 'Removal of environment helper %s failed' % plugin_name
 
     logger.info('Removing login managers')
-    for plugin_name in args['lm_order']:
+    for plugin_name in plugins['Login Managers']:
         plugin = plugins['Login Managers'][plugin_name]
         if plugin.unconfigure(args) == False:
             print 'Removal of login manager %s failed' % plugin_name
@@ -351,6 +354,9 @@ def parse_args(plugins):
     if not args['hostname']:
         args['hostname'] = socket.getfqdn()
 
+    if args['uninstall']:
+        return args
+
     if len(args['hostname'].split('.')) < 2:
         raise ConfigurationError('Hostname: %s is not a FQDN')
 
@@ -373,12 +379,7 @@ def parse_args(plugins):
         args['lm_order'] = args['lm_order'].split(',')
 
     if len(args['lm_order']) == 0:
-        #force the basic pam provider if nothing else is selected
-        if 'pam' not in args:
-            parser.print_help()
-            sys.exit(-1)
-        args['lm_order'] = ['pam']
-        args['pam'] = 'yes'
+        sys.exit('No login plugins are enabled.')
 
     #FIXME: check instance is only alphanums
 
