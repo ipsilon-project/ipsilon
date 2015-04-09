@@ -282,6 +282,51 @@ class HttpSessions(object):
         if r.status_code != 200:
             raise ValueError('Failed to post SP data [%s]' % repr(r))
 
+    # pylint: disable=dangerous-default-value
+    def set_attributes_and_mapping(self, idp, mapping=[], attrs=[],
+                                   spname=None):
+        """
+        Set allowed attributes and mapping in the IDP or the SP. In the
+        case of the SP both allowed attributes and the mapping need to
+        be provided. An empty option for either means delete all values.
+
+        mapping is a list of list of rules of the form:
+           [['from-1', 'to-1'], ['from-2', 'from-2']]
+
+        ex. [['*', '*'], ['fullname', 'namefull']]
+
+        attrs is the list of attributes that will be allowed:
+           ['fullname', 'givenname', 'surname']
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+        if spname:  # per-SP setting
+            url = '%s/%s/admin/providers/saml2/admin/sp/%s' % (
+                idpuri, idp, spname)
+            mapname = 'Attribute Mapping'
+            attrname = 'Allowed Attributes'
+        else:  # global default
+            url = '%s/%s/admin/providers/saml2' % (idpuri, idp)
+            mapname = 'default attribute mapping'
+            attrname = 'default allowed attributes'
+
+        headers = {'referer': url}
+        headers['content-type'] = 'application/x-www-form-urlencoded'
+        payload = {'submit': 'Submit'}
+        count = 0
+        for m in mapping:
+            payload['%s %s-from' % (mapname, count)] = m[0]
+            payload['%s %s-to' % (mapname, count)] = m[1]
+            count += 1
+        count = 0
+        for attr in attrs:
+            payload['%s %s-name' % (attrname, count)] = attr
+            count += 1
+        r = idpsrv['session'].post(url, headers=headers,
+                                   data=payload)
+        if r.status_code != 200:
+            raise ValueError('Failed to post IDP data [%s]' % repr(r))
+
     def fetch_rest_page(self, idpname, uri):
         """
         idpname - the name of the IDP to fetch the page from

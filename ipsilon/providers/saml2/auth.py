@@ -226,6 +226,8 @@ class AuthenticateRequest(ProviderPageBase):
             allowed_attributes = provider.allowed_attributes
         else:
             allowed_attributes = self.cfg.default_allowed_attributes
+        self.debug("Allowed attrs: %s" % allowed_attributes)
+        self.debug("Mapping: %s" % attribute_mappings)
         policy = Policy(attribute_mappings, allowed_attributes)
         userattrs = us.get_user_attrs()
         mappedattrs, _ = policy.map_attributes(userattrs)
