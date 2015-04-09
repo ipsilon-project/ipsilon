@@ -32,7 +32,12 @@ class TestAuth(LoginFormBase):
         if username and password:
             if password == 'ipsilon':
                 cherrypy.log("User %s successfully authenticated." % username)
-                testdata = {'fullname': 'Test User %s' % username}
+                testdata = {
+                    'givenname': 'Test User',
+                    'surname': username,
+                    'fullname': 'Test User %s' % username,
+                    'email': '%s@example.com' % username
+                }
                 return self.lm.auth_successful(self.trans,
                                                username, 'password', testdata)
             else:
