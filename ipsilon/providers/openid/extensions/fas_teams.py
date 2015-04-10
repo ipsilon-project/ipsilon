@@ -17,6 +17,6 @@ class OpenidExtension(Teams):
             return {}
         if '_FAS_ALL_GROUPS_' in req.requested:
             # We will send all groups the user is a member of
-            req.requested = userdata.get('groups', [])
-        data = userdata.get('groups', [])
+            req.requested = userdata.get('_groups', [])
+        data = userdata.get('_groups', [])
         return teams.TeamsResponse.extractResponse(req, data)

@@ -18,7 +18,7 @@ class Teams(OpenidExtensionBase):
         req = teams.TeamsRequest.fromOpenIDRequest(request)
         if req is None:
             return {}
-        data = userdata.get('groups', [])
+        data = userdata.get('_groups', [])
         return teams.TeamsResponse.extractResponse(req, data)
 
     def _display(self, request, userdata):
