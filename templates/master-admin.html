@@ -14,9 +14,9 @@
         $( document ).ready(
             function() {
                 history.replaceState({} , document.title, "{{ newurl }}");
+                $('[data-toggle="tooltip"]').tooltip();
             }
         );
-        $( document ).tooltip();
     </script>
     {% endif %}
     {% block scripts %}
