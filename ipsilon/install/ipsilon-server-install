@@ -40,7 +40,7 @@ TEMPLATES = '/usr/share/ipsilon/templates/install'
 CONFDIR = '/etc/ipsilon'
 DATADIR = '/var/lib/ipsilon'
 HTTPDCONFD = '/etc/httpd/conf.d'
-BINDIR = '/usr/sbin'
+BINDIR = '/usr/libexec'
 STATICDIR = '/usr/share/ipsilon'
 WSGI_SOCKET_PREFIX = None
 

@@ -231,11 +231,12 @@ CFLAGS="%{optflags}" %{__python} setup.py build
 %install
 %{__python} setup.py install --skip-build --root %{buildroot}
 mkdir -p %{buildroot}%{_sbindir}
+mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_defaultdocdir}
 # These 0700 permissions are because ipsilon will store private keys here
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
-mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_sbindir}
+mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_libexecdir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
 rm -fr %{buildroot}%{python2_sitelib}/tests
@@ -315,7 +316,7 @@ fi
 %{_datadir}/ipsilon/ui/img
 %{_datadir}/ipsilon/ui/js
 %{_datadir}/ipsilon/ui/fonts
-%{_sbindir}/ipsilon
+%{_libexecdir}/ipsilon
 %dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
 %dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
 
