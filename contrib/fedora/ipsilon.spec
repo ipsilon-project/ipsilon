@@ -183,20 +183,20 @@ Provides a login plugin to authenticate against the local PAM stack
 
 
 %package authkrb
-Summary:        mod_auth_kerb based login plugin
+Summary:        mod_auth_gssapi based login plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Requires:       %{name} = %{version}-%{release}
-Requires:       mod_auth_kerb
+Requires:       mod_auth_gssapi
 BuildArch:      noarch
 
 %description authkrb
-Provides a login plugin to allow authentication via the mod_auth_kerb Apache
-module.
+Provides a login plugin to allow authentication via the mod_auth_gssapi
+Apache module.
 
 
 %package authldap
-Summary:        mod_auth_kerb based login plugin
+Summary:        LDAP info and login plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Requires:       %{name} = %{version}-%{release}

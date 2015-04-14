@@ -53,7 +53,7 @@ class KrbError(LoginPageBase):
 
     def root(self, *args, **kwargs):
         cherrypy.log.error('REQUEST: %s' % cherrypy.request.headers)
-        # If we have no negotiate header return whatever mod_auth_kerb
+        # If we have no negotiate header return whatever mod_auth_gssapi
         # generated and wait for the next request
 
         if 'WWW-Authenticate' not in cherrypy.request.headers:
@@ -81,8 +81,8 @@ class LoginManager(LoginManagerBase):
         self.path = 'krb/negotiate'
         self.page = None
         self.description = """
-Kereros Negotiate authentication plugin. Relies on the mod_auth_kerb apache
-plugin for actual authentication. """
+Kerberos Negotiate authentication plugin. Relies on the mod_auth_gssapi
+apache plugin for actual authentication. """
         self.new_config(self.name)
 
     def get_tree(self, site):
@@ -96,16 +96,11 @@ plugin for actual authentication. """
 CONF_TEMPLATE = """
 
 <Location /${instance}/login/krb/negotiate>
-  AuthType Kerberos
-  AuthName "Kerberos Login"
-  KrbMethodNegotiate on
-  KrbMethodK5Passwd off
-  KrbServiceName HTTP
-  $realms
+  AuthType GSSAPI
+  AuthName "GSSAPI Single Sign On Login"
   $keytab
-  KrbSaveCredentials off
-  KrbConstrainedDelegation off
-  # KrbLocalUserMapping On
+  GssapiSSLonly $gssapisslonly
+  GssapiLocalName on
   Require valid-user
 
   ErrorDocument 401 /${instance}/login/krb/unauthorized
@@ -124,8 +119,6 @@ class Installer(LoginManagerInstaller):
     def install_args(self, group):
         group.add_argument('--krb', choices=['yes', 'no'], default='no',
                            help='Configure Kerberos authentication')
-        group.add_argument('--krb-realms',
-                           help='Allowed Kerberos Auth Realms')
         group.add_argument('--krb-httpd-keytab',
                            default='/etc/httpd/conf/http.keytab',
                            help='Kerberos keytab location for HTTPD')
@@ -137,14 +130,15 @@ class Installer(LoginManagerInstaller):
         confopts = {'instance': opts['instance']}
 
         if os.path.exists(opts['krb_httpd_keytab']):
-            confopts['keytab'] = '  Krb5KeyTab %s' % opts['krb_httpd_keytab']
+            confopts['keytab'] = 'GssapiCredStore keytab:%s' % (
+                opts['krb_httpd_keytab'])
         else:
             raise Exception('Keytab not found')
 
-        if opts['krb_realms'] is None:
-            confopts['realms'] = '  # KrbAuthRealms - Any realm is allowed'
+        if opts['secure'] == 'no':
+            confopts['gssapisslonly'] = 'Off'
         else:
-            confopts['realms'] = '  KrbAuthRealms %s' % opts['krb_realms']
+            confopts['gssapisslonly'] = 'On'
 
         tmpl = Template(CONF_TEMPLATE)
         hunk = tmpl.substitute(**confopts)  # pylint: disable=star-args

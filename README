@@ -29,8 +29,8 @@ Prerequisites:
 - An unprivileged user to run the Ipsilon code (defaults to 'ipsilon')
 
 Currently there are only two available authentication modules, Kerberos and
-PAM. The Kerberos module uses mod_auth_kerb (which it will configure for you at
-install time), the Pam module simply uses the PAM stack with a default service
+PAM. The Kerberos module uses mod_auth_gssapi (which it will configure for
+you at install time), the Pam module simply uses the PAM stack with a default service
 name set to 'remote'.
 
 NOTE: The PAM module is invoked as an unprivileged user so if you are using the

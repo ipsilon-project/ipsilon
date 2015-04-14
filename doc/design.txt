@@ -29,7 +29,7 @@ Architecture
 
 Ipsilon is mostly a web service builtin in python on the cherrypy framework.
 It is normally installed and run in an apache server and some plugins depend
-on authentication modules available in apache like mod_auth_kerb.
+on authentication modules available in apache like mod_auth_gssapi.
 
 Each authentication method is chained to the next in line so that automatic
 fallback can happen and multiple authentication methods can be employed at
