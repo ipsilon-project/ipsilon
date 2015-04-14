@@ -136,7 +136,13 @@ if __name__ == '__main__':
     sess.add_server(spname, 'http://127.0.0.11:45081')
 
     print "test1: Authenticate to IDP ...",
+    sys.stdout.flush()
     try:
+        print 'Stress-testing the database connections...',
+        sys.stdout.flush()
+        for i in xrange(50):
+            sess.auth_to_idp(idpname)
+            sess.logout_from_idp(idpname)
         sess.auth_to_idp(idpname)
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)

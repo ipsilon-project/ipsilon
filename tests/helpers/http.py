@@ -232,6 +232,15 @@ class HttpSessions(object):
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % srv['user'])
 
+    def logout_from_idp(self, idp):
+
+        srv = self.servers[idp]
+        target_url = '%s/%s/logout' % (srv['baseuri'], idp)
+
+        r = self.access('get', target_url)
+        if r.status_code != 200:
+            raise ValueError("Logout from idp failed: %s" % repr(r))
+
     def get_sp_metadata(self, idp, sp):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']

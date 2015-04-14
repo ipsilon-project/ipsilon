@@ -19,6 +19,7 @@ import cherrypy
 from ipsilon.util.log import Log
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column, Text
+from sqlalchemy.pool import QueuePool, SingletonThreadPool
 from sqlalchemy.sql import select
 import ConfigParser
 import os
@@ -30,19 +31,48 @@ UNIQUE_DATA_COLUMNS = ['uuid', 'name', 'value']
 
 
 class SqlStore(Log):
+    __instances = {}
+
+    @classmethod
+    def get_connection(cls, name):
+        if name not in cls.__instances.keys():
+            print 'SqlStore new: %s' % name
+            cls.__instances[name] = SqlStore(name)
+        return cls.__instances[name]
 
     def __init__(self, name):
+        self.debug('SqlStore init: %s' % name)
+        self.name = name
         engine_name = name
         if '://' not in engine_name:
             engine_name = 'sqlite:///' + engine_name
-        self._dbengine = create_engine(engine_name)
+        # This pool size is per configured database. The minimum needed,
+        #  determined by binary search, is 23. We're using 25 so we have a bit
+        #  more playroom, and then the overflow should make sure things don't
+        #  break when we suddenly need more.
+        pool_args = {'poolclass': QueuePool,
+                     'pool_size': 25,
+                     'max_overflow': 50}
+        if engine_name.startswith('sqlite://'):
+            # It's not possible to share connections for SQLite between
+            #  threads, so let's use the SingletonThreadPool for them
+            pool_args = {'poolclass': SingletonThreadPool}
+        # pylint: disable=star-args
+        self._dbengine = create_engine(engine_name, **pool_args)
         self.is_readonly = False
 
     def engine(self):
         return self._dbengine
 
     def connection(self):
-        return self._dbengine.connect()
+        self.debug('SqlStore connect: %s' % self.name)
+        conn = self._dbengine.connect()
+
+        def cleanup_connection():
+            self.debug('SqlStore cleanup: %s' % self.name)
+            conn.close()
+        cherrypy.request.hooks.attach('on_end_request', cleanup_connection)
+        return conn
 
 
 def SqlAutotable(f):
@@ -244,7 +274,7 @@ class Store(Log):
             self._db = FileStore(filename)
             self._query = FileQuery
         else:
-            self._db = SqlStore(name)
+            self._db = SqlStore.get_connection(name)
             self._query = SqlQuery
 
     @property
