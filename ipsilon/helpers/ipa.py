@@ -151,10 +151,10 @@ class Installer(EnvHelpersInstaller):
                 version=u'2.0',
             )
         except ipaerrors.DuplicateEntry:
-            logger.debug('Principal %s already exists' % princ)
+            logger.debug('Principal %s already exists', princ)
         except ipaerrors.NotFound as e:
             print >> sys.stderr, "%s" % e
-            logger.error('%s' % e)
+            logger.error('%s', e)
             raise Exception('%s' % e)
         except ipaerrors.ACIError as e:
             print >> sys.stderr, NO_CREDS_FOR_KEYTAB
