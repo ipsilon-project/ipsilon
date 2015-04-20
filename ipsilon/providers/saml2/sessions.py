@@ -1,12 +1,31 @@
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+from cherrypy import config as cherrypy_config
 from ipsilon.util.log import Log
 from ipsilon.util.data import SAML2SessionStore
+import datetime
 
 LOGGED_IN = 1
 INIT_LOGOUT = 2
 LOGGING_OUT = 4
 LOGGED_OUT = 8
+
+
+def expire_sessions():
+    """
+    Find all expired sessions and remove them. This is executed as a
+    background cherrypy task.
+    """
+    ss = SAML2SessionStore()
+    data = ss.get_data()
+    now = datetime.datetime.now()
+    for idval in data:
+        r = data[idval]
+        exp = r.get('expiration_time', None)
+        if exp is not None:
+            exp = datetime.datetime.strptime(exp, '%Y-%m-%d %H:%M:%S.%f')
+            if exp < now:
+                ss.remove_session(idval)
 
 
 class SAMLSession(Log):
@@ -26,10 +45,12 @@ class SAMLSession(Log):
                     logout response will include an InResponseTo value
                     which matches this.
        logout_request - the Logout request object
+       expiration_time - the time the login session expires
     """
     def __init__(self, uuidval, session_id, provider_id, user,
                  login_session, logoutstate=None, relaystate=None,
-                 logout_request=None, request_id=None):
+                 logout_request=None, request_id=None,
+                 expiration_time=None):
 
         self.uuidval = uuidval
         self.session_id = session_id
@@ -40,6 +61,7 @@ class SAMLSession(Log):
         self.relaystate = relaystate
         self.request_id = request_id
         self.logout_request = logout_request
+        self.expiration_time = expiration_time
 
     def set_logoutstate(self, relaystate=None, request=None, request_id=None):
         """
@@ -76,6 +98,7 @@ class SAMLSession(Log):
         data['relaystate'] = self.relaystate
         data['logout_request'] = self.logout_request
         data['request_id'] = self.request_id
+        data['expiration_time'] = self.expiration_time
 
         return {self.uuidval: data}
 
@@ -111,7 +134,8 @@ class SAMLSessionFactory(Log):
                            data.get('logoutstate'),
                            data.get('relaystate'),
                            data.get('logout_request'),
-                           data.get('request_id'))
+                           data.get('request_id'),
+                           data.get('expiration_time'))
 
     def add_session(self, session_id, provider_id, user, login_session,
                     request_id=None):
@@ -120,11 +144,16 @@ class SAMLSessionFactory(Log):
         """
         self.user = user
 
+        timeout = cherrypy_config['tools.sessions.timeout']
+        t = datetime.timedelta(seconds=timeout * 60)
+        expiration_time = datetime.datetime.now() + t
+
         data = {'session_id': session_id,
                 'provider_id': provider_id,
                 'user': user,
                 'login_session': login_session,
-                'logoutstate': LOGGED_IN}
+                'logoutstate': LOGGED_IN,
+                'expiration_time': expiration_time}
         if request_id:
             data['request_id'] = request_id
 
@@ -132,7 +161,8 @@ class SAMLSessionFactory(Log):
 
         return SAMLSession(uuidval, session_id, provider_id, user,
                            login_session, LOGGED_IN,
-                           request_id=request_id)
+                           request_id=request_id,
+                           expiration_time=expiration_time)
 
     def get_session_by_id(self, session_id):
         """
@@ -254,13 +284,12 @@ class SAMLSessionFactory(Log):
             count += 1
 
 if __name__ == '__main__':
-    import cherrypy
-
     provider1 = "http://127.0.0.10/saml2"
     provider2 = "http://127.0.0.11/saml2"
 
-    # temporary database location for testing
-    cherrypy.config['saml2.sessions.db'] = '/tmp/saml2sessions.sqlite'
+    # temporary values to simulate cherrypy
+    cherrypy_config['saml2.sessions.db'] = '/tmp/saml2sessions.sqlite'
+    cherrypy_config['tools.sessions.timeout'] = 60
 
     factory = SAMLSessionFactory()
     factory.wipe_data()

@@ -8,6 +8,7 @@ from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.rest import Saml2RestBase
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.providers.saml2.sessions import SAMLSessionFactory
+from ipsilon.providers.saml2.sessions import expire_sessions
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
@@ -279,6 +280,9 @@ Provides SAML 2.0 authentication infrastructure. """
             lh = logging.StreamHandler(sys.stderr)
             logger.addHandler(lh)
             logger.setLevel(logging.DEBUG)
+
+        bt = cherrypy.process.plugins.BackgroundTask(60, expire_sessions)
+        bt.start()
 
     @property
     def allow_self_registration(self):
