@@ -509,3 +509,67 @@ class TranStore(Store):
 
     def __init__(self, path=None):
         super(TranStore, self).__init__('transactions.db')
+
+
+class SAML2SessionStore(Store):
+
+    def __init__(self, path=None):
+        super(SAML2SessionStore, self).__init__('saml2.sessions.db')
+        self.table = 'sessions'
+
+    def _get_unique_id_from_column(self, name, value):
+        """
+        The query is going to return only the column in the query.
+        Use this method to get the uuidval which can be used to fetch
+        the entire entry.
+
+        Returns None or the uuid of the first value found.
+        """
+        data = self.get_unique_data(self.table, name=name, value=value)
+        count = len(data)
+        if count == 0:
+            return None
+        elif count != 1:
+            raise ValueError("Multiple entries returned")
+        return data.keys()[0]
+
+    def get_data(self, idval=None, name=None, value=None):
+        return self.get_unique_data(self.table, idval, name, value)
+
+    def new_session(self, datum):
+        return self.new_unique_data(self.table, datum)
+
+    def get_session(self, session_id=None, request_id=None):
+        if session_id:
+            uuidval = self._get_unique_id_from_column('session_id', session_id)
+        elif request_id:
+            uuidval = self._get_unique_id_from_column('request_id', request_id)
+        else:
+            raise ValueError("Unable to find session")
+        if not uuidval:
+            return None, None
+        data = self.get_unique_data(self.table, uuidval=uuidval)
+        return uuidval, data[uuidval]
+
+    def get_user_sessions(self, user):
+        """
+        Retrun a list of all sessions for a given user.
+        """
+        rows = self.get_unique_data(self.table, name='user', value=user)
+
+        # We have a list of sessions for this user, now get the details
+        logged_in = []
+        for r in rows:
+            data = self.get_unique_data(self.table, uuidval=r)
+            logged_in.append(data)
+
+        return logged_in
+
+    def update_session(self, datum):
+        self.save_unique_data(self.table, datum)
+
+    def remove_session(self, uuidval):
+        self.del_unique_data(self.table, uuidval)
+
+    def wipe_data(self):
+        self._reset_data(self.table)
