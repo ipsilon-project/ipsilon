@@ -2,7 +2,7 @@
 
 from ipsilon.providers.common import ProviderPageBase
 from ipsilon.providers.common import InvalidRequest
-from ipsilon.providers.saml2.sessions import SAMLSessionsContainer
+from ipsilon.providers.saml2.sessions import SAMLSessionFactory
 from ipsilon.providers.saml2.auth import UnknownProvider
 from ipsilon.util.user import UserSession
 import cherrypy
@@ -51,16 +51,20 @@ class LogoutRequest(ProviderPageBase):
             self.error('SLO unknown error: %s' % message)
             raise cherrypy.HTTPError(400, 'Invalid logout request')
 
-        # TODO: verify that the session index is in the request
         session_indexes = logout.request.sessionIndexes
         self.debug('SLO from %s with %s sessions' %
                    (logout.remoteProviderId, session_indexes))
 
-        session = saml_sessions.find_session_by_provider(
-            logout.remoteProviderId)
+        # Find the first session being asked to log out. Later we loop over
+        # all the session indexes and mark them as logging out but only one
+        # is needed to handle the request.
+        if len(session_indexes) < 1:
+            self.error('SLO empty session Indexes: %s')
+            raise cherrypy.HTTPError(400, 'Invalid logout request')
+        session = saml_sessions.get_session_by_id(session_indexes[0])
         if session:
             try:
-                logout.setSessionFromDump(session.session.dump())
+                logout.setSessionFromDump(session.login_session)
             except lasso.ProfileBadSessionDumpError as e:
                 self.error('loading session failed: %s' % e)
                 raise cherrypy.HTTPError(400, 'Invalid logout session')
@@ -89,11 +93,15 @@ class LogoutRequest(ProviderPageBase):
         except lasso.Error, e:
             self.error('SLO failed to build logout response: %s' % e)
 
-        session.set_logoutstate(logout.msgUrl, logout.request.id,
-                                message)
-        saml_sessions.start_logout(session)
-
-        us.save_provider_data('saml2', saml_sessions)
+        for ind in session_indexes:
+            session = saml_sessions.get_session_by_id(ind)
+            if session:
+                session.set_logoutstate(relaystate=logout.msgUrl,
+                                        request=message)
+                saml_sessions.start_logout(session)
+            else:
+                self.error('SLO request to log out non-existent session: %s' %
+                           ind)
 
         return
 
@@ -120,21 +128,13 @@ class LogoutRequest(ProviderPageBase):
             self.debug('SLO response to request id %s' %
                        logout.response.inResponseTo)
 
-            saml_sessions = us.get_provider_data('saml2')
-            if saml_sessions is None:
-                # TODO: return logged out instead
-                saml_sessions = SAMLSessionsContainer()
-
-            # TODO: need to log out each SessionIndex?
-            session = saml_sessions.find_session_by_provider(
-                logout.remoteProviderId)
+            session = saml_sessions.get_session_by_request_id(
+                logout.response.inResponseTo)
 
             if session is not None:
                 self.debug('Logout response session logout id is: %s' %
                            session.session_id)
-                saml_sessions.remove_session_by_provider(
-                    logout.remoteProviderId)
-                us.save_provider_data('saml2', saml_sessions)
+                saml_sessions.remove_session(session)
                 user = us.get_user()
                 self._audit('Logged out user: %s [%s] from %s' %
                             (user.name, user.fullname,
@@ -204,13 +204,7 @@ class LogoutRequest(ProviderPageBase):
 
         us = UserSession()
 
-        saml_sessions = us.get_provider_data('saml2')
-        if saml_sessions is None:
-            # No sessions means nothing to log out
-            return self._not_logged_in(logout, message)
-
-        self.debug('%d sessions loaded' % saml_sessions.count())
-        saml_sessions.dump()
+        saml_sessions = SAMLSessionFactory()
 
         if lasso.SAML2_FIELD_REQUEST in message:
             self._handle_logout_request(us, logout, saml_sessions, message)
@@ -224,13 +218,12 @@ class LogoutRequest(ProviderPageBase):
         # Fall through to handle any remaining sessions.
 
         # Find the next SP to logout and send a LogoutRequest
-        saml_sessions = us.get_provider_data('saml2')
         session = saml_sessions.get_next_logout()
         if session:
             self.debug('Going to log out %s' % session.provider_id)
 
             try:
-                logout.setSessionFromDump(session.session.dump())
+                logout.setSessionFromDump(session.login_session)
             except lasso.ProfileBadSessionDumpError as e:
                 self.error('Failed to load session: %s' % e)
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
@@ -245,12 +238,19 @@ class LogoutRequest(ProviderPageBase):
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                             % e)
 
-            # Now set the full list of session indexes to log out
+            # Set the full list of session indexes for this provider to
+            # log out
+            self.debug('logging out provider id %s' % session.provider_id)
+            indexes = saml_sessions.get_session_id_by_provider_id(
+                session.provider_id
+            )
+            self.debug('Requesting logout for sessions %s' % indexes)
             req = logout.get_request()
-            req.setSessionIndexes(tuple(set(session.session_indexes)))
+            req.setSessionIndexes(indexes)
 
-            session.set_logoutstate(logout.msgUrl, logout.request.id, None)
-            us.save_provider_data('saml2', saml_sessions)
+            session.set_logoutstate(relaystate=logout.msgUrl,
+                                    request_id=logout.request.id)
+            saml_sessions.start_logout(session, initial=False)
 
             self.debug('Request logout ID %s for session ID %s' %
                        (logout.request.id, session.session_id))
@@ -262,19 +262,17 @@ class LogoutRequest(ProviderPageBase):
         # Otherwise we're done, respond to the original request using the
         # response we cached earlier.
 
-        saml_sessions = us.get_provider_data('saml2')
-        if saml_sessions is None or saml_sessions.count() == 0:
-            return self._not_logged_in(logout, message)
-
         try:
-            session = saml_sessions.get_last_session()
+            session = saml_sessions.get_initial_logout()
         except ValueError:
             self.debug('SLO get_last_session() unable to find last session')
             raise cherrypy.HTTPError(400, 'Unable to determine logout state')
 
-        redirect = session.logoutstate.get('relaystate')
+        redirect = session.relaystate
         if not redirect:
             redirect = self.basepath
+
+        saml_sessions.remove_session(session)
 
         # Log out of cherrypy session
         user = us.get_user()
