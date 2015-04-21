@@ -108,6 +108,9 @@ def install(plugins, args):
                     'datadir': args['data_dir'], 'dbname': 'userprefs'},
                 'transdb': args['transaction_dburi'] or args['database_url'] %
                 {'datadir': args['data_dir'], 'dbname': 'transactions'},
+                'samlsessionsdb': args['samlsessions_dburi'] or args[
+                    'database_url'] % {'datadir': args['data_dir'],
+                                       'dbname': 'saml2sessions'},
                 'secure': "False" if args['secure'] == "no" else "True",
                 'debugging': "True" if args['server_debugging'] else "False"}
     # Testing database sessions
@@ -357,6 +360,8 @@ def parse_args(plugins):
                              'template)')
     parser.add_argument('--transaction-dburi',
                         help='Transaction database URI (override template)')
+    parser.add_argument('--samlsessions-dburi',
+                        help='SAML 2 sessions database URI (override template)')
 
     lms = []
 
