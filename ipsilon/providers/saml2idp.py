@@ -7,6 +7,7 @@ from ipsilon.providers.saml2.logout import LogoutRequest
 from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.rest import Saml2RestBase
 from ipsilon.providers.saml2.provider import IdentityProvider
+from ipsilon.providers.saml2.sessions import SAMLSessionFactory
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
@@ -378,27 +379,15 @@ Provides SAML 2.0 authentication infrastructure. """
         """
         self.debug("IdP-initiated SAML2 logout")
         us = UserSession()
+        user = us.get_user()
 
-        saml_sessions = us.get_provider_data('saml2')
-        if saml_sessions is None:
-            self.debug("No SAML2 sessions to logout")
-            return
-        session = saml_sessions.get_next_logout(remove=False)
+        saml_sessions = SAMLSessionFactory()
+        session = saml_sessions.get_next_logout()
         if session is None:
             return
 
-        # Add a fake session to indicate where the user should
-        # be redirected to when all SP's are logged out.
-        idpurl = self._root.instance_base_url()
-        saml_sessions.add_session("_idp_initiated_logout",
-                                  idpurl,
-                                  "")
-        init_session = saml_sessions.find_session_by_provider(idpurl)
-        init_session.set_logoutstate(idpurl, "idp_initiated_logout", None)
-        saml_sessions.start_logout(init_session)
-
         logout = self.idp.get_logout_handler()
-        logout.setSessionFromDump(session.session.dump())
+        logout.setSessionFromDump(session.login_session)
         logout.initRequest(session.provider_id)
         try:
             logout.buildRequestMsg()
@@ -407,6 +396,21 @@ Provides SAML 2.0 authentication infrastructure. """
             raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                         % e)
 
+        # Add a fake session to indicate where the user should
+        # be redirected to when all SP's are logged out.
+        idpurl = self._root.instance_base_url()
+        session_id = "_" + uuid.uuid4().hex.upper()
+        saml_sessions.add_session(session_id, idpurl, user.name, "")
+        init_session = saml_sessions.get_session_by_id(session_id)
+        saml_sessions.start_logout(init_session, relaystate=idpurl)
+
+        # Add the logout request id we just created to the session to be
+        # logged out so that when it responds we can find the right
+        # session.
+        session.set_logoutstate(request_id=logout.request.id)
+        saml_sessions.start_logout(session, initial=False)
+
+        self.debug('Sending initial logout request to %s' % logout.msgUrl)
         raise cherrypy.HTTPRedirect(logout.msgUrl)
 
 
