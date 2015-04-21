@@ -7,6 +7,7 @@ import cStringIO
 import inspect
 import os
 import traceback
+import logging
 
 
 def log_request_response():
@@ -327,6 +328,6 @@ class Log(object):
         cherrypy.log(fact)
 
     def error(self, fact):
-        cherrypy.log.error('ERROR: %s' % fact)
+        cherrypy.log.error('ERROR: %s' % fact, severity=logging.ERROR)
         if cherrypy.config.get('stacktrace_on_error', False):
             cherrypy.log.error(Log.stacktrace())

@@ -20,6 +20,7 @@ from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import cherrypy
+import logging
 
 
 class TestAuth(LoginFormBase):
@@ -46,7 +47,7 @@ class TestAuth(LoginFormBase):
                 error = "Authentication failed"
         else:
             error = "Username or password is missing"
-            cherrypy.log.error("Error: " + error)
+            cherrypy.log.error("Error: " + error, severity=logging.ERROR)
 
         context = self.create_tmpl_context(
             username=username,
@@ -120,7 +121,7 @@ class Installer(LoginManagerInstaller):
         if opts['testauth'] != 'yes':
             return
 
-        print self.pargs
+        logging.debug(self.pargs)
         # Add configuration data to database
         po = PluginObject(*self.pargs)
         po.name = 'testauth'

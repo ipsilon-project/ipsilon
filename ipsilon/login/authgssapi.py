@@ -22,6 +22,7 @@ from ipsilon.util.user import UserSession
 from string import Template
 import cherrypy
 import os
+import logging
 
 
 class GSSAPI(LoginPageBase):
@@ -56,7 +57,8 @@ class GSSAPIAuth(LoginPageBase):
 class GSSAPIError(LoginPageBase):
 
     def root(self, *args, **kwargs):
-        cherrypy.log.error('REQUEST: %s' % cherrypy.request.headers)
+        cherrypy.log.error('REQUEST: %s' % cherrypy.request.headers,
+                           severity=logging.DEBUG)
         # If we have no negotiate header return whatever mod_auth_gssapi
         # generated and wait for the next request
 

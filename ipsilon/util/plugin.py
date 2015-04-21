@@ -19,6 +19,7 @@ import os
 import imp
 import cherrypy
 import inspect
+import logging
 from ipsilon.util.data import AdminStore
 from ipsilon.util.log import Log
 
@@ -30,7 +31,7 @@ class Plugins(object):
 
     def _load_class(self, tree, class_type, file_name, *pargs):
         cherrypy.log.error('Check module %s for class %s' % (file_name,
-                                                             class_type))
+                           class_type), severity=logging.DEBUG)
         name, ext = os.path.splitext(os.path.split(file_name)[-1])
         try:
             if ext.lower() == '.py':
@@ -40,21 +41,24 @@ class Plugins(object):
             else:
                 return
         except Exception, e:  # pylint: disable=broad-except
-            cherrypy.log.error('Failed to load "%s" module: [%s]' % (name, e))
+            cherrypy.log.error('Failed to load "%s" module: [%s]' % (name, e),
+                               severity=logging.ERROR)
             return
 
         if hasattr(mod, class_type):
             instance = getattr(mod, class_type)(*pargs)
             public_name = getattr(instance, 'name', name)
             tree[public_name] = instance
-            cherrypy.log.error('Added module %s as %s' % (name, public_name))
+            cherrypy.log.error('Added module %s as %s' % (name, public_name),
+                               severity=logging.DEBUG)
 
     def _load_classes(self, tree, path, class_type, *pargs):
         files = None
         try:
             files = os.listdir(path)
         except Exception, e:  # pylint: disable=broad-except
-            cherrypy.log.error('No modules in %s: [%s]' % (path, e))
+            cherrypy.log.error('No modules in %s: [%s]' % (path, e),
+                               severity=logging.ERROR)
             return
 
         for name in files:

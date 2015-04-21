@@ -79,7 +79,15 @@ def openlogs():
         lh = logging.StreamHandler(sys.stderr)
     formatter = logging.Formatter('[%(asctime)s] %(message)s')
     lh.setFormatter(formatter)
+    lh.setLevel(logging.DEBUG)
     logger.addHandler(lh)
+    logger.propagate = False
+    ch = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
+    cherrypy.log.error_log.setLevel(logging.DEBUG)
 
 
 def install(plugins, args):
@@ -178,7 +186,7 @@ def install(plugins, args):
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
         if plugin.configure_server(args) == False:
-            print 'Configuration of environment helper %s failed' % plugin_name
+            logger.info('Configuration of environment helper %s failed' % plugin_name)
 
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
@@ -187,19 +195,19 @@ def install(plugins, args):
         except KeyError:
             sys.exit('Login provider %s not installed' % plugin_name)
         if plugin.configure(args) == False:
-            print 'Configuration of login manager %s failed' % plugin_name
+            logger.info('Configuration of login manager %s failed' % plugin_name)
 
     logger.info('Configuring Info provider')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
         if plugin.configure(args) == False:
-            print 'Configuration of info provider %s failed' % plugin_name
+            logger.info('Configuration of info provider %s failed' % plugin_name)
 
     logger.info('Configuring Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
         if plugin.configure(args) == False:
-            print 'Configuration of auth provider %s failed' % plugin_name
+            logger.info('Configuration of auth provider %s failed' % plugin_name)
 
     # Fixup permissions so only the ipsilon user can read these files
     files.fix_user_dirs(instance_conf, opts['system_user'])
@@ -235,25 +243,25 @@ def uninstall(plugins, args):
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
         if plugin.unconfigure(args) == False:
-            print 'Removal of environment helper %s failed' % plugin_name
+            logger.info('Removal of environment helper %s failed' % plugin_name)
 
     logger.info('Removing login managers')
     for plugin_name in plugins['Login Managers']:
         plugin = plugins['Login Managers'][plugin_name]
         if plugin.unconfigure(args) == False:
-            print 'Removal of login manager %s failed' % plugin_name
+            logger.info('Removal of login manager %s failed' % plugin_name)
 
     logger.info('Removing Info providers')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
         if plugin.unconfigure(args) == False:
-            print 'Removal of info provider %s failed' % plugin_name
+            logger.info('Removal of info provider %s failed' % plugin_name)
 
     logger.info('Removing Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
         if plugin.unconfigure(args) == False:
-            print 'Removal of auth provider %s failed' % plugin_name
+            logger.info('Removal of auth provider %s failed' % plugin_name)
 
     logger.info('Removing httpd configuration')
     os.remove(httpd_conf)
@@ -395,13 +403,13 @@ if __name__ == '__main__':
 
         logger.setLevel(logging.DEBUG)
 
-        logger.info('Intallation arguments:')
+        logger.debug('Installation arguments:')
         for k in sorted(opts.iterkeys()):
-            logger.info('%s: %s', k, opts[k])
+            logger.debug('%s: %s', k, opts[k])
 
         if 'uninstall' in opts and opts['uninstall'] is True:
             if not os.path.exists(os.path.join(CONFDIR, opts['instance'])):
-                print 'Instance %s could not be found' % opts['instance']
+                logger.info('Instance %s could not be found' % opts['instance'])
                 sys.exit(0)
             uninstall(fplugins, opts)
         else:
@@ -409,10 +417,10 @@ if __name__ == '__main__':
     except Exception, e:  # pylint: disable=broad-except
         logger.exception(e)
         if 'uninstall' in opts and opts['uninstall'] is True:
-            print 'Uninstallation aborted.'
+            logger.info('Uninstallation aborted.')
         else:
-            print 'Installation aborted.'
-        print 'See log file %s for details' % LOGFILE
+            logger.info('Installation aborted.')
+        logger.info('See log file %s for details' % LOGFILE)
         out = 1
     except SystemExit:
         out = 1
@@ -420,8 +428,8 @@ if __name__ == '__main__':
     finally:
         if out == 0:
             if 'uninstall' in opts and opts['uninstall'] is True:
-                print 'Uninstallation complete.'
+                logger.info('Uninstallation complete.')
             else:
-                print 'Installation complete.'
-                print 'Please restart HTTPD to enable the IdP instance.'
+                logger.info('Installation complete.')
+                logger.info('Please restart HTTPD to enable the IdP instance.')
     sys.exit(out)

@@ -2,6 +2,7 @@
 
 import cherrypy
 import json
+import logging
 from functools import wraps
 from ipsilon.util.endpoint import Endpoint
 
@@ -54,7 +55,8 @@ class RestPlugins(RestPage):
         for plugin in self._site[facility].available:
             obj = self._site[facility].available[plugin]
             if hasattr(obj, 'rest'):
-                cherrypy.log.error('Rest plugin: %s' % plugin)
+                cherrypy.log.error('Rest plugin: %s' % plugin,
+                                   severity=logging.DEBUG)
                 obj.rest.mount(self)
 
     def root_with_msg(self, message=None, message_type=None, changed=None):

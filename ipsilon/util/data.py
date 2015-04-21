@@ -24,6 +24,7 @@ from sqlalchemy.sql import select
 import ConfigParser
 import os
 import uuid
+import logging
 
 
 OPTIONS_COLUMNS = ['name', 'option', 'value']
@@ -36,7 +37,7 @@ class SqlStore(Log):
     @classmethod
     def get_connection(cls, name):
         if name not in cls.__instances.keys():
-            print 'SqlStore new: %s' % name
+            logging.debug('SqlStore new: %s', name)
             cls.__instances[name] = SqlStore(name)
         return cls.__instances[name]
 

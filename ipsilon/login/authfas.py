@@ -7,6 +7,7 @@ from ipsilon.util.plugin import PluginObject
 from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
 import cherrypy
+import logging
 
 from fedora.client.fasproxy import FasProxyClient
 from fedora.client import AuthError
@@ -54,9 +55,12 @@ class FAS(LoginFormBase):
             try:
                 _, data = self.lm.fpc.login(username, password)
             except AuthError, e:
-                cherrypy.log.error("Authentication error [%s]" % str(e))
+                cherrypy.log.error("Authentication error [%s]" % str(e),
+                                   severity=logging.ERROR)
             except Exception, e:  # pylint: disable=broad-except
-                cherrypy.log.error("Unknown Error [%s]" % str(e))
+                cherrypy.log.error("Unknown Error [%s]" % str(e),
+                                   severity=logging.ERROR)
+
             if data and data.user:
                 userdata = self.make_userdata(data.user)
                 return self.lm.auth_successful(self.trans,
@@ -64,10 +68,10 @@ class FAS(LoginFormBase):
                                                userdata=userdata)
             else:
                 error = "Authentication failed"
-                cherrypy.log.error(error)
+                cherrypy.log.error(error, severity=logging.ERROR)
         else:
             error = "Username or password is missing"
-            cherrypy.log.error("Error: " + error)
+            cherrypy.log.error("Error: " + error, severity=logging.ERROR)
 
         context = self.create_tmpl_context(
             username=username,

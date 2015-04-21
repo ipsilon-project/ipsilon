@@ -421,14 +421,14 @@ if __name__ == '__main__':
     except Exception, e:  # pylint: disable=broad-except
         log_exception(e)
         if 'uninstall' in args and args['uninstall'] is True:
-            print 'Uninstallation aborted.'
+            logging.info('Uninstallation aborted.')
         else:
-            print 'Installation aborted.'
+            logging.info('Installation aborted.')
         out = 1
     finally:
         if out == 0:
             if 'uninstall' in args and args['uninstall'] is True:
-                print 'Uninstallation complete.'
+                logging.info('Uninstallation complete.')
             else:
-                print 'Installation complete.'
+                logging.info('Installation complete.')
     sys.exit(out)

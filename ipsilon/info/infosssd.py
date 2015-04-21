@@ -15,6 +15,7 @@ import cherrypy
 import time
 import subprocess
 import SSSDConfig
+import logging
 
 SSSD_CONF = '/etc/sssd/sssd.conf'
 
@@ -151,7 +152,7 @@ class Installer(InfoProviderInstaller):
         except Exception as e:  # pylint: disable=broad-except
             # Unable to read existing SSSD config so it is probably not
             # configured.
-            print 'Loading SSSD config failed: %s' % e
+            logging.info('Loading SSSD config failed: %s', e)
             return False
 
         if not opts['info_sssd_domain']:
@@ -163,7 +164,7 @@ class Installer(InfoProviderInstaller):
             try:
                 sssd_domain = sssdconfig.get_domain(domain)
             except SSSDConfig.NoDomainError:
-                print 'No SSSD domain %s' % domain
+                logging.info('No SSSD domain %s', domain)
                 continue
             else:
                 sssd_domain.set_option(
@@ -171,10 +172,10 @@ class Installer(InfoProviderInstaller):
                 )
                 sssdconfig.save_domain(sssd_domain)
                 configured += 1
-                print "Configured SSSD domain %s" % domain
+                logging.info("Configured SSSD domain %s", domain)
 
         if configured == 0:
-            print 'No SSSD domains configured'
+            logging.info('No SSSD domains configured')
             return False
 
         try:

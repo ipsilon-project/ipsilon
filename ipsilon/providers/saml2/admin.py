@@ -28,6 +28,7 @@ from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from copy import deepcopy
 import requests
+import logging
 
 
 class NewSPAdminPage(AdminPage):
@@ -195,7 +196,7 @@ class SPAdminPage(AdminPage):
                         set(value) == set(option.get_value())):
                     continue
                 cherrypy.log.error("Storing %s = %s" %
-                                   (name, value))
+                                   (name, value), severity=logging.DEBUG)
                 new_db_values[name] = value
 
         if len(new_db_values) != 0:

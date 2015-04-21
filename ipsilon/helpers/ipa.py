@@ -20,7 +20,6 @@ import pwd
 import os
 import socket
 import subprocess
-import sys
 
 from ipsilon.helpers.common import EnvHelpersInstaller
 
@@ -95,21 +94,19 @@ class Installer(EnvHelpersInstaller):
         # Check if we already have a keytab for HTTP
         if 'gssapi_httpd_keytab' in opts:
             msg = "Searching for keytab in: %s" % opts['gssapi_httpd_keytab']
-            print >> sys.stdout, msg,
             if os.path.exists(opts['gssapi_httpd_keytab']):
-                print >> sys.stdout, "... Found!"
+                logger.info(msg + "... Found!")
                 return
             else:
-                print >> sys.stdout, "... Not found!"
+                logger.info(msg + "... Not found!")
 
         msg = "Searching for keytab in: %s" % HTTPD_IPA_KEYTAB
-        print >> sys.stdout, msg,
         if os.path.exists(HTTPD_IPA_KEYTAB):
             opts['gssapi_httpd_keytab'] = HTTPD_IPA_KEYTAB
-            print >> sys.stdout, "... Found!"
+            logger.info(msg + "... Found!")
             return
         else:
-            print >> sys.stdout, "... Not found!"
+            logger.info(msg + "... Not found!")
 
         us = socket.gethostname()
         princ = 'HTTP/%s@%s' % (us, self.realm)
@@ -125,15 +122,13 @@ class Installer(EnvHelpersInstaller):
             api.Backend.rpcclient.connect()
             logger.debug('Try RPC connection')
             api.Backend.rpcclient.forward('ping')
-            print >> sys.stdout, "... Succeeded!"
+            logger.debug("... Succeeded!")
         except ipaerrors.KerberosError as e:
-            print >> sys.stderr, NO_CREDS_FOR_KEYTAB
             logger.error('Invalid credentials: [%s]', repr(e))
             if api.Backend.rpcclient.isconnected():
                 api.Backend.rpcclient.disconnect()
             raise Exception('Invalid credentials: [%s]' % e)
         except ipaerrors.PublicError as e:
-            print >> sys.stderr, "Can't connect to any IPA server"
             logger.error(
                 'Cannot connect to the server due to generic error: %s', e)
             if api.Backend.rpcclient.isconnected():
@@ -153,12 +148,11 @@ class Installer(EnvHelpersInstaller):
         except ipaerrors.DuplicateEntry:
             logger.debug('Principal %s already exists', princ)
         except ipaerrors.NotFound as e:
-            print >> sys.stderr, "%s" % e
             logger.error('%s', e)
             raise Exception('%s' % e)
         except ipaerrors.ACIError as e:
-            print >> sys.stderr, NO_CREDS_FOR_KEYTAB
-            logger.error('Invalid credentials: [%s]', repr(e))
+            logger.error(NO_CREDS_FOR_KEYTAB)
+            logger.debug('Invalid credentials: [%s]', repr(e))
             raise Exception('Invalid credentials: [%s]' % e)
         finally:
             server = api.Backend.rpcclient.api.env.server
@@ -168,14 +162,14 @@ class Installer(EnvHelpersInstaller):
         try:
             msg = "Trying to fetch keytab[%s] for %s" % (
                   opts['gssapi_httpd_keytab'], princ)
-            print >> sys.stdout, msg,
+            logger.info(msg)
             subprocess.check_output([IPA_GETKEYTAB,
                                      '-s', server, '-p', princ,
                                      '-k', opts['gssapi_httpd_keytab']],
                                     stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError, e:
             # unfortunately this one is fatal
-            print >> sys.stderr, FAILED_TO_GET_KEYTAB
+            logger.error(FAILED_TO_GET_KEYTAB)
             logger.info('Error trying to get HTTP keytab:')
             logger.info('Cmd> %s\n%s', e.cmd, e.output)
             raise Exception('Missing keytab: [%s]' % e)

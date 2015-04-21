@@ -23,6 +23,7 @@ from ipsilon.util import config as pconfig
 from string import Template
 import cherrypy
 import subprocess
+import logging
 
 
 class Form(LoginFormBase):
@@ -38,7 +39,7 @@ class Form(LoginFormBase):
                 error = cherrypy.request.headers['EXTERNAL_AUTH_ERROR']
             except KeyError:
                 error = "Unknown error using external authentication"
-                cherrypy.log.error("Error: %s" % error)
+                cherrypy.log.error("Error: %s" % error, logging.ERROR)
             return self.lm.auth_failed(self.trans)
 
 

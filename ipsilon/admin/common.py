@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cherrypy
+import logging
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
 from ipsilon.util.endpoint import allow_iframe
@@ -113,7 +114,8 @@ class AdminPluginConfig(AdminPage):
 
             if value != option.get_value():
                 cherrypy.log.error("Storing [%s]: %s = %s" %
-                                   (self._po.name, name, value))
+                                   (self._po.name, name, value),
+                                   severity=logging.DEBUG)
             option.set_value(value)
             new_db_values[name] = option.export_value()
 
@@ -222,7 +224,8 @@ class AdminPlugins(AdminPage):
             return
 
         for plugin in self._site[facility].available:
-            cherrypy.log.error('Admin info plugin: %s' % plugin)
+            cherrypy.log.error('Admin info plugin: %s' % plugin,
+                               severity=logging.DEBUG)
             obj = self._site[facility].available[plugin]
             page = AdminPluginConfig(obj, self._site, self)
             if hasattr(obj, 'admin'):

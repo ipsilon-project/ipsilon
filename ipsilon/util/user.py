@@ -18,6 +18,7 @@
 from ipsilon.util.data import UserStore
 from ipsilon.util.log import Log
 import cherrypy
+import logging
 
 
 class Site(object):
@@ -142,7 +143,8 @@ class UserSession(Log):
             if not type(user) is User:
                 raise TypeError
             # Completely reset user data
-            cherrypy.log.error('%s %s' % (user.name, user.fullname))
+            cherrypy.log.error('%s %s' % (user.name, user.fullname),
+                               severity=logging.INFO)
             user.reset()
 
         # Destroy current session in all cases
