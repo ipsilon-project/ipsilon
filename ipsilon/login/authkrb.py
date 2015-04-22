@@ -42,7 +42,11 @@ class KrbAuth(LoginPageBase):
         us.remote_login()
         self.user = us.get_user()
         if not self.user.is_anonymous:
-            userdata = {'krb_principal_name': self.user.name}
+            principal = cherrypy.request.wsgi_environ.get('GSS_NAME', None)
+            if principal:
+                userdata = {'krb_principal_name': principal}
+            else:
+                userdata = {'krb_principal_name': self.user.name}
             return self.lm.auth_successful(trans, self.user.name,
                                            'krb', userdata)
         else:
