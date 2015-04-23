@@ -1,7 +1,6 @@
 # Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
 
 from ipsilon.providers.common import ProviderPageBase
-from ipsilon.util.trans import Transaction
 from ipsilon.util.user import UserSession
 
 import base64
@@ -18,15 +17,7 @@ class AuthenticateRequest(ProviderPageBase):
         self.trans = None
 
     def _preop(self, *args, **kwargs):
-        try:
-            # generate a new id or get current one
-            self.trans = Transaction('persona', **kwargs)
-            if self.trans.cookie.value != self.trans.provider:
-                self.debug('Invalid transaction, %s != %s' % (
-                           self.trans.cookie.value, self.trans.provider))
-        except Exception, e:  # pylint: disable=broad-except
-            self.debug('Transaction initialization failed: %s' % repr(e))
-            raise cherrypy.HTTPError(400, 'Invalid transaction id')
+        self.trans = self.get_valid_transaction('persona', **kwargs)
 
     def pre_GET(self, *args, **kwargs):
         self._preop(*args, **kwargs)
