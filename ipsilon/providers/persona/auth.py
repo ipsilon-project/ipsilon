@@ -2,6 +2,7 @@
 
 from ipsilon.providers.common import ProviderPageBase
 from ipsilon.util.user import UserSession
+from ipsilon.util.endpoint import allow_iframe
 
 import base64
 import cherrypy
@@ -71,6 +72,7 @@ class Sign(AuthenticateRequest):
                 return True
         return False
 
+    @allow_iframe
     def POST(self, *args, **kwargs):
         if 'email' not in kwargs or 'publicKey' not in kwargs \
                 or 'certDuration' not in kwargs or '@' not in kwargs['email']:
@@ -93,6 +95,7 @@ class Sign(AuthenticateRequest):
 
 
 class SignInResult(AuthenticateRequest):
+    @allow_iframe
     def GET(self, *args, **kwargs):
         user = UserSession().get_user()
 
@@ -106,6 +109,7 @@ class SignIn(AuthenticateRequest):
         self.result = SignInResult(*args, **kwargs)
         self.trans = None
 
+    @allow_iframe
     def GET(self, *args, **kwargs):
         username = None
         domain = None
@@ -135,6 +139,7 @@ class Persona(AuthenticateRequest):
         self.SignIn = SignIn(*args, **kwargs)
         self.trans = None
 
+    @allow_iframe
     def GET(self, *args, **kwargs):
         user = UserSession().get_user()
         return self._template('persona/provisioning.html',

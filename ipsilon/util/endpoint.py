@@ -4,11 +4,29 @@ import cherrypy
 from ipsilon.util.log import Log
 from ipsilon.util.user import UserSession
 from urllib import unquote
+from functools import wraps
 try:
     from urlparse import urlparse
 except ImportError:
     # pylint: disable=no-name-in-module, import-error
     from urllib.parse import urlparse
+
+
+def allow_iframe(func):
+    """
+    Remove the X-Frame-Options and CSP frame-options deny headers.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        for (header, value) in [
+                ('X-Frame-Options', 'deny'),
+                ('Content-Security-Policy', 'frame-options \'deny\'')]:
+            if cherrypy.response.headers.get(header, None) == value:
+                cherrypy.response.headers.pop(header, None)
+        return result
+
+    return wrapper
 
 
 class Endpoint(Log):
@@ -19,6 +37,8 @@ class Endpoint(Log):
         self.default_headers = {
             'Cache-Control': 'no-cache, no-store, must-revalidate, private',
             'Pragma': 'no-cache',
+            'Content-Security-Policy': 'frame-options \'deny\'',
+            'X-Frame-Options': 'deny',
         }
         self.auth_protect = False
 
