@@ -35,7 +35,7 @@ class OpenidExtension(OpenidExtensionBase):
     def _resp(self, request, userdata):
         req = ax.FetchRequest.fromOpenIDRequest(request)
         if req is None:
-            return {}
+            return None
         resp = ax.FetchResponse(req)
         for name in req.requested_attributes:
             try:
@@ -50,6 +50,8 @@ class OpenidExtension(OpenidExtensionBase):
 
     def _display(self, request, userdata):
         resp = self._resp(request, userdata)
+        if resp is None:
+            return {}
         data = dict()
         for name, value in resp.data.items():
             key = name
