@@ -38,9 +38,6 @@
         {% else %}
           <a href="{{ basepath }}" title="Cancel" class="btn btn-link" tabindex="4">Cancel</a>
         {% endif %}
-        {% if next_url %}
-          <a href="{{ next_url }}" title="Next authentication method" class="btn btn-link" tabindex="5">Next method </a>
-        {% endif %}
         <button type="submit" value="login" class="btn btn-primary btn-lg" tabindex="3">Log In</button>
       </div>
     </div>
@@ -49,6 +46,16 @@
 
 <div class="col-sm-5 col-md-6 col-lg-7 details">
   <p>{{description}}</p>
+{% if other_stacks %}
+  <hr>
+  <p>Other authentication methods:
+  <ul>
+  {% for s in other_stacks %}
+    <li><a href="{{ s['url'] }}" class="btn btn-link" tabindex="5">{{ s['name'] }}</a></li>
+  {% endfor %}
+  </ul>
+  </p>
+{% endif %}
 </div>
 
 {% endblock %}

@@ -142,6 +142,19 @@ class LoginManagerBase(ConfigHelper, PluginObject):
         except (ValueError, IndexError):
             return None
 
+    def other_login_stacks(self):
+        plugins = self._site[FACILITY]
+        stack = list()
+        try:
+            idx = plugins.enabled.index(self.name)
+        except (ValueError, IndexError):
+            idx = None
+        for i in range(0, len(plugins.enabled)):
+            if i == idx:
+                continue
+            stack.append(plugins.available[plugins.enabled[i]])
+        return stack
+
     def on_enable(self):
 
         # and add self to the root
@@ -182,11 +195,14 @@ class LoginFormBase(LoginPageBase):
             return op(*args, **kwargs)
 
     def create_tmpl_context(self, **kwargs):
-        next_url = None
-        next_login = self.lm.next_login()
-        if next_login:
-            next_url = '%s?%s' % (next_login.path,
-                                  self.trans.get_GET_arg())
+        other_stacks = None
+        other_login_stacks = self.lm.other_login_stacks()
+        if other_login_stacks:
+            other_stacks = list()
+            for ls in other_login_stacks:
+                url = '%s?%s' % (ls.path, self.trans.get_GET_arg())
+                name = ls.name
+                other_stacks.append({'url': url, 'name': name})
 
         cookie = SecureCookie(USERNAME_COOKIE)
         cookie.receive()
@@ -210,7 +226,7 @@ class LoginFormBase(LoginPageBase):
             "username_text": self.lm.username_text,
             "password_text": self.lm.password_text,
             "description": self.lm.help_text,
-            "next_url": next_url,
+            "other_stacks": other_stacks,
             "username": username,
             "login_target": target,
             "cancel_url": '%s/login/cancel?%s' % (self.basepath,
