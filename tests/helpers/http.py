@@ -113,14 +113,17 @@ class HttpSessions(object):
         return action
 
     def get_form_data(self, page, form_id, input_fields):
+        form_selector = '//form'
+        if form_id:
+            form_selector += '[@id="%s"]' % form_id
         values = []
-        action = page.first_value('//form[@id="%s"]/@action' % form_id)
+        action = page.first_value('%s/@action' % form_selector)
         values.append(action)
-        method = page.first_value('//form[@id="%s"]/@method' % form_id)
+        method = page.first_value('%s/@method' % form_selector)
         values.append(method)
         for field in input_fields:
-            value = page.all_values('//form[@id="%s"]/input/@%s' % (form_id,
-                                                                    field))
+            value = page.all_values('%s/input/@%s' % (form_selector,
+                                                      field))
             values.append(value)
         return values
 
@@ -180,6 +183,65 @@ class HttpSessions(object):
         return [method, self.new_url(referer, action_url),
                 {'headers': headers, 'data': payload}]
 
+    def handle_openid_form(self, page):
+        if type(page) != PageTree:
+            raise TypeError("Expected PageTree object")
+
+        if not page.first_value('//title/text()') == \
+                'OpenID transaction in progress':
+            raise WrongPage('Not OpenID autosubmit form')
+
+        try:
+            results = self.get_form_data(page, None,
+                                         ["name", "value"])
+            action_url = results[0]
+            if action_url is None:
+                raise Exception
+            method = results[1]
+            names = results[2]
+            values = results[3]
+        except Exception:  # pylint: disable=broad-except
+            raise WrongPage("Not OpenID autosubmit form")
+
+        referer = page.make_referer()
+        headers = {'referer': referer}
+
+        payload = {}
+        for i in range(0, len(names)):
+            payload[names[i]] = values[i]
+
+        return [method, self.new_url(referer, action_url),
+                {'headers': headers, 'data': payload}]
+
+    def handle_openid_consent_form(self, page):
+        if type(page) != PageTree:
+            raise TypeError("Expected PageTree object")
+
+        try:
+            results = self.get_form_data(page, "consent_form",
+                                         ['name', 'value'])
+            action_url = results[0]
+            if action_url is None:
+                raise Exception
+            method = results[1]
+            names = results[2]
+            values = results[3]
+        except Exception:  # pylint: disable=broad-except
+            raise WrongPage("Not an OpenID Consent Form Page")
+
+        referer = page.make_referer()
+        headers = {'referer': referer}
+
+        payload = {}
+        for i in range(0, len(names)):
+            payload[names[i]] = values[i]
+
+        # Replace known values
+        payload['decided_allow'] = 'Allow'
+
+        return [method, self.new_url(referer, action_url),
+                {'headers': headers, 'data': payload}]
+
     def fetch_page(self, idp, target_url, follow_redirect=True):
         url = target_url
         action = 'get'
@@ -187,7 +249,7 @@ class HttpSessions(object):
 
         while True:
             r = self.access(action, url, **args)  # pylint: disable=star-args
-            if r.status_code == 303:
+            if r.status_code == 303 or r.status_code == 302:
                 if not follow_redirect:
                     return PageTree(r)
                 url = r.headers['location']
@@ -204,6 +266,18 @@ class HttpSessions(object):
 
                 try:
                     (action, url, args) = self.handle_return_form(page)
+                    continue
+                except WrongPage:
+                    pass
+
+                try:
+                    (action, url, args) = self.handle_openid_consent_form(page)
+                    continue
+                except WrongPage:
+                    pass
+
+                try:
+                    (action, url, args) = self.handle_openid_form(page)
                     continue
                 except WrongPage:
                     pass

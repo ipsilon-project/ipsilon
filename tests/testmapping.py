@@ -65,7 +65,7 @@ def check_info_plugin(s, idp_name, urlbase, expected):
     """
     Logout, login, fetch SP page to get the info variables and
     compare the MELLON_ ones to what we expect.  IDP and NAMEID are
-    ignored. The authtest plugin returns no groups.
+    ignored.
     """
 
     # Log out
@@ -195,6 +195,7 @@ if __name__ == '__main__':
             'surname': user,
             'givenname': 'Test User',
             'email': '%s@example.com' % user,
+            'groups': user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception, e:  # pylint: disable=broad-except
@@ -221,6 +222,7 @@ if __name__ == '__main__':
             'surname': user,
             'givenname': 'Test User',
             'email': '%s@example.com' % user,
+            'groups': user
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception, e:  # pylint: disable=broad-except

@@ -98,6 +98,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=pgdb
 	PYTHONPATH=./ ./tests/tests.py --test=fconf
 	PYTHONPATH=./ ./tests/tests.py --test=ldap
+	PYTHONPATH=./ ./tests/tests.py --test=openid
 
 test: lp-test unittests tests
 

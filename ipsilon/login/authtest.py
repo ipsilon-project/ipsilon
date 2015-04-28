@@ -36,7 +36,8 @@ class TestAuth(LoginFormBase):
                     'givenname': 'Test User',
                     'surname': username,
                     'fullname': 'Test User %s' % username,
-                    'email': '%s@example.com' % username
+                    'email': '%s@example.com' % username,
+                    '_groups': [username]
                 }
                 return self.lm.auth_successful(self.trans,
                                                username, 'password', testdata)

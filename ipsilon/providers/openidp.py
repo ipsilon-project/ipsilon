@@ -143,6 +143,8 @@ class Installer(ProviderInstaller):
                            help='Configure OpenID Provider')
         group.add_argument('--openid-dburi',
                            help='OpenID database URI')
+        group.add_argument('--openid-extensions', default='',
+                           help='List of OpenID Extensions to enable')
 
     def configure(self, opts):
         if opts['openid'] != 'yes':
@@ -160,10 +162,11 @@ class Installer(ProviderInstaller):
         po.wipe_data()
         po.wipe_config_values()
         config = {'endpoint url': url,
-                  'identity_url_template': '%sid/%%(username)s' % url,
+                  'identity url template': '%sid/%%(username)s' % url,
                   'database url': opts['openid_dburi'] or
                   opts['database_url'] % {
-                      'datadir': opts['data_dir'], 'dbname': 'openid'}}
+                      'datadir': opts['data_dir'], 'dbname': 'openid'},
+                  'enabled extensions': opts['openid_extensions']}
         po.save_plugin_config(config)
 
         # Update global config to add login plugin
