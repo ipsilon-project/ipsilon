@@ -18,6 +18,7 @@
 import cherrypy
 from ipsilon.util.page import Page
 from ipsilon.util.page import admin_protect
+from ipsilon.util.endpoint import allow_iframe
 from ipsilon.util import config as pconfig
 
 
@@ -334,6 +335,7 @@ class Admin(AdminPage):
         return urls
 
     @admin_protect
+    @allow_iframe
     def scheme(self):
         cherrypy.response.headers.update({'Content-Type': 'image/svg+xml'})
         urls = self.get_menu_urls()
