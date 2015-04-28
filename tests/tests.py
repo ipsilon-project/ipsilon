@@ -23,6 +23,7 @@ from ipsilon.util import plugin
 import os
 import sys
 import subprocess
+import time
 import traceback
 
 
@@ -103,4 +104,6 @@ if __name__ == '__main__':
     finally:
         test.wait()
 
+    # Wait until all of the sockets are closed by the OS
+    time.sleep(0.5)
     print "FINISHED"
