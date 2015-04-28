@@ -29,6 +29,64 @@ from string import Template
 import subprocess
 
 
+WRAP_HOSTNAME = 'idp.ipsilon.dev'
+TESTREALM = 'IPSILON.DEV'
+TESTDOMAIN = 'ipsilon.dev'
+KDC_DBNAME = 'db.file'
+KDC_STASH = 'stash.file'
+KDC_PASSWORD = 'ipsilon'
+KRB5_CONF_TEMPLATE = '''
+[libdefaults]
+  default_realm = ${TESTREALM}
+  dns_lookup_realm = false
+  dns_lookup_kdc = false
+  rdns = false
+  ticket_lifetime = 24h
+  forwardable = yes
+  default_ccache_name = FILE://${TESTDIR}/ccaches/krb5_ccache_XXXXXX
+  udp_preference_limit = 0
+
+[realms]
+  ${TESTREALM} = {
+    kdc =${WRAP_HOSTNAME}
+  }
+
+[domain_realm]
+  .${TESTDOMAIN} = ${TESTREALM}
+  ${TESTDOMAIN} = ${TESTREALM}
+
+[dbmodules]
+  ${TESTREALM} = {
+    database_name = ${KDCDIR}/${KDC_DBNAME}
+  }
+'''
+
+KDC_CONF_TEMPLATE = '''
+[kdcdefaults]
+ kdc_ports = 88
+ kdc_tcp_ports = 88
+ restrict_anonymous_to_tgt = true
+
+[realms]
+ ${TESTREALM} = {
+  master_key_type = aes256-cts
+  max_life = 7d
+  max_renewable_life = 14d
+  acl_file = ${KDCDIR}/kadm5.acl
+  dict_file = /usr/share/dict/words
+  default_principal_flags = +preauth
+  admin_keytab = ${TESTREALM}/kadm5.keytab
+  key_stash_file = ${KDCDIR}/${KDC_STASH}
+ }
+[logging]
+  kdc = FILE:${KDCLOG}
+'''
+
+USER_KTNAME = "user.keytab"
+HTTP_KTNAME = "http.keytab"
+KEY_TYPE = "aes256-cts-hmac-sha1-96:normal"
+
+
 class IpsilonTestBase(object):
 
     def __init__(self, name, execname):
@@ -73,6 +131,7 @@ class IpsilonTestBase(object):
                              'TESTDIR': self.testdir,
                              'ROOTDIR': self.rootdir,
                              'NAMEID': nameid,
+                             'HTTP_KTNAME': HTTP_KTNAME,
                              'TEST_USER': self.testuser})
 
         filename = os.path.join(self.testdir, '%s_profile.cfg' % name)
@@ -166,6 +225,104 @@ class IpsilonTestBase(object):
                              '-h', 'ldap://%s:%s' % (addr, port)],
                              env=env, preexec_fn=os.setsid)
         self.processes.append(p)
+
+    def setup_kdc(self, env):
+
+        # setup kerberos environment
+        testlog = os.path.join(self.testdir, 'kerb.log')
+        krb5conf = os.path.join(self.testdir, 'krb5.conf')
+        kdcconf = os.path.join(self.testdir, 'kdc.conf')
+        kdcdir = os.path.join(self.testdir, 'kdc')
+        if os.path.exists(kdcdir):
+            shutil.rmtree(kdcdir)
+        os.makedirs(kdcdir)
+
+        t = Template(KRB5_CONF_TEMPLATE)
+        text = t.substitute({'TESTREALM': TESTREALM,
+                             'TESTDOMAIN': TESTDOMAIN,
+                             'TESTDIR': self.testdir,
+                             'KDCDIR': kdcdir,
+                             'KDC_DBNAME': KDC_DBNAME,
+                             'WRAP_HOSTNAME': WRAP_HOSTNAME})
+        with open(krb5conf, 'w+') as f:
+            f.write(text)
+
+        t = Template(KDC_CONF_TEMPLATE)
+        text = t.substitute({'TESTREALM': TESTREALM,
+                             'KDCDIR': kdcdir,
+                             'KDCLOG': testlog,
+                             'KDC_STASH': KDC_STASH})
+        with open(kdcconf, 'w+') as f:
+            f.write(text)
+
+        kdcenv = {'PATH': '/sbin:/bin:/usr/sbin:/usr/bin',
+                  'KRB5_CONFIG': krb5conf,
+                  'KRB5_KDC_PROFILE': kdcconf}
+        kdcenv.update(env)
+
+        with (open(testlog, 'a')) as logfile:
+            ksetup = subprocess.Popen(["kdb5_util", "create", "-s",
+                                       "-r", TESTREALM, "-P", KDC_PASSWORD],
+                                      stdout=logfile, stderr=logfile,
+                                      env=kdcenv, preexec_fn=os.setsid)
+        ksetup.wait()
+        if ksetup.returncode != 0:
+            raise ValueError('KDC Setup failed')
+
+        kdcproc = subprocess.Popen(['krb5kdc', '-n'],
+                                   env=kdcenv, preexec_fn=os.setsid)
+        self.processes.append(kdcproc)
+
+        return kdcenv
+
+    def kadmin_local(self, cmd, env, logfile):
+        ksetup = subprocess.Popen(["kadmin.local", "-q", cmd],
+                                  stdout=logfile, stderr=logfile,
+                                  env=env, preexec_fn=os.setsid)
+        ksetup.wait()
+        if ksetup.returncode != 0:
+            raise ValueError('Kadmin local [%s] failed' % cmd)
+
+    def setup_keys(self, env):
+
+        testlog = os.path.join(self.testdir, 'kerb.log')
+
+        svc_name = "HTTP/%s" % WRAP_HOSTNAME
+        svc_keytab = os.path.join(self.testdir, HTTP_KTNAME)
+        cmd = "addprinc -randkey -e %s %s" % (KEY_TYPE, svc_name)
+        with (open(testlog, 'a')) as logfile:
+            self.kadmin_local(cmd, env, logfile)
+        cmd = "ktadd -k %s -e %s %s" % (svc_keytab, KEY_TYPE, svc_name)
+        with (open(testlog, 'a')) as logfile:
+            self.kadmin_local(cmd, env, logfile)
+
+        usr_keytab = os.path.join(self.testdir, USER_KTNAME)
+        cmd = "addprinc -randkey -e %s %s" % (KEY_TYPE, self.testuser)
+        with (open(testlog, 'a')) as logfile:
+            self.kadmin_local(cmd, env, logfile)
+        cmd = "ktadd -k %s -e %s %s" % (usr_keytab, KEY_TYPE, self.testuser)
+        with (open(testlog, 'a')) as logfile:
+            self.kadmin_local(cmd, env, logfile)
+
+        keys_env = {"KRB5_KTNAME": svc_keytab}
+        keys_env.update(env)
+
+        return keys_env
+
+    def kinit_keytab(self, kdcenv):
+        testlog = os.path.join(self.testdir, 'kinit.log')
+        usr_keytab = os.path.join(self.testdir, USER_KTNAME)
+        kdcenv['KRB5CCNAME'] = 'FILE:' + os.path.join(
+            self.testdir, 'ccaches/user')
+        with (open(testlog, 'a')) as logfile:
+            logfile.write("\n%s\n" % kdcenv)
+            ksetup = subprocess.Popen(["kinit", "-kt", usr_keytab,
+                                       self.testuser],
+                                      stdout=logfile, stderr=logfile,
+                                      env=kdcenv, preexec_fn=os.setsid)
+            ksetup.wait()
+            if ksetup.returncode != 0:
+                raise ValueError('kinit %s failed' % self.testuser)
 
     def wait(self):
         for p in self.processes:

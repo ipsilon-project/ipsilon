@@ -25,6 +25,7 @@ import sys
 import subprocess
 import time
 import traceback
+from helpers.common import WRAP_HOSTNAME  # pylint: disable=relative-import
 
 
 logger = None
@@ -63,12 +64,27 @@ def try_wrappers(base, wrappers):
         else:
             raise ValueError('Socket Wrappers not available')
 
+    pkgcfg = subprocess.Popen(['pkg-config', '--exists', 'nss_wrapper'])
+    pkgcfg.wait()
+    if pkgcfg.returncode != 0:
+        if wrappers == 'auto':
+            return {}
+        else:
+            raise ValueError('Nss Wrappers not available')
+
     wrapdir = os.path.join(base, 'wrapdir')
     os.mkdir(wrapdir)
 
-    wenv = {'LD_PRELOAD': 'libsocket_wrapper.so',
+    hosts_file = os.path.join(base, 'hosts')
+    with open(hosts_file, 'w+') as f:
+        f.write('127.0.0.9 %s\n' % WRAP_HOSTNAME)
+
+    wenv = {'LD_PRELOAD': 'libsocket_wrapper.so libnss_wrapper.so',
             'SOCKET_WRAPPER_DIR': wrapdir,
-            'SOCKET_WRAPPER_DEFAULT_IFACE': '9'}
+            'SOCKET_WRAPPER_DEFAULT_IFACE': '9',
+            'SOCKET_WRAPPER_DEBUGLEVEL': '1',
+            'NSS_WRAPPER_HOSTNAME': WRAP_HOSTNAME,
+            'NSS_WRAPPER_HOSTS': hosts_file}
 
     return wenv
 
@@ -90,6 +106,7 @@ if __name__ == '__main__':
 
     env = try_wrappers(test.testdir, args['wrappers'])
     env['PYTHONPATH'] = test.rootdir
+    env['TESTDIR'] = test.testdir
 
     try:
         test.setup_servers(env)

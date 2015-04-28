@@ -93,6 +93,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=testnameid
 	PYTHONPATH=./ ./tests/tests.py --test=testrest
 	PYTHONPATH=./ ./tests/tests.py --test=testmapping
+	PYTHONPATH=./ ./tests/tests.py --test=testgssapi
 	PYTHONPATH=./ ./tests/tests.py --test=attrs
 	PYTHONPATH=./ ./tests/tests.py --test=trans
 	PYTHONPATH=./ ./tests/tests.py --test=pgdb
