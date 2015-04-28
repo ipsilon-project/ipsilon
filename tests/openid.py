@@ -44,7 +44,7 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'openid': 'yes',
          'openid_extensions': 'Attribute Exchange,Simple Registration,Teams',
          'pam': 'no',
-         'krb': 'no',
+         'gssapi': 'no',
          'ipa': 'no',
          'server_debugging': 'True'}
 

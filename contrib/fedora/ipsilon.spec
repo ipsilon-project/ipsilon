@@ -78,7 +78,7 @@ Client install tools
 summary:        IPA helpers
 Group:          System Environment/Base
 License:        GPLv3+
-Requires:       %{name}-authkrb = %{version}-%{release}
+Requires:       %{name}-authgssapi = %{version}-%{release}
 Requires:       %{name}-authform = %{version}-%{release}
 %if 0%{?rhel}
 Requires:       ipa-client
@@ -182,7 +182,7 @@ BuildArch:      noarch
 Provides a login plugin to authenticate against the local PAM stack
 
 
-%package authkrb
+%package authgssapi
 Summary:        mod_auth_gssapi based login plugin
 Group:          System Environment/Base
 License:        GPLv3+
@@ -190,7 +190,7 @@ Requires:       %{name} = %{version}-%{release}
 Requires:       mod_auth_gssapi
 BuildArch:      noarch
 
-%description authkrb
+%description authgssapi
 Provides a login plugin to allow authentication via the mod_auth_gssapi
 Apache module.
 
@@ -352,9 +352,9 @@ fi
 %files authpam
 %{python2_sitelib}/ipsilon/login/authpam*
 
-%files authkrb
-%{python2_sitelib}/ipsilon/login/authkrb*
-%{_datadir}/ipsilon/templates/login/krb.html
+%files authgssapi
+%{python2_sitelib}/ipsilon/login/authgssapi*
+%{_datadir}/ipsilon/templates/login/gssapi.html
 
 %files authldap
 %{python2_sitelib}/ipsilon/login/authldap*

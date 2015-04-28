@@ -46,7 +46,7 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
-         'krb': 'no',
+         'gssapi': 'no',
          'ipa': 'no',
          'server_debugging': 'True'}
 

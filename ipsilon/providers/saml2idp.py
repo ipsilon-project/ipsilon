@@ -433,7 +433,7 @@ class Installer(ProviderInstaller):
         validity = int(opts['saml2_metadata_validity'])
         meta = IdpMetadataGenerator(url, cert,
                                     timedelta(validity))
-        if 'krb' in opts and opts['krb'] == 'yes':
+        if 'gssapi' in opts and opts['gssapi'] == 'yes':
             meta.meta.add_allowed_name_format(
                 lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS)
 

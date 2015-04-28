@@ -28,7 +28,7 @@ Prerequisites:
 - A keytab if Kerberos authentication is desired
 - An unprivileged user to run the Ipsilon code (defaults to 'ipsilon')
 
-Currently there are only two available authentication modules, Kerberos and
+Currently there are only two available authentication modules, GSSAPI and
 PAM. The Kerberos module uses mod_auth_gssapi (which it will configure for
 you at install time), the Pam module simply uses the PAM stack with a default service
 name set to 'remote'.
@@ -39,7 +39,7 @@ not work properly. Please use a different PAM module, like pam_sss, pam_ldap,
 etc..
 
 Before you run the install script make sure to create an administrative user
-that can be authenticated either via PAM or Kerberos. The default name the
+that can be authenticated either via PAM or GSSAPI. The default name the
 installation script expects is 'admin' but that can be changed with the command
 line option named --admin-user
 
@@ -50,9 +50,10 @@ name is referenced and resolved by remote clients.
 
 Other options are available by running ipsilon-server-install --help
 
-To install a server that allow both Kerberos and PAM authentication use:
+To install a server that allow both GSSAPI (Kerberos) and PAM authentication
+use:
 
- $ ipsilon-server-install --krb=yes --pam=yes
+ $ ipsilon-server-install --gssapi=yes --pam=yes
 
 This command will generate a default instance called 'idp' (you can change the
 default name using the --instance switch). Multiple instance can be installed

@@ -93,10 +93,10 @@ class Installer(EnvHelpersInstaller):
                 raise Exception('No IPA tools found!')
 
         # Check if we already have a keytab for HTTP
-        if 'krb_httpd_keytab' in opts:
-            msg = "Searching for keytab in: %s" % opts['krb_httpd_keytab']
+        if 'gssapi_httpd_keytab' in opts:
+            msg = "Searching for keytab in: %s" % opts['gssapi_httpd_keytab']
             print >> sys.stdout, msg,
-            if os.path.exists(opts['krb_httpd_keytab']):
+            if os.path.exists(opts['gssapi_httpd_keytab']):
                 print >> sys.stdout, "... Found!"
                 return
             else:
@@ -105,7 +105,7 @@ class Installer(EnvHelpersInstaller):
         msg = "Searching for keytab in: %s" % HTTPD_IPA_KEYTAB
         print >> sys.stdout, msg,
         if os.path.exists(HTTPD_IPA_KEYTAB):
-            opts['krb_httpd_keytab'] = HTTPD_IPA_KEYTAB
+            opts['gssapi_httpd_keytab'] = HTTPD_IPA_KEYTAB
             print >> sys.stdout, "... Found!"
             return
         else:
@@ -167,11 +167,11 @@ class Installer(EnvHelpersInstaller):
 
         try:
             msg = "Trying to fetch keytab[%s] for %s" % (
-                  opts['krb_httpd_keytab'], princ)
+                  opts['gssapi_httpd_keytab'], princ)
             print >> sys.stdout, msg,
             subprocess.check_output([IPA_GETKEYTAB,
                                      '-s', server, '-p', princ,
-                                     '-k', opts['krb_httpd_keytab']],
+                                     '-k', opts['gssapi_httpd_keytab']],
                                     stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError, e:
             # unfortunately this one is fatal
@@ -182,12 +182,12 @@ class Installer(EnvHelpersInstaller):
 
         # Fixup permissions so only the ipsilon user can read these files
         pw = pwd.getpwnam(HTTPD_USER)
-        os.chown(opts['krb_httpd_keytab'], pw.pw_uid, pw.pw_gid)
+        os.chown(opts['gssapi_httpd_keytab'], pw.pw_uid, pw.pw_gid)
 
     def configure_server(self, opts):
         if opts['ipa'] != 'yes' and opts['ipa'] != 'auto':
             return
-        if opts['ipa'] != 'yes' and opts['krb'] == 'no':
+        if opts['ipa'] != 'yes' and opts['gssapi'] == 'no':
             return
 
         self.logger = logging.getLogger()
@@ -196,12 +196,12 @@ class Installer(EnvHelpersInstaller):
 
         self.get_keytab(opts)
 
-        # Forcibly use krb then pam modules
+        # Forcibly use gssapi then pam modules
         if 'lm_order' not in opts:
             opts['lm_order'] = []
-        opts['krb'] = 'yes'
-        if 'krb' not in opts['lm_order']:
-            opts['lm_order'].insert(0, 'krb')
+        opts['gssapi'] = 'yes'
+        if 'gssapi' not in opts['lm_order']:
+            opts['lm_order'].insert(0, 'gssapi')
         opts['form'] = 'yes'
         if not any(lm in opts['lm_order'] for lm in ('form', 'pam')):
             opts['lm_order'].append('form')
