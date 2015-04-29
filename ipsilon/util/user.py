@@ -156,7 +156,7 @@ class UserSession(Log):
 
     def save_user_attrs(self, userattrs):
         cherrypy.session['userattrs'] = userattrs
-        self._debug('Saved user attrs')
+        self.debug('Saved user attrs')
         self.userattrs = userattrs
 
     def _get_provider_attr_name(self, provider):
@@ -172,14 +172,14 @@ class UserSession(Log):
     def save_provider_data(self, provider, data):
         attr = self._get_provider_attr_name(provider)
         cherrypy.session[attr] = data
-        self._debug('Saved %s provider data' % provider)
+        self.debug('Saved %s provider data' % provider)
 
     def save_data(self, facility, name, data):
         """ Save named data in the session so it can be retrieved later """
         if facility not in cherrypy.session:
             cherrypy.session[facility] = dict()
         cherrypy.session[facility][name] = data
-        self._debug('Saved session data named [%s:%s]' % (facility, name))
+        self.debug('Saved session data named [%s:%s]' % (facility, name))
 
     def get_data(self, facility, name):
         """ Get named data in the session if available """
@@ -197,7 +197,7 @@ class UserSession(Log):
                 return
             cherrypy.session[facility][name] = None
             del cherrypy.session[facility][name]
-            self._debug('Nuked session data named [%s:%s]' % (facility, name))
+            self.debug('Nuked session data named [%s:%s]' % (facility, name))
         else:
             del cherrypy.session[facility]
-            self._debug('Nuked session facility [%s]' % (facility,))
+            self.debug('Nuked session facility [%s]' % (facility,))

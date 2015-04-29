@@ -85,20 +85,20 @@ class Page(Endpoint):
                 return op(*args[1:], **kwargs)
         else:
             if self._is_form_page:
-                self._debug("method: %s" % cherrypy.request.method)
+                self.debug("method: %s" % cherrypy.request.method)
                 op = getattr(self, cherrypy.request.method, None)
                 if callable(op):
                     # Basic CSRF protection
                     if cherrypy.request.method != 'GET':
                         url = self.get_url()
                         if 'referer' not in cherrypy.request.headers:
-                            self._debug("Missing referer in %s request to %s"
-                                        % (cherrypy.request.method, url))
+                            self.debug("Missing referer in %s request to %s"
+                                       % (cherrypy.request.method, url))
                             raise cherrypy.HTTPError(403)
                         referer = cherrypy.request.headers['referer']
                         if not self._check_referer(referer, url):
-                            self._debug("Wrong referer %s in request to %s"
-                                        % (referer, url))
+                            self.debug("Wrong referer %s in request to %s"
+                                       % (referer, url))
                             raise cherrypy.HTTPError(403)
                     return op(*args, **kwargs)
             else:

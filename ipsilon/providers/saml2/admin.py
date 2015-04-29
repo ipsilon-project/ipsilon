@@ -58,14 +58,14 @@ class NewSPAdminPage(AdminPage):
             name = None
             meta = None
             if 'content-type' not in cherrypy.request.headers:
-                self._debug("Invalid request, missing content-type")
+                self.debug("Invalid request, missing content-type")
                 message = "Malformed request"
                 message_type = ADMIN_STATUS_ERROR
                 return self.form_new(message, message_type)
             ctype = cherrypy.request.headers['content-type'].split(';')[0]
             if ctype != 'multipart/form-data':
-                self._debug("Invalid form type (%s), trying to cope" % (
-                            cherrypy.request.content_type,))
+                self.debug("Invalid form type (%s), trying to cope" % (
+                           cherrypy.request.content_type,))
             for key, value in kwargs.iteritems():
                 if key == 'name':
                     name = value
@@ -76,7 +76,7 @@ class NewSPAdminPage(AdminPage):
                     if hasattr(value, 'content_type'):
                         meta = value.fullvalue()
                     else:
-                        self._debug("Invalid format for 'meta'")
+                        self.debug("Invalid format for 'meta'")
                 elif key == 'metaurl':
                     if len(value) > 0:
                         try:
@@ -84,7 +84,7 @@ class NewSPAdminPage(AdminPage):
                             r.raise_for_status()
                             meta = r.content
                         except Exception, e:  # pylint: disable=broad-except
-                            self._debug("Failed to fetch metadata: " + repr(e))
+                            self.debug("Failed to fetch metadata: " + repr(e))
                             message = "Failed to fetch metadata: " + repr(e)
                             message_type = ADMIN_STATUS_ERROR
                             return self.form_new(message, message_type)
@@ -101,7 +101,7 @@ class NewSPAdminPage(AdminPage):
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
                 except Exception, e:  # pylint: disable=broad-except
-                    self._debug(repr(e))
+                    self.debug(repr(e))
                     message = "Failed to create Service Provider!"
                     message_type = ADMIN_STATUS_ERROR
             else:
@@ -247,7 +247,7 @@ class SPAdminPage(AdminPage):
                 message_type = ADMIN_STATUS_ERROR
                 return self.root_with_msg(message, message_type)
             except Exception as e:  # pylint: disable=broad-except
-                self._debug("Error: %s" % repr(e))
+                self.debug("Error: %s" % repr(e))
                 message = "Internal Error"
                 message_type = ADMIN_STATUS_ERROR
                 return self.root_with_msg(message, message_type)
@@ -300,7 +300,7 @@ class Saml2AdminPage(AdminPage):
             self.providers.remove(page.sp)
             self.sp.del_subtree(name)
         except Exception, e:  # pylint: disable=broad-except
-            self._debug("Failed to remove provider %s: %s" % (name, str(e)))
+            self.debug("Failed to remove provider %s: %s" % (name, str(e)))
 
     def add_sps(self):
         if self.cfg.idp:
@@ -310,7 +310,7 @@ class Saml2AdminPage(AdminPage):
                     self.del_sp(sp.name)
                     self.add_sp(sp.name, sp)
                 except Exception, e:  # pylint: disable=broad-except
-                    self._debug("Failed to find provider %s: %s" % (p, str(e)))
+                    self.debug("Failed to find provider %s: %s" % (p, str(e)))
 
     def mount(self, page):
         self.menu = page.menu

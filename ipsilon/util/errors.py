@@ -31,7 +31,7 @@ class Errors(Page):
         return str(output_page)
 
     def handler(self, status, message, traceback, version):
-        self._debug(repr([status, message, traceback, version]))
+        self.debug(repr([status, message, traceback, version]))
         return self._error_template('internalerror.html',
                                     title='Internal Error')
 

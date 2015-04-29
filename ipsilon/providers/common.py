@@ -40,14 +40,14 @@ class AuthenticationError(ProviderException):
     def __init__(self, message, code):
         super(AuthenticationError, self).__init__(message)
         self.code = code
-        self._debug('%s [%s]' % (message, code))
+        self.debug('%s [%s]' % (message, code))
 
 
 class InvalidRequest(ProviderException):
 
     def __init__(self, message):
         super(InvalidRequest, self).__init__(message)
-        self._debug(message)
+        self.debug(message)
 
 
 class ProviderBase(ConfigHelper, PluginObject):
@@ -68,7 +68,7 @@ class ProviderBase(ConfigHelper, PluginObject):
         self._root = root
         # init pages and admin interfaces
         self.tree = self.get_tree(site)
-        self._debug('IdP Provider registered: %s' % self.name)
+        self.debug('IdP Provider registered: %s' % self.name)
 
     def on_enable(self):
         self._root.add_subtree(self.name, self.tree)
@@ -103,9 +103,9 @@ class ProviderPageBase(Page):
         else:
             raise cherrypy.HTTPError(405)
 
-    def _debug(self, fact):
+    def debug(self, fact):
         superfact = '%s: %s' % (self.plugin_name, fact)
-        super(ProviderPageBase, self)._debug(superfact)
+        super(ProviderPageBase, self).debug(superfact)
 
     def _audit(self, fact):
         cherrypy.log('%s: %s' % (self.plugin_name, fact))
@@ -141,14 +141,14 @@ class LoadProviders(Log):
         site[FACILITY] = plugins
 
         available = plugins.available.keys()
-        self._debug('Available providers: %s' % str(available))
+        self.debug('Available providers: %s' % str(available))
 
         for item in plugins.available:
             plugin = plugins.available[item]
             plugin.register(root, site)
 
         for item in plugins.enabled:
-            self._debug('Provider plugin in enabled list: %s' % item)
+            self.debug('Provider plugin in enabled list: %s' % item)
             if item not in plugins.available:
                 continue
             plugins.available[item].enable()
@@ -197,9 +197,9 @@ class RestProviderBase(RestPage):
         else:
             raise cherrypy.HTTPError(405)
 
-    def _debug(self, fact):
+    def debug(self, fact):
         superfact = '%s: %s' % (self.plugin_name, fact)
-        super(RestProviderBase, self)._debug(superfact)
+        super(RestProviderBase, self).debug(superfact)
 
     def _audit(self, fact):
         cherrypy.log('%s: %s' % (self.plugin_name, fact))

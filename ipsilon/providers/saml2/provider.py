@@ -32,7 +32,7 @@ class InvalidProviderId(ProviderException):
     def __init__(self, code):
         message = 'Invalid Provider ID: %s' % code
         super(InvalidProviderId, self).__init__(message)
-        self._debug(message)
+        self.debug(message)
 
 
 class NameIdNotAllowed(Exception):
@@ -207,12 +207,12 @@ class ServiceProvider(ServiceProviderConfig):
         self.load_config()
 
     def get_valid_nameid(self, nip):
-        self._debug('Requested NameId [%s]' % (nip.format,))
+        self.debug('Requested NameId [%s]' % (nip.format,))
         if nip.format is None:
             return SAML2_NAMEID_MAP[self.default_nameid]
         else:
             allowed = self.allowed_nameids
-            self._debug('Allowed NameIds %s' % (repr(allowed)))
+            self.debug('Allowed NameIds %s' % (repr(allowed)))
             for nameid in allowed:
                 if nip.format == SAML2_NAMEID_MAP[nameid]:
                     return nip.format
@@ -291,7 +291,7 @@ class IdentityProvider(Log):
     def add_provider(self, sp):
         self.server.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP,
                                           sp['metadata'])
-        self._debug('Added SP %s' % sp['name'])
+        self.debug('Added SP %s' % sp['name'])
 
     def get_login_handler(self, dump=None):
         if dump:

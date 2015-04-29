@@ -255,14 +255,14 @@ class Login(Page):
         self._site[FACILITY] = plugins
 
         available = plugins.available.keys()
-        self._debug('Available login managers: %s' % str(available))
+        self.debug('Available login managers: %s' % str(available))
 
         for item in plugins.available:
             plugin = plugins.available[item]
             plugin.register(self, self._site)
 
         for item in plugins.enabled:
-            self._debug('Login plugin in enabled list: %s' % item)
+            self.debug('Login plugin in enabled list: %s' % item)
             if item not in plugins.available:
                 continue
             plugins.available[item].enable()

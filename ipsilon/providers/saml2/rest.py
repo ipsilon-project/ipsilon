@@ -98,10 +98,10 @@ class SPS(RestProviderBase):
             spc = ServiceProviderCreator(obj)
             sp = spc.create_from_buffer(name, metadata)
         except (InvalidProviderId, ServerAddProviderFailedError) as e:
-            self._debug(repr(e))
+            self.debug(repr(e))
             return rest_error(400, str(e))
         except Exception, e:  # pylint: disable=broad-except
-            self._debug(repr(e))
+            self.debug(repr(e))
             return rest_error(500, "Failed to create Service Provider")
 
         obj.admin.add_sp(name, sp)

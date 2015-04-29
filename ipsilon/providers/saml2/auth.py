@@ -35,7 +35,7 @@ class UnknownProvider(ProviderException):
 
     def __init__(self, message):
         super(UnknownProvider, self).__init__(message)
-        self._debug(message)
+        self.debug(message)
 
 
 class AuthenticateRequest(ProviderPageBase):
@@ -95,7 +95,7 @@ class AuthenticateRequest(ProviderPageBase):
                                                  e, message)
             raise UnknownProvider(msg)
 
-        self._debug('SP %s requested authentication' % login.remoteProviderId)
+        self.debug('SP %s requested authentication' % login.remoteProviderId)
 
         return login
 
@@ -108,13 +108,13 @@ class AuthenticateRequest(ProviderPageBase):
         try:
             login = self._parse_request(request)
         except InvalidRequest, e:
-            self._debug(str(e))
+            self.debug(str(e))
             raise cherrypy.HTTPError(400, 'Invalid SAML request token')
         except UnknownProvider, e:
-            self._debug(str(e))
+            self.debug(str(e))
             raise cherrypy.HTTPError(400, 'Unknown Service Provider')
         except Exception, e:  # pylint: disable=broad-except
-            self._debug(str(e))
+            self.debug(str(e))
             raise cherrypy.HTTPError(500)
 
         return login
@@ -305,7 +305,7 @@ class AuthenticateRequest(ProviderPageBase):
             raise cherrypy.HTTPError(501)
         elif login.protocolProfile == lasso.LOGIN_PROTOCOL_PROFILE_BRWS_POST:
             login.buildAuthnResponseMsg()
-            self._debug('POSTing back to SP [%s]' % (login.msgUrl))
+            self.debug('POSTing back to SP [%s]' % (login.msgUrl))
             context = {
                 "title": 'Redirecting back to the web application',
                 "action": login.msgUrl,

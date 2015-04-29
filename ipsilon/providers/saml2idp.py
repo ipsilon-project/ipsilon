@@ -68,14 +68,14 @@ class Continue(AuthenticateRequest):
         self.stage = transdata['saml2_stage']
 
         if user.is_anonymous:
-            self._debug("User is marked anonymous?!")
+            self.debug("User is marked anonymous?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(401)
 
-        self._debug('Continue auth for %s' % user.name)
+        self.debug('Continue auth for %s' % user.name)
 
         if 'saml2_request' not in transdata:
-            self._debug("Couldn't find Request dump?!")
+            self.debug("Couldn't find Request dump?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(400)
         dump = transdata['saml2_request']
@@ -83,10 +83,10 @@ class Continue(AuthenticateRequest):
         try:
             login = self.cfg.idp.get_login_handler(dump)
         except Exception, e:  # pylint: disable=broad-except
-            self._debug('Failed to load status from dump: %r' % e)
+            self.debug('Failed to load status from dump: %r' % e)
 
         if not login:
-            self._debug("Empty Request dump?!")
+            self.debug("Empty Request dump?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(400)
 
@@ -119,7 +119,7 @@ class SLO(ProviderPageBase):
 
     def __init__(self, *args, **kwargs):
         super(SLO, self).__init__(*args, **kwargs)
-        self._debug('SLO init')
+        self.debug('SLO init')
         self.Redirect = RedirectLogout(*args, **kwargs)
 
 
@@ -306,7 +306,7 @@ Provides SAML 2.0 authentication infrastructure. """
         try:
             idp = IdentityProvider(self)
         except Exception, e:  # pylint: disable=broad-except
-            self._debug('Failed to init SAML2 provider: %r' % e)
+            self.debug('Failed to init SAML2 provider: %r' % e)
             return None
 
         self._root.logout.add_handler(self.name, self.idp_initiated_logout)
@@ -322,7 +322,7 @@ Provides SAML 2.0 authentication infrastructure. """
             try:
                 idp.add_provider(sp)
             except Exception, e:  # pylint: disable=broad-except
-                self._debug('Failed to add SP %s: %r' % (sp['name'], e))
+                self.debug('Failed to add SP %s: %r' % (sp['name'], e))
 
         return idp
 
@@ -339,12 +339,12 @@ Provides SAML 2.0 authentication infrastructure. """
 
         For the current user only.
         """
-        self._debug("IdP-initiated SAML2 logout")
+        self.debug("IdP-initiated SAML2 logout")
         us = UserSession()
 
         saml_sessions = us.get_provider_data('saml2')
         if saml_sessions is None:
-            self._debug("No SAML2 sessions to logout")
+            self.debug("No SAML2 sessions to logout")
             return
         session = saml_sessions.get_next_logout(remove=False)
         if session is None:

@@ -53,7 +53,7 @@ class LoadExtensions(Log):
         self.plugins.get_plugin_data()
 
         available = self.plugins.available.keys()
-        self._debug('Available Extensions: %s' % str(available))
+        self.debug('Available Extensions: %s' % str(available))
 
     def enable(self, enabled):
         for item in enabled:
