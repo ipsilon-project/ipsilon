@@ -33,15 +33,6 @@ class LoginStack(AdminPlugins):
         self.children.remove(self.__dict__[name])
         del self.__dict__[name]
 
-    def get_children_urls(self):
-        urls = dict()
-        for item in self.children:
-            name = getattr(item, 'name', None)
-            if name:
-                urls['%s_url' % name] = cherrypy.url('/%s/%s' % (self.mount,
-                                                                 name))
-        return urls
-
     def root_with_msg(self, message=None, message_type=None, changed=None):
         # Force the url to be that of the Login Stack
         kwargs = {'title': self.title,
@@ -51,6 +42,7 @@ class LoginStack(AdminPlugins):
                   'newurl': self.url,
                   'sections': list()}
         for child in self.children:
+            # pylint: disable=protected-access
             plugins = child._site[child.facility]
 
             if changed is None:
