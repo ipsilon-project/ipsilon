@@ -197,7 +197,8 @@ class AuthenticateRequest(ProviderPageBase):
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
             nameid = '_' + uuid.uuid4().hex
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
-            nameid = us.get_data('user', 'gssapi_principal_name')
+            userattrs = us.get_user_attrs()
+            nameid = userattrs.get('gssapi_principal_name')
         elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
             nameid = us.get_user().email
             if not nameid:

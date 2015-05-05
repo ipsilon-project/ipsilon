@@ -94,8 +94,9 @@ class HttpSessions(object):
         session = self.get_session(url)
         allow_redirects = False
         if krb:
-            # In at least the test instance we don't get back a negotiate
-            # blob to do mutual authentication against.
+            # python-requests-kerberos isn't too bright about doing mutual
+            # authentication and it tries to do it on any non-401 response
+            # which doesn't work in our case since we follow redirects.
             kerberos_auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
             kwargs['auth'] = kerberos_auth
             allow_redirects = True
