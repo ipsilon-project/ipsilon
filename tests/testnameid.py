@@ -2,6 +2,8 @@
 # Copyright (C) 2015 Ipsilon Project Contributors
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.common import WRAP_HOSTNAME  # pylint: disable=relative-import
+from helpers.common import TESTREALM  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
 import os
@@ -27,7 +29,8 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
-         'gssapi': 'no',
+         'gssapi': 'yes',
+         'gssapi_httpd_keytab': '${TESTDIR}/${HTTP_KTNAME}',
          'ipa': 'no',
          'server_debugging': 'True'}
 
@@ -39,7 +42,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
 
 
 sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
+        'saml_idp_metadata': 'http://%s:45080/idp1/saml2/metadata' %
+        WRAP_HOSTNAME,
         'saml_secure_setup': 'False',
         'saml_auth': '/sp',
         'saml_nameid': '${NAMEID}',
@@ -106,14 +110,26 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('testnameid', __file__)
 
     def setup_servers(self, env=None):
+        os.mkdir("%s/ccaches" % self.testdir)
+
+        print "Installing KDC server"
+        kdcenv = self.setup_kdc(env)
+
+        print "Creating principals and keytabs"
+        self.setup_keys(kdcenv)
+
+        print "Getting a TGT"
+        self.kinit_keytab(kdcenv)
+
         print "Installing IDP server"
         name = 'idp1'
-        addr = '127.0.0.10'
+        addr = WRAP_HOSTNAME
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
         print "Starting IDP's httpd server"
+        env.update(kdcenv)
         self.start_http_server(conf, env)
 
         for spdata in generate_sp_list():
@@ -142,38 +158,53 @@ if __name__ == '__main__':
         'persistent':  True,
         'windows':     False,   # not supported
         'encrypted':   False,   # not supported
-        'kerberos':    False,   # no auth with kerberos, no princ
+        'kerberos':    True,
         'email':       True,
         'unspecified': True,
         'entity':      False,   # not supported
     }
 
     expected_re = {
-        'x509':        None,    # not supported
+        'x509':        'Unauthorized',    # not supported
         'transient':   '_[0-9a-f]{32}',
         'persistent':  '_[0-9a-f]{128}',
-        'windows':     None,    # not supported
-        'encrypted':   None,    # not supported
-        'kerberos':    False,   # no auth with kerberos, no princ
+        'windows':     'Unauthorized',    # not supported
+        'encrypted':   'Unauthorized',    # not supported
+        'kerberos':    '%s@%s' % (user, TESTREALM),
         'email':       '%s@.*' % user,
         'unspecified': user,
-        'entity':      False,   # not supported
+        'entity':      'Unauthorized',   # not supported
     }
+
+    testdir = os.environ['TESTDIR']
+
+    krb5conf = os.path.join(testdir, 'krb5.conf')
+    kenv = {'PATH': '/sbin:/bin:/usr/sbin:/usr/bin',
+            'KRB5_CONFIG': krb5conf,
+            'KRB5CCNAME': 'FILE:' + os.path.join(testdir, 'ccaches/user')}
+
+    for kkey in kenv:
+        os.environ[kkey] = kenv[kkey]
 
     sp_list = generate_sp_list()
     for sp in sp_list:
+        krb = False
         spname = sp['nameid']
         spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
+        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME, user,
+                        'ipsilon')
         sess.add_server(spname, spurl)
 
         print ""
         print "testnameid: Testing NameID format %s ..." % spname
 
+        if spname == 'kerberos':
+            krb = True
+
         print "testnameid: Authenticate to IDP ...",
         try:
-            sess.auth_to_idp(idpname)
+            sess.auth_to_idp(idpname, krb=krb)
         except Exception, e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
@@ -200,8 +231,8 @@ if __name__ == '__main__':
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             if not re.match(expected_re[spname], page.text):
                 raise ValueError(
-                    'id %s did not match expression %s' %
-                    (id, expected_re[spname])
+                    'page did not contain expression %s' %
+                    expected_re[spname]
                 )
         except ValueError, e:
             if expected[spname]:
@@ -213,7 +244,8 @@ if __name__ == '__main__':
 
         print "testnameid: Try authentication failure ...",
         newsess = HttpSessions()
-        newsess.add_server(idpname, 'http://127.0.0.10:45080', user, 'wrong')
+        newsess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+                           user, 'wrong')
         try:
             newsess.auth_to_idp(idpname)
             print >> sys.stderr, " ERROR: Authentication should have failed"
@@ -232,7 +264,8 @@ if __name__ == '__main__':
     ids = []
     for i in xrange(4):
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
+        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+                        user, 'ipsilon')
         sess.add_server(spname, spurl)
         print "testnameid: Authenticate to IDP ...",
         try:
@@ -289,7 +322,8 @@ if __name__ == '__main__':
     ids = []
     for i in xrange(4):
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
+        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+                        user, 'ipsilon')
         sess.add_server(spname, spurl)
         print "testnameid: Authenticate to IDP ...",
         try:
