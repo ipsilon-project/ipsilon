@@ -1,0 +1,177 @@
+.\" Copyright (C) 2015 Ipsilon Project Contributors
+.\"
+.TH "ipsilon-server-install" "1" "1.0.0" "Ipsilon" "Ipsilon Manual Pages"
+.SH "NAME"
+ipsilon\-server\-install \- Configure an Ipsilon Identity Provider instance
+.SH "SYNOPSIS"
+ipsilon\-server\-install [OPTION]...
+.SH "DESCRIPTION"
+Configure an Ipsilon instance to provide identity services using any of the supported and enabled protocols.
+
+Ipsilon uses a plugable framework so some options may not be available, depending on what plugins have been installed.
+
+Ipsilon supports three types of plugins:
+
+1. Authentication provider plugins \- implements an authentication protocol such as SAML 2, OpenID or Persona. At least one needs to be enabled.
+.br
+2. Login plugins \- mechanisms for authenticating including GSSAPI, LDAP, PAM, etc. At least one should be enabled.
+.br
+3. Info plugins \- sources where additional attributes of the user may be obtained.
+.br
+
+There are also environment helper options which aid in configuring the Identity Provider for a particular environment, such as a FreeIPA domain.
+
+The installation details are logged to /var/log/ipsilon\-install.log.
+.SH "DATABASES"
+Ipsilon stores configuration and session information in database tables. By default, a set of sqlite databases are used. If a full RDBMS is desired then the \fB\-\-database\-url\fR and/or \fB*\-dburi\fR options can be used to provide the database URIs. This should probably be used in load\-balanced situations so all servers can use the same database.
+
+An example of a specific URI is
+.br
+\-\-users_dburi=postgresql://@dbserver.example.com:45432/users
+
+The templatized version would be
+.br
+\-\-database\-url=postgresql://@dbserver.example.com:45432/%(dbname)s
+.SH "OPTIONS"
+.SS BASIC OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show this help message and exit
+.TP
+\fB\-\-version\fR
+Show program's version number and exit
+.TP
+\fB\-o\fR \fILM_ORDER\fR, \fB\-\-login\-managers\-order\fR \fILM_ORDER\fR
+Comma separated list of login managers
+.TP
+\fB\-\-hostname\fR \fIHOSTNAME\fR
+The hostname used by clients to reach this instance. This is used to determine the URLs provided in SAML metadata
+.TP
+\fB\-\-instance\fR \fIINSTANCE\fR
+Ipsilon instance name
+.TP
+\fB\-\-system\-user\fR \fISYSTEM_USER\fI
+User account used to run the server
+.TP
+\fB\-\-admin\-user\fR \fIADMIN_USER\fR
+User account that is assigned Ipsilon admin privileges
+.TP
+\fB\-\-database\-url\fR \fIDATABASE_URL\fR
+The (templatized) database URL to use
+.TP
+\fB\-\-secure\fR
+Boolean to turn on all security checks
+.TP
+\fB\-\-server\-debugging\fR
+Enable debugging
+.TP
+\fB\-\-uninstall\fR
+Uninstall the server and all data
+.TP
+\fB\-\-yes\fR
+Always answer yes
+.TP
+\fB\-\-admin\-dburi\fR \fIADMIN_DBURI\fR
+Configuration database URI (override template)
+.TP
+\fB\-\-users\-dburi \fIUSERS_DBURI\fR
+User configuration database URI (override template)
+.TP
+\fB\-\-transaction\-dburi\fR \fITRANSACTION_DBURI\fR
+Transaction database URI (override template)
+.SS AUTHENTICATION PROVIDER OPTIONS
+.TP
+\fB\-\-openid\fR
+Configure OpenID Provider
+.TP
+\fB\-\-openid\-dburi\fR \fIOPENID_DBURI\fR
+OpenID database URI (override template)
+.TP
+\fB\-\-persona\fR
+Configure Persona Provider
+.TP
+\fB\-\-saml2\fR
+Configure SAML2 Provider
+.TP
+\fB\-\-saml2\-metadata\-validity\fR \fISAML2_METADATA_VALIDITY\fR
+Metadata validity period in days (default \- 1825)
+
+.SS LOGIN MANAGER OPTIONS
+.TP
+\fB\-\-form\fR
+Configure External Form authentication
+.TP
+\fB\-\-form\-service\fR \fIFORM_SERVICE\fR
+PAM service name to use for authentication
+.TP
+\fB\-\-fas\fR
+Configure FAS (Fedora Authentication System) authentication
+.TP
+\fB\-\-ldap\fR
+Configure LDAP authentication
+.TP
+\fB\-\-ldap\-server\-url\fR \fILDAP_SERVER_URL\fR
+LDAP Server Url
+.TP
+\fB\-\-ldap\-bind\-dn\-template\fR \fILDAP_BIND_DN_TEMPLATE\fR
+LDAP Bind DN Template
+.TP
+\fB\-\-ldap\-tls\-level\fR \fILDAP_TLS_LEVEL\fR
+LDAP TLS level
+.TP
+\fB\-\-ldap\-base\-dn\fR \fILDAP_BASE_DN\fR
+LDAP Base DN
+.TP
+\fB\-\-krb\fR
+Configure Kerberos authentication
+.TP
+\fB\-\-krb\-httpd\-keytab\fR \fIKRB_HTTPD_KEYTAB\fR
+Kerberos keytab location for HTTPD
+.TP
+\fB\-\-pam\fR
+Configure PAM authentication
+.TP
+\fB\-\-pam\-service\fR \fIPAM_SERVICE\fR
+PAM service name to use for authentication
+.TP
+\fB\-\-testauth\fR
+Configure testing environment authentication
+
+.SS INFO PROVIDER OPTIONS
+\fB\-\-info\-ldap\fR
+Use LDAP to populate user attrs
+.TP
+\fB\-\-info\-ldap\-server\-url\fR \fIINFO_LDAP_SERVER_URL\fR
+LDAP Server Url
+.TP
+\fB\-\-info\-ldap\-bind\-dn\fR \fIINFO_LDAP_BIND_DN\fR
+LDAP Bind DN
+.TP
+\fB\-\-info\-ldap\-bind\-pwd\fR \fIINFO_LDAP_BIND_PWD\fR
+LDAP Bind Password
+.TP
+\fB\-\-info\-ldap\-user\-dn\-template\fR \fIINFO_LDAP_USER_DN_TEMPLATE\fR
+LDAP User DN Template
+.TP
+\fB\-\-info\-ldap\-base\-dn\fR \fIINFO_LDAP_BASE_DN\fR
+LDAP Base DN
+.TP
+\fB\-\-info\-nss\fR
+Use passwd data to populate user attrs
+.TP
+\fB\-\-info\-sssd\fR \fI
+Use mod_lookup_identity and SSSD to populate user attrs. SSSD must be pre\-configured for at least one domain.
+.TP
+\fB\-\-info\-sssd\-domain\fR \fIINFO_SSSD_DOMAIN\fR
+SSSD domain to enable mod_lookup_identity for (default is all)
+
+.SS ENVIRONMENT HELPER OPTIONS
+\fB\-\-ipa\fR
+Helper for IPA joined machines. This configures Ipsilon for Kerberos authentication.
+.SH "EXIT STATUS"
+0 if the installation was successful
+
+1 if an error occurred
+.SH "SEE ALSO"
+.BR ipsilon(7),
+.BR ipsilon\-client\-install(1)
