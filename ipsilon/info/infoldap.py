@@ -198,9 +198,6 @@ class Installer(InfoProviderInstaller):
             config['server url'] = opts['info_ldap_server_url']
         elif 'ldap_server_url' in opts:
             config['server url'] = opts['ldap_server_url']
-        config = {'bind dn': opts['info_ldap_bind_dn']}
-        config = {'bind password': opts['info_ldap_bind_pwd']}
-        config = {'user dn template': opts['info_ldap_user_dn_template']}
         if 'info_ldap_bind_dn' in opts:
             config['bind dn'] = opts['info_ldap_bind_dn']
         if 'info_ldap_bind_pwd' in opts:
