@@ -9,6 +9,7 @@ from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.policy import Policy
+from ipsilon.util import config as pconfig
 from string import Template
 import cherrypy
 import time
@@ -46,7 +47,13 @@ class InfoProvider(InfoProviderBase):
         super(InfoProvider, self).__init__(*pargs)
         self.mapper = Policy(sssd_mapping)
         self.name = 'sssd'
-        self.new_config(self.name)
+        self.new_config(
+            self.name,
+            pconfig.Condition(
+                'preconfigured',
+                'SSSD can only be used when pre-configured',
+                False),
+        )
 
     def _get_user_data(self, user):
         reply = dict()
@@ -79,6 +86,18 @@ class InfoProvider(InfoProviderBase):
             pass
 
         return reply
+
+    def save_plugin_config(self, *args, **kwargs):
+        raise ValueError('Configuration cannot be modified live for SSSD')
+
+    def get_config_obj(self):
+        return None
+
+    def enable(self):
+        self.refresh_plugin_config()
+        if not self.get_config_value('preconfigured'):
+            raise Exception("SSSD Can be enabled only if pre-configured")
+        super(InfoProvider, self).enable()
 
 
 CONF_TEMPLATE = """
@@ -192,6 +211,8 @@ class Installer(InfoProviderInstaller):
         po.name = 'sssd'
         po.wipe_data()
         po.wipe_config_values()
+        config = {'preconfigured': True}
+        po.save_plugin_config(config)
 
         # Update global config to add info plugin
         po.is_enabled = True

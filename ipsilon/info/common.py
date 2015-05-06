@@ -65,7 +65,13 @@ class Info(Log):
             if item not in plugins.available:
                 self.debug('Info Plugin %s not found' % item)
                 continue
-            plugins.available[item].enable()
+            try:
+                plugins.available[item].enable()
+            except Exception as e:  # pylint: disable=broad-except
+                while item in plugins.enabled:
+                    plugins.enabled.remove(item)
+                self.debug("Info Plugin %s couldn't be enabled: %s" % (
+                    item, str(e)))
 
     def get_user_attrs(self, user, requested=None):
         plugins = self._site[FACILITY].available

@@ -282,7 +282,10 @@ class AdminPlugins(AdminPage):
         except AdminError, e:
             return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if not obj.is_enabled:
-            obj.enable()
+            try:
+                obj.enable()
+            except Exception as e:  # pylint: disable=broad-except
+                return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
             obj.save_enabled_state()
             msg = "Plugin %s enabled" % obj.name
         return self.root_with_msg(msg, ADMIN_STATUS_OK,
@@ -297,7 +300,10 @@ class AdminPlugins(AdminPage):
         except AdminError, e:
             return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if obj.is_enabled:
-            obj.disable()
+            try:
+                obj.disable()
+            except Exception as e:  # pylint: disable=broad-except
+                return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
             obj.save_enabled_state()
             msg = "Plugin %s disabled" % obj.name
         return self.root_with_msg(msg, ADMIN_STATUS_OK,
