@@ -1,0 +1,94 @@
+.\" Copyright (C) 2015 Ipsilon Project Contributors
+.\"
+.TH "ipsilon-client-install" "1" "1.0.0" "Ipsilon" "Ipsilon Manual Pages"
+.SH "NAME"
+ipsilon\-client\-install \- Configure an Ipsilon client
+.SH "SYNOPSIS"
+ipsilon\-client\-install [OPTION]...
+.SH "DESCRIPTION"
+Configures a server to be used as a Service Provider (SP) in federation with an Ipsilon instance as its Identity Provider (IdP).
+
+By default, Apache is configured using mod_auth_mellon to handle the SAML 2 Federation.
+.SH "OPTIONS"
+\fB\-h\fR, \fB\-\-help\fR
+Show help message and exit
+.TP
+\fB\-\-version\fR
+Show program's version number and exit
+.TP
+\fB\-\-hostname\fR \fIHOSTNAME\fR
+Machine's fully qualified host name
+.TP
+\fB\-\-port\fR PORT
+Port number that SP listens on. The default is to not set a specific listen port. The \-\-saml\-secure\-setup option can affect this.
+.TP
+\fB\-\-admin\-user\fR \fIADMIN_USER\fR
+Account allowed to create a Service Provider (SP). The default is admin.
+.TP
+\fB\-\-admin\-password\fR \fIADMIN_PASSWORD\fR
+File containing the password for the account used toc reate a SP (\- to read from stdin)
+.TP
+\fB\-\-httpd\-user\fR \fIHTTPD_USER\fR
+Web server account used. Some files created by the installation will be chown(1) to this user. The default is apache.
+.TP
+\fB\-\-saml\fR
+Boolean value whether to install a saml2 SP or not. Default is True.
+.TP
+\fB\-\-saml\-idp\-url\fR \fISAML_IDP_URL\fR
+An URL of the Ipsilon instance to register the SP with.
+.TP
+\fB\-\-saml\-idp\-metadata\fR \fISAML_IDP_METADATA\fR
+An URL pointing at the IDP Metadata (FILE or HTTP)
+.TP
+\fB\-\-saml\-no\-httpd\fR
+Do not configure httpd. The default is False.
+.TP
+\fB\-\-saml\-base\fR \fISAML_BASE\fR
+Where saml2 authdata is available (default: /)
+.TP
+\fB\-\-saml\-auth\fR \fISAML_AUTH\fR
+Where saml2 authentication is enforced. The default is /saml2protected. This only applies when configuring Apache.
+.TP
+\fB\-\-saml\-sp\fR \fISAML_SP\fR
+Where saml communication happens. The default is /saml2.
+.TP
+\fB\-\-saml\-sp\-logout\fR \fISAML_SP_LOGOUT\fR
+Single Logout URL. The default is /saml2/logout.
+.TP
+\fB\-\-saml\-sp\-post\fR \fISAML_SP_POST\fR
+Post response URL. The default is /saml2/postResponse.
+.TP
+\fB\-\-saml\-secure\-setup\fR
+Turn on all security checks. The default is True.
+.TP
+\fB\-\-saml\-nameid\fR
+The saml2 NameID format that this SP will use. Must be one of: x509,transient,persistent,windows,encrypted,kerberos,email,unspecified,entity. The default is unspecified.
+.TP
+\fB\-\-saml\-sp\-name\fR \fISAML_SP_NAME\fR
+The SP name to register with the IdP.
+.TP
+\fB\-\-debug\fR
+Turn on script debugging
+.TP
+\fB\-\-uninstall\fR
+Uninstall the ipsilon client
+.SH "CERTIFICATES"
+Two levels of SSL certificates may be used in an Ipsilon instalation.
+
+An X509 signing certificate is used by Ipsilon to sign SAML 2 messages. The public key of the certificate is passed in the SAML metadata exchanged between the Identity Provider and the Service Provider. This certificate and key are automatically generated.
+
+Any page on the SP that will use the authentication provided by the IdP will need to be protected by SSL in order to access the secure cookie that the IdP provides. Ipsilon does not provide this certificate.
+.SH "EXAMPLES"
+Install a SAML 2 SP using the  IdP instance idp on idp.example.com.
+
+   # ipsilon\-client\-install \-\-saml\-idp\-metadata https://idp.example.com/idp/saml2/metadata \-\-saml\-auth /protected
+
+Any unauthenticated request to /protected will trigger a redirect to the IdP for authentication.
+
+Once the SP has been generated it needs to be registered with the IdP.
+.SH "EXIT STATUS"
+0 if the installation was successful
+
+1 if an error occurred
+.SH "SEE ALSO"
+.BR ipsilon(7)
