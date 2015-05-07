@@ -119,7 +119,7 @@ Info plugin that uses LDAP to retrieve user data. """
             raise Exception('No unique user object could be found!')
         data = dict()
         for name, value in result[0][1].iteritems():
-            if type(value) is list and len(value) == 1:
+            if isinstance(value, list) and len(value) == 1:
                 value = value[0]
             data[name] = value
         return data

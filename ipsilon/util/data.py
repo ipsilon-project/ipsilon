@@ -58,7 +58,6 @@ class SqlStore(Log):
             # It's not possible to share connections for SQLite between
             #  threads, so let's use the SingletonThreadPool for them
             pool_args = {'poolclass': SingletonThreadPool}
-        # pylint: disable=star-args
         self._dbengine = create_engine(engine_name, **pool_args)
         self.is_readonly = False
 

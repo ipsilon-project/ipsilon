@@ -59,5 +59,4 @@ class LoginStack(AdminPlugins):
 
             kwargs['sections'].append(targs)
 
-        # pylint: disable=star-args
         return self._template(self.template, **kwargs)

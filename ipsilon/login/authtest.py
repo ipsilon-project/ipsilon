@@ -56,7 +56,6 @@ class TestAuth(LoginFormBase):
             error_username=not username
         )
         self.lm.set_auth_error()
-        # pylint: disable=star-args
         return self._template('login/form.html', **context)
 
 

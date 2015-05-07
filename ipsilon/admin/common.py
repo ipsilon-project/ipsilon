@@ -97,14 +97,14 @@ class AdminPluginConfig(AdminPage):
                         aname = '%s_%s' % (name, a)
                         if aname in kwargs:
                             value.append(a)
-                elif type(option) is pconfig.ComplexList:
-                    value = get_complex_list_value(name,
+                elif isinstance(option, pconfig.MappingList):
+                    value = get_mapping_list_value(name,
                                                    option.get_value(),
                                                    **kwargs)
                     if value is None:
                         continue
-                elif type(option) is pconfig.MappingList:
-                    value = get_mapping_list_value(name,
+                elif isinstance(option, pconfig.ComplexList):
+                    value = get_complex_list_value(name,
                                                    option.get_value(),
                                                    **kwargs)
                     if value is None:
@@ -257,7 +257,6 @@ class AdminPlugins(AdminPage):
             targs['order_name'] = '%s_order_form' % self.name
             targs['order_action'] = self.order.url
 
-        # pylint: disable=star-args
         return self._template(self.template, **targs)
 
     def root(self, *args, **kwargs):
@@ -351,7 +350,6 @@ class Admin(AdminPage):
     def scheme(self):
         cherrypy.response.headers.update({'Content-Type': 'image/svg+xml'})
         urls = self.get_menu_urls()
-        # pylint: disable=star-args
         return str(self._template('admin/ipsilon-scheme.svg', **urls))
     scheme.public_function = True
 

@@ -44,7 +44,7 @@ class AuthenticateRequest(ProviderPageBase):
         if args is not None:
             first = args[0] if len(args) > 0 else None
             second = first[0] if len(first) > 0 else None
-            if type(second) is dict:
+            if isinstance(second, dict):
                 form = second.get('form', None)
         return form
 
@@ -191,7 +191,6 @@ class AuthenticateRequest(ProviderPageBase):
                 "authz_details": ad,
             }
             context.update(dict((self.trans.get_POST_tuple(),)))
-            # pylint: disable=star-args
             return self._template('openid/consent_form.html', **context)
 
     def _response(self, request, session):

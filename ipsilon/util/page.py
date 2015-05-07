@@ -71,7 +71,6 @@ class Page(Endpoint):
         return False
 
     def __call__(self, *args, **kwargs):
-        # pylint: disable=star-args
         cherrypy.response.headers.update(self.default_headers)
 
         self.user = UserSession().get_user()
@@ -116,7 +115,6 @@ class Page(Endpoint):
         return model
 
     def _template(self, *args, **kwargs):
-        # pylint: disable=star-args
         t = self._site['template_env'].get_template(args[0])
         m = self._template_model()
         m.update(kwargs)

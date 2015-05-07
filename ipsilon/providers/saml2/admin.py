@@ -157,6 +157,9 @@ class SPAdminPage(AdminPage):
                 value = kwargs[name]
                 if isinstance(option, pconfig.List):
                     value = [x.strip() for x in value.split('\n')]
+                    # for normal lists we want unordered comparison
+                    if set(value) == set(option.get_value()):
+                        continue
                 elif isinstance(option, pconfig.Condition):
                     value = True
             else:
@@ -168,9 +171,9 @@ class SPAdminPage(AdminPage):
                         aname = '%s_%s' % (name, a)
                         if aname in kwargs:
                             value.append(a)
-                elif type(option) is pconfig.ComplexList:
+                elif isinstance(option, pconfig.MappingList):
                     current = deepcopy(option.get_value())
-                    value = get_complex_list_value(name,
+                    value = get_mapping_list_value(name,
                                                    current,
                                                    **kwargs)
                     # if current value is None do nothing
@@ -178,9 +181,9 @@ class SPAdminPage(AdminPage):
                         if option.get_value() is None:
                             continue
                         # else pass and let it continue as None
-                elif type(option) is pconfig.MappingList:
+                elif isinstance(option, pconfig.ComplexList):
                     current = deepcopy(option.get_value())
-                    value = get_mapping_list_value(name,
+                    value = get_complex_list_value(name,
                                                    current,
                                                    **kwargs)
                     # if current value is None do nothing
@@ -192,9 +195,6 @@ class SPAdminPage(AdminPage):
                     continue
 
             if value != option.get_value():
-                if (type(option) is pconfig.List and
-                        set(value) == set(option.get_value())):
-                    continue
                 cherrypy.log.error("Storing %s = %s" %
                                    (name, value), severity=logging.DEBUG)
                 new_db_values[name] = value

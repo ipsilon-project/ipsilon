@@ -133,7 +133,7 @@ class ServiceProvider(ServiceProviderConfig):
 
     @allowed_nameids.setter
     def allowed_nameids(self, value):
-        if type(value) is not list:
+        if not isinstance(value, list):
             raise ValueError("Must be a list")
         self._staging['allowed nameids'] = ','.join(value)
 

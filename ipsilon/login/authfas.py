@@ -80,7 +80,6 @@ class FAS(LoginFormBase):
             error_username=not username
         )
         self.lm.set_auth_error()
-        # pylint: disable=star-args
         return self._template(self.formtemplate, **context)
 
     def make_userdata(self, fas_data):

@@ -265,7 +265,6 @@ class HttpSessions(object):
         args = {}
 
         while True:
-            # pylint: disable=star-args
             r = self.access(action, url, krb=krb, **args)
             if r.status_code == 303 or r.status_code == 302:
                 if not follow_redirect:

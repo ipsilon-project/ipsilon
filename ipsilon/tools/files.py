@@ -39,6 +39,6 @@ def fix_user_dirs(path, user=None, mode=0700):
 def write_from_template(destfile, template, opts):
     with open(template) as f:
         t = Template(f.read())
-    text = t.substitute(**opts)  # pylint: disable=star-args
+    text = t.substitute(**opts)
     with open(destfile, 'w+') as f:
         f.write(text)

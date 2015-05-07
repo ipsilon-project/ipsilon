@@ -109,7 +109,7 @@ class Option(Log):
         return None
 
     def _str_import_value(self, value):
-        if type(value) is not str:
+        if not isinstance(value, str):
             raise ValueError('Value must be string')
         self._assigned_value = value
 
@@ -170,7 +170,7 @@ class List(Option):
         return None
 
     def import_value(self, value):
-        if type(value) is not str:
+        if not isinstance(value, str):
             raise ValueError('Value (type: %s) must be string' % type(value))
         self._assigned_value = [x.strip() for x in value.split(',')]
 
@@ -180,7 +180,7 @@ class ComplexList(List):
     def _check_value(self, value):
         if value is None:
             return
-        if type(value) is not list:
+        if not isinstance(value, list):
             raise ValueError('The value type must be a list, not "%s"' %
                              type(value))
 
@@ -194,7 +194,7 @@ class ComplexList(List):
         return None
 
     def import_value(self, value):
-        if type(value) is not str:
+        if not isinstance(value, str):
             raise ValueError('The value type must be a string, not "%s"' %
                              type(value))
         jsonval = json.loads(value)
@@ -206,11 +206,11 @@ class MappingList(ComplexList):
     def _check_value(self, value):
         if value is None:
             return
-        if type(value) is not list:
+        if not isinstance(value, list):
             raise ValueError('The value type must be a list, not "%s"' %
                              type(value))
         for v in value:
-            if type(v) is not list:
+            if not isinstance(v, list):
                 raise ValueError('Each element must be a list, not "%s"' %
                                  type(v))
             if len(v) != 2:
@@ -218,7 +218,7 @@ class MappingList(ComplexList):
                                  ' not %d' % len(v))
 
     def import_value(self, value):
-        if type(value) is not str:
+        if not isinstance(value, str):
             raise ValueError('Value (type: %s) must be string' % type(value))
         jsonval = json.loads(value)
         self.set_value(jsonval)
@@ -253,7 +253,7 @@ class Choice(Option):
         return '%s=%s' % (self.name, self.get_value())
 
     def set_value(self, value):
-        if type(value) is not list:
+        if not isinstance(value, list):
             value = [value]
         self._assigned_value = list()
         for val in value:
@@ -267,7 +267,7 @@ class Choice(Option):
             self._assigned_value = None
 
     def unset_value(self, value):
-        if type(value) is str:
+        if isinstance(value, str):
             value = [value]
         unset = list()
         for val in value:

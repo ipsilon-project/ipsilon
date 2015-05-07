@@ -185,7 +185,6 @@ class LoginFormBase(LoginPageBase):
 
     def GET(self, *args, **kwargs):
         context = self.create_tmpl_context()
-        # pylint: disable=star-args
         return self._template(self.formtemplate, **context)
 
     def root(self, *args, **kwargs):

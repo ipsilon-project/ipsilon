@@ -24,7 +24,6 @@ class Errors(Page):
         super(Errors, self).__init__(*args, **kwargs)
 
     def _error_template(self, *args, **kwargs):
-        # pylint: disable=star-args
         output_page = self._template(*args, **kwargs)
         # for some reason cherrypy will choke if the output
         # is a unicode object, so use str() here to please it

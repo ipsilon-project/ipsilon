@@ -316,7 +316,6 @@ class AuthenticateRequest(ProviderPageBase):
                 ],
                 "submit": 'Return to application',
             }
-            # pylint: disable=star-args
             return self._template('saml2/post_response.html', **context)
 
         else:

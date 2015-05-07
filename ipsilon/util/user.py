@@ -140,7 +140,7 @@ class UserSession(Log):
 
     def logout(self, user):
         if user is not None:
-            if not type(user) is User:
+            if not isinstance(user, User):
                 raise TypeError
             # Completely reset user data
             cherrypy.log.error('%s %s' % (user.name, user.fullname),

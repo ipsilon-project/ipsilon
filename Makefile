@@ -42,6 +42,7 @@ lint:
 	pylint -d c,r,i,W0613 -r n -f colorized \
 		   --notes= \
 		   --ignored-classes=cherrypy,API \
+		   --disable=star-args \
 		   ./ipsilon
 
 pep8:
@@ -77,6 +78,7 @@ lp-test:
 	pylint -d c,r,i,W0613 -r n -f colorized \
 		   --notes= \
 		   --ignored-classes=cherrypy \
+		   --disable=star-args \
 		   ./tests
 	pep8 tests
 

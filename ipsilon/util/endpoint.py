@@ -62,7 +62,6 @@ class Endpoint(Log):
         return False
 
     def __call__(self, *args, **kwargs):
-        # pylint: disable=star-args
         cherrypy.response.headers.update(self.default_headers)
 
         self.user = UserSession().get_user()

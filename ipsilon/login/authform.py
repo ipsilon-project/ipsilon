@@ -123,7 +123,7 @@ class Installer(LoginManagerInstaller):
                     'service': opts['form_service']}
 
         tmpl = Template(CONF_TEMPLATE)
-        hunk = tmpl.substitute(**confopts)  # pylint: disable=star-args
+        hunk = tmpl.substitute(**confopts)
         with open(opts['httpd_conf'], 'a') as httpd_conf:
             httpd_conf.write(hunk)
 
