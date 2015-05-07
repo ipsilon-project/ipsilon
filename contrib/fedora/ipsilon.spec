@@ -317,8 +317,8 @@ fi
 %{_datadir}/ipsilon/ui/js
 %{_datadir}/ipsilon/ui/fonts
 %{_libexecdir}/ipsilon
-%dir %attr(0700,ipsilon,ipsilon) %{_sharedstatedir}/ipsilon
-%dir %attr(0700,ipsilon,ipsilon) %{_sysconfdir}/ipsilon
+%dir %attr(0751,root,root) %{_sharedstatedir}/ipsilon
+%dir %attr(0751,root,root) %{_sysconfdir}/ipsilon
 
 %files client
 %{_bindir}/ipsilon-client-install
