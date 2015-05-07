@@ -37,11 +37,13 @@ class SqlStore(Log):
     @classmethod
     def get_connection(cls, name):
         if name not in cls.__instances.keys():
-            logging.debug('SqlStore new: %s', name)
+            if cherrypy.config.get('db.conn.log', False):
+                logging.debug('SqlStore new: %s', name)
             cls.__instances[name] = SqlStore(name)
         return cls.__instances[name]
 
     def __init__(self, name):
+        self.db_conn_log = cherrypy.config.get('db.conn.log', False)
         self.debug('SqlStore init: %s' % name)
         self.name = name
         engine_name = name
@@ -60,6 +62,10 @@ class SqlStore(Log):
             pool_args = {'poolclass': SingletonThreadPool}
         self._dbengine = create_engine(engine_name, **pool_args)
         self.is_readonly = False
+
+    def debug(self, fact):
+        if self.db_conn_log:
+            super(SqlStore, self).debug(fact)
 
     def engine(self):
         return self._dbengine
