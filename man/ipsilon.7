@@ -1,8 +1,17 @@
-.TH "ipsilon" "7" "2013" "Ipsilon" "Ipsilon Identity Provider"
+.\" Copyright (C) 2015 Ipsilon Project Contributors
+.\"
+.TH "ipsilon" "7" "1.0.0" "Ipsilon" "Ipsilon Manual Pages"
 .SH "NAME"
 ipsilon
 .SH "DESCRIPTION"
 Ipsilon is an Identity Provider (IdP) that implements standard Authentication
-and FEderation protocols like SAML, and integrates with Enterprise
+and Federation protocols like SAML, and integrates with Enterprise
 Authentication systems to provide easy to use Single Sign On capabilities to
 Web Applications and Services.
+
+An IdP server allows users to authenticate against any identity backend, whether that is a corporate LDAP server or even just local files, and allows applications to authenticate users without having to worry about the sort of authentication infrastructure is being used.
+
+Ipsilon supports applications to authenticate users via either the SAML2, OpenID or Persona protocols, and more protocols can be added with plugins.
+.SH "SEE ALSO"
+.BR ipsilon\-server\-install(1),
+.BR ipsilon\-client\-install(1)
