@@ -1,0 +1,92 @@
+.\" Copyright (C) 2015 Ipsilon Project Contributors
+.\"
+.TH "ipsilon.conf" "5" "1.0.0" "Ipsilon" "Ipsilon Manual Pages"
+.SH "NAME"
+ipsilon.conf \- Ipsilon IdP configuration file
+.SH "SYNOPSIS"
+/etc/ipsilon/<instancename>/ipsilon.conf
+.SH "DESCRIPTION"
+\fIipsilon.conf\fR is used to set instance\-specific configuration options for an Ipsilon instance. It should be stored in a subdirectory representing the instance under the the system configuration directory, normally /etc/ipsilon. For example \fI/etc/ipsilon/idp/ispilon.conf\fR.
+
+.SH "SYNTAX"
+The configuration options are not case sensitive. The values may be case sensitive, depending on the option.
+
+Blank lines are ignored.
+Lines beginning with # are comments and are ignored.
+
+Valid lines consist of an option name, an equals sign and a value. Spaces surrounding equals sign are ignored. An option terminates at the end of a line.
+
+Non\-string values should not be quoted, the quotes will not be stripped.
+
+.np
+    # Wrong \- don't include quotes with boolean options
+    verbose = "True"
+
+    # Right \- Properly formatted options
+    verbose = True
+    verbose=True
+.fi
+
+Options must appear in the section named [global]. There are no other sections defined or used currently.
+
+.SH "OPTIONS"
+The following options are defined:
+.TP
+.B debug
+Enables additional debugging output. log.screen must also be True for this to be written.
+.TP
+.B tools.log_request_response.on
+Logs the full SAML 2 request and response information.
+.TP
+.B db.conn.log
+Enable verbose database connection tracing logs. debug and log.screen both need to be True for this to be written.
+.TP
+.B template_dir
+Location of the template directory used for buidling the UI. This can be relative to \fIbase.dir\fR.
+.TP
+.B log.screen
+Send logs to the console, which Apache grabs and adds to its own error log.
+.TP
+.B base.mount
+The base mount mount for UI pages. This should match the name of the IdP.
+.TP
+.B base.dir
+The Ipsilon UI base directory, e.g. \fI/usr/share/ipsilon\fR.
+.TP
+.B admin.config.db
+Database URL for storing Ipsilon administrative settings.
+.TP
+.B user.prefs.db
+Database URL for storing persistent user information. This is where users are marked as administrators by setting is_admin to 1.
+.TP
+.B transactions.db
+Database URL for storing login transactions.
+.TP
+.B tools.sessions.on
+Enable sessions in CherryPy. This should always be True.
+.TP
+.B tools.sessions.name
+The session name to be used in session cookies.
+.TP
+.B tools.sessions.storage_type
+Type of storage for the sessions. See CherryPy documentation for more details. Ipsilon defaults to using file. Ipsilon adds a session storage type "Sql" for storing the sesions in an SQL database for load\-balanced servers.
+.TP
+.B tools.sessions.storage_path
+The directory where the CherryPy sessions are stored.
+.TP
+.B tools.sessions.storage_dburi
+The database URL used for session storage if storage_type is set to "Sql".
+.TP
+.B tools.sessions.path
+The URI for where the session is valid, this should conform to the instance name, e.g. /idp.
+.TP
+.B tools.sessions.timeout
+The time in minutes the session is valid for. Default is 60.
+.TP
+.B tools.sessions.httponly
+If False (the default) the cookie \fIhttponly\fR value will not be set. If True, the cookie \fIhttponly\fR value will be set (to 1). Of this is set to True, browsers are instructed to only send cookies with http requests, resulting in them not being available for Javascript\-based requests.
+.TP
+.B tools.sessions.secure
+If False the cookie \fIsecure\fR value will not be set. If True (the default), the cookie \fIsecure\fR value will be set (to 1). If this is set to True, browsers are instructed to only send cookies to secure (TLS\-protected) URLs.
+.SH "SEE ALSO"
+.BR ipsilon\-server\-install(1)
