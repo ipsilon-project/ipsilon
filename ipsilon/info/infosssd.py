@@ -158,13 +158,21 @@ class Installer(InfoProviderInstaller):
         else:
             domains = opts['info_sssd_domain']
 
+        changes['domains'] = {}
         for domain in domains:
+            changes['domains'][domain] = {}
             try:
                 sssd_domain = sssdconfig.get_domain(domain)
             except SSSDConfig.NoDomainError:
                 logging.info('No SSSD domain %s', domain)
                 continue
             else:
+                try:
+                    changes['domains'][domain] = {
+                        'ldap_user_extra_attrs':
+                            sssd_domain.get_option('ldap_user_extra_attrs')}
+                except SSSDConfig.NoOptionError:
+                    pass
                 sssd_domain.set_option(
                     'ldap_user_extra_attrs', ', '.join(SSSD_ATTRS)
                 )
@@ -176,14 +184,26 @@ class Installer(InfoProviderInstaller):
             logging.info('No SSSD domains configured')
             return False
 
+        changes['ifp'] = {}
         try:
             sssdconfig.new_service('ifp')
+            changes['ifp']['new'] = True
         except SSSDConfig.ServiceAlreadyExists:
-            pass
+            changes['ifp']['new'] = False
 
         sssdconfig.activate_service('ifp')
 
         ifp = sssdconfig.get_service('ifp')
+        if not changes['ifp']['new']:
+            try:
+                changes['ifp']['allowed_uids'] = ifp.get_option('allowed_uids')
+            except SSSDConfig.NoOptionError:
+                pass
+            try:
+                changes['ifp']['user_attributes'] = ifp.get_option(
+                    'user_attributes')
+            except SSSDConfig.NoOptionError:
+                pass
         ifp.set_option('allowed_uids', 'apache, root')
         ifp.set_option('user_attributes', '+' + ', +'.join(SSSD_ATTRS))
 
@@ -216,3 +236,53 @@ class Installer(InfoProviderInstaller):
         # Update global config to add info plugin
         po.is_enabled = True
         po.save_enabled_state()
+
+    def unconfigure(self, opts, changes):
+        try:
+            sssdconfig = SSSDConfig.SSSDConfig()
+            sssdconfig.import_config()
+        except Exception as e:  # pylint: disable=broad-except
+            # Unable to read existing SSSD config so it is probably not
+            # configured.
+            logging.info('Loading SSSD config failed: %s', e)
+            return False
+
+        for domain in changes['domains']:
+            try:
+                sssd_domain = sssdconfig.get_domain(domain.encode('utf-8'))
+            except SSSDConfig.NoDomainError:
+                logging.info('No SSSD domain %s', domain)
+                continue
+            else:
+                if 'ldap_user_extra_attrs' in changes['domains'][domain]:
+                    sssd_domain.set_option('ldap_user_extra_attrs',
+                                           changes['domains'][domain][
+                                               'ldap_user_extra_attrs'].encode(
+                                                   'utf-8'))
+                else:
+                    sssd_domain.remove_option('ldap_user_extra_attrs')
+                sssdconfig.save_domain(sssd_domain)
+
+        if changes['ifp']['new']:
+            # We created the service newly, let's remove
+            sssdconfig.delete_service('ifp')
+        else:
+            ifp = sssdconfig.get_service('ifp')
+            if 'allowed_uids' in changes['ifp']:
+                ifp.set_option('allowed_uids',
+                               changes['ifp']['allowed_uids'].encode('utf-8'))
+            if 'user_attributes' in changes['ifp']:
+                ifp.set_option('user_attributes',
+                               changes['ifp']['user_attributes'].encode(
+                                   'utf-8'))
+            sssdconfig.save_service(ifp)
+
+        sssdconfig.write(SSSD_CONF)
+
+        try:
+            subprocess.call(['/sbin/service', 'sssd', 'restart'])
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+        # Give SSSD a chance to restart
+        time.sleep(5)

@@ -252,28 +252,28 @@ def uninstall(plugins, args):
     logger.info('Removing environment helpers')
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
-        plugin_changes = changes['env_helper'][plugin_name]
+        plugin_changes = changes['env_helper'].get(plugin_name, {})
         if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of environment helper %s failed' % plugin_name)
 
     logger.info('Removing login managers')
     for plugin_name in plugins['Login Managers']:
         plugin = plugins['Login Managers'][plugin_name]
-        plugin_changes = changes['login_manager'][plugin_name]
+        plugin_changes = changes['login_manager'].get(plugin_name, {})
         if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of login manager %s failed' % plugin_name)
 
     logger.info('Removing Info providers')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
-        plugin_changes = changes['info_provider'][plugin_name]
+        plugin_changes = changes['info_provider'].get(plugin_name, {})
         if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of info provider %s failed' % plugin_name)
 
     logger.info('Removing Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
-        plugin_changes = changes['auth_provider'][plugin_name]
+        plugin_changes = changes['auth_provider'].get(plugin_name, {})
         if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of auth provider %s failed' % plugin_name)
 
