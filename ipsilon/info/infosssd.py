@@ -212,7 +212,7 @@ class Installer(InfoProviderInstaller):
         po.name = 'sssd'
         po.wipe_data()
         po.wipe_config_values()
-        config = {'preconfigured': True}
+        config = {'preconfigured': 'True'}
         po.save_plugin_config(config)
 
         # Update global config to add info plugin
