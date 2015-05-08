@@ -1,4 +1,4 @@
-# Copyright (C) 2014  Ipsilon Contributors see COPYING for license
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.admin.common import AdminPlugins
 

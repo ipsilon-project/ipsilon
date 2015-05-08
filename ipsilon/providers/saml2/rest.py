@@ -1,4 +1,4 @@
-# Copyright (C) 2015  Ipsilon project Contributors, for licensee see COPYING
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
 import cherrypy
 from ipsilon.providers.common import RestProviderBase

@@ -1,6 +1,4 @@
-# Copyright (C) 2014 Ipsilon Project Contributors
-#
-# See the file named COPYING for the project license
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller

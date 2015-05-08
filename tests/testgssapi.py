@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# Copyright (C) 2015 Ipsilon Project Contributors
-
+#
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.common import WRAP_HOSTNAME  # pylint: disable=relative-import

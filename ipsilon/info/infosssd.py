@@ -1,6 +1,4 @@
-# Copyright (C) 2014 Ipsilon Project Contributors
-#
-# See the file named COPYING for the project license
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 # Info plugin for mod_lookup_identity Apache module via SSSD
 # http://www.adelton.com/apache/mod_lookup_identity/

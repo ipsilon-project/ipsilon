@@ -1,5 +1,4 @@
-# Copyright (C) 2014 Ipsilon contributors, see COPYING file for license
-
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
     LoginManagerInstaller

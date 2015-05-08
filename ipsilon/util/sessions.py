@@ -1,4 +1,4 @@
-# Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 import base64
 from cherrypy.lib.sessions import Session

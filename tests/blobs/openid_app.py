@@ -1,4 +1,5 @@
-# Copyright (C) 2015  Ipsilon project Contributors, for licensee see COPYING
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
+
 import sys
 sys.stdout = sys.stderr
 

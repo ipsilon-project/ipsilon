@@ -1,4 +1,4 @@
-# Copyright (C) 2015  Ipsilon Contributors see COPYING for license
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
 import cherrypy
 from ipsilon.util.log import Log

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2014  Ipsilon project Contributors, for licensee see COPYING
+# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from distutils.core import setup
 from glob import glob
