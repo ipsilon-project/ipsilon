@@ -12,6 +12,7 @@ import uuid
 import logging
 
 
+CURRENT_SCHEMA_VERSION = 1
 OPTIONS_COLUMNS = ['name', 'option', 'value']
 UNIQUE_DATA_COLUMNS = ['uuid', 'name', 'value']
 
@@ -267,6 +268,33 @@ class Store(Log):
         else:
             self._db = SqlStore.get_connection(name)
             self._query = SqlQuery
+        self._upgrade_database()
+
+    def _upgrade_database(self):
+        if self.is_readonly:
+            # If the database is readonly, we cannot do anything to the
+            #  schema. Let's just return, and assume people checked the
+            #  upgrade notes
+            return
+        current_version = self.load_options('dbinfo').get('scheme', None)
+        if current_version is None or 'version' not in current_version:
+            # No version stored, storing current version
+            self.save_options('dbinfo', 'scheme',
+                              {'version': CURRENT_SCHEMA_VERSION})
+            current_version = CURRENT_SCHEMA_VERSION
+        else:
+            current_version = int(current_version['version'])
+        if current_version != CURRENT_SCHEMA_VERSION:
+            self.debug('Upgrading database schema from %i to %i' % (
+                       current_version, CURRENT_SCHEMA_VERSION))
+            self._upgrade_database_from(current_version)
+
+    def _upgrade_database_from(self, old_schema_version):
+        # Insert code here to upgrade from old_schema_version to
+        #  CURRENT_SCHEMA_VERSION
+        raise Exception('Unable to upgrade database to current schema'
+                        ' version: version %i is unknown!' %
+                        old_schema_version)
 
     @property
     def is_readonly(self):
