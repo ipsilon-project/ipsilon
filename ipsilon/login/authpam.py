@@ -114,7 +114,7 @@ class Installer(LoginManagerInstaller):
         group.add_argument('--pam-service', action='store', default='remote',
                            help='PAM service name to use for authentication')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['pam'] != 'yes':
             return
 

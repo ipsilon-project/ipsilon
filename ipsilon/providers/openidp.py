@@ -146,7 +146,7 @@ class Installer(ProviderInstaller):
         group.add_argument('--openid-extensions', default='',
                            help='List of OpenID Extensions to enable')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['openid'] != 'yes':
             return
 

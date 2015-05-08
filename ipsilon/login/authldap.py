@@ -194,7 +194,7 @@ class Installer(LoginManagerInstaller):
         group.add_argument('--ldap-base-dn', action='store',
                            help='LDAP Base DN')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['ldap'] != 'yes':
             return
 

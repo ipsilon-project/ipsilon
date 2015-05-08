@@ -105,7 +105,7 @@ class ProviderInstaller(object):
         self.ptype = 'provider'
         self.name = None
 
-    def unconfigure(self, opts):
+    def unconfigure(self, opts, changes):
         return
 
     def install_args(self, group):
@@ -114,7 +114,7 @@ class ProviderInstaller(object):
     def validate_args(self, args):
         return
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         raise NotImplementedError
 
 

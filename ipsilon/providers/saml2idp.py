@@ -452,7 +452,7 @@ class Installer(ProviderInstaller):
                                  '(default - %d)' %
                                  METADATA_DEFAULT_VALIDITY_PERIOD))
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['saml2'] != 'yes':
             return
 

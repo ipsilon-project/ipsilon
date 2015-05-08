@@ -131,7 +131,7 @@ class Installer(InfoProviderInstaller):
                            help='SSSD domain to enable mod_lookup_identity'
                                 ' for')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['info_sssd'] != 'yes':
             return
 

@@ -182,7 +182,7 @@ class Installer(InfoProviderInstaller):
         group.add_argument('--info-ldap-base-dn', action='store',
                            help='LDAP Base DN')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['info_ldap'] != 'yes':
             return
 

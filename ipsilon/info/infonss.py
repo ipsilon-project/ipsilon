@@ -79,7 +79,7 @@ class Installer(InfoProviderInstaller):
         group.add_argument('--info-nss', choices=['yes', 'no'], default='no',
                            help='Use passwd data to populate user attrs')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['info_nss'] != 'yes':
             return
 

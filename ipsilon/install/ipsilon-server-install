@@ -10,6 +10,7 @@ from ipsilon.tools import files
 import ConfigParser
 import argparse
 import cherrypy
+import json
 import logging
 import os
 import pwd
@@ -154,6 +155,12 @@ def install(plugins, args):
     # components
     cherrypy.config.update(ipsilon_conf)
 
+    # Prepare to allow plugins to save things changed during install
+    changes = {'env_helper': {},
+               'login_manager': {},
+               'info_provider': {},
+               'auth_provider': {}}
+
     # Move pre-existing admin db away
     admin_db = cherrypy.config['admin.config.db']
     if os.path.exists(admin_db):
@@ -169,8 +176,10 @@ def install(plugins, args):
     logger.info('Configuring environment helpers')
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
-        if plugin.configure_server(args) == False:
+        plugin_changes = {}
+        if plugin.configure_server(args, plugin_changes) == False:
             logger.info('Configuration of environment helper %s failed' % plugin_name)
+        changes['env_helper'][plugin_name] = plugin_changes
 
     logger.info('Configuring login managers')
     for plugin_name in args['lm_order']:
@@ -178,20 +187,32 @@ def install(plugins, args):
             plugin = plugins['Login Managers'][plugin_name]
         except KeyError:
             sys.exit('Login provider %s not installed' % plugin_name)
-        if plugin.configure(args) == False:
+        plugin_changes = {}
+        if plugin.configure(args, plugin_changes) == False:
             logger.info('Configuration of login manager %s failed' % plugin_name)
+        changes['login_manager'][plugin_name] = plugin_changes
 
     logger.info('Configuring Info provider')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
-        if plugin.configure(args) == False:
+        plugin_changes = {}
+        if plugin.configure(args, plugin_changes) == False:
             logger.info('Configuration of info provider %s failed' % plugin_name)
+        changes['info_provider'][plugin_name] = plugin_changes
 
     logger.info('Configuring Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
-        if plugin.configure(args) == False:
+        plugin_changes = {}
+        if plugin.configure(args, plugin_changes) == False:
             logger.info('Configuration of auth provider %s failed' % plugin_name)
+        changes['auth_provider'][plugin_name] = plugin_changes
+
+    # Save any changes that were made
+    install_changes = os.path.join(instance_conf, 'install_changes')
+    changes = json.dumps(changes)
+    with open(install_changes, 'w+') as f:
+        f.write(changes)
 
     # Fixup permissions so only the ipsilon user can read these files
     files.fix_user_dirs(instance_conf, opts['system_user'])
@@ -223,28 +244,37 @@ def uninstall(plugins, args):
         if sure != 'yes':
             raise Exception('Aborting')
 
+    # Get the details of what we changed during installation
+    install_changes = os.path.join(instance_conf, 'install_changes')
+    with open(install_changes, 'r') as f:
+        changes = json.loads(f.read())
+
     logger.info('Removing environment helpers')
     for plugin_name in plugins['Environment Helpers']:
         plugin = plugins['Environment Helpers'][plugin_name]
-        if plugin.unconfigure(args) == False:
+        plugin_changes = changes['env_helper'][plugin_name]
+        if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of environment helper %s failed' % plugin_name)
 
     logger.info('Removing login managers')
     for plugin_name in plugins['Login Managers']:
         plugin = plugins['Login Managers'][plugin_name]
-        if plugin.unconfigure(args) == False:
+        plugin_changes = changes['login_manager'][plugin_name]
+        if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of login manager %s failed' % plugin_name)
 
     logger.info('Removing Info providers')
     for plugin_name in plugins['Info Provider']:
         plugin = plugins['Info Provider'][plugin_name]
-        if plugin.unconfigure(args) == False:
+        plugin_changes = changes['info_provider'][plugin_name]
+        if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of info provider %s failed' % plugin_name)
 
     logger.info('Removing Authentication Providers')
     for plugin_name in plugins['Auth Providers']:
         plugin = plugins['Auth Providers'][plugin_name]
-        if plugin.unconfigure(args) == False:
+        plugin_changes = changes['auth_provider'][plugin_name]
+        if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of auth provider %s failed' % plugin_name)
 
     logger.info('Removing httpd configuration')

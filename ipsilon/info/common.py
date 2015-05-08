@@ -102,10 +102,10 @@ class InfoProviderInstaller(object):
     def validate_args(self, args):
         return
 
-    def unconfigure(self, opts):
+    def unconfigure(self, opts, changes):
         return
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         raise NotImplementedError
 
 

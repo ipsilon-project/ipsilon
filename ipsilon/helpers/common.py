@@ -12,7 +12,7 @@ class EnvHelpersInstaller(object):
         self.ptype = 'helper'
         self.name = None
 
-    def unconfigure(self, opts):
+    def unconfigure(self, opts, changes):
         return
 
     def install_args(self, group):
@@ -21,7 +21,7 @@ class EnvHelpersInstaller(object):
     def validate_args(self, args):
         return
 
-    def configure_server(self, opts):
+    def configure_server(self, opts, changes):
         raise NotImplementedError
 
 

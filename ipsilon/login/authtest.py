@@ -101,7 +101,7 @@ class Installer(LoginManagerInstaller):
         group.add_argument('--testauth', choices=['yes', 'no'], default='no',
                            help='Configure PAM authentication')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['testauth'] != 'yes':
             return
 

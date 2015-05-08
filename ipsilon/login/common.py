@@ -322,7 +322,7 @@ class LoginManagerInstaller(object):
         self.ptype = 'login'
         self.name = None
 
-    def unconfigure(self, opts):
+    def unconfigure(self, opts, changes):
         return
 
     def install_args(self, group):
@@ -331,7 +331,7 @@ class LoginManagerInstaller(object):
     def validate_args(self, args):
         return
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         raise NotImplementedError
 
 

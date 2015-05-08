@@ -163,7 +163,7 @@ class Installer(EnvHelpersInstaller):
         pw = pwd.getpwnam(HTTPD_USER)
         os.chown(opts['gssapi_httpd_keytab'], pw.pw_uid, pw.pw_gid)
 
-    def configure_server(self, opts):
+    def configure_server(self, opts, changes):
         if opts['ipa'] != 'yes' and opts['ipa'] != 'auto':
             return
         if opts['ipa'] != 'yes' and opts['gssapi'] == 'no':

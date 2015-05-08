@@ -85,7 +85,7 @@ class Installer(ProviderInstaller):
         group.add_argument('--persona', choices=['yes', 'no'], default='yes',
                            help='Configure Persona Provider')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['persona'] != 'yes':
             return
 

@@ -185,7 +185,7 @@ class Installer(LoginManagerInstaller):
         group.add_argument('--fas', choices=['yes', 'no'], default='no',
                            help='Configure FAS authentication')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['fas'] != 'yes':
             return
 

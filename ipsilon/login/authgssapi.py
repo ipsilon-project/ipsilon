@@ -114,7 +114,7 @@ class Installer(LoginManagerInstaller):
                            default='/etc/httpd/conf/http.keytab',
                            help='Kerberos keytab location for HTTPD')
 
-    def configure(self, opts):
+    def configure(self, opts, changes):
         if opts['gssapi'] != 'yes':
             return
 
