@@ -187,7 +187,7 @@ class IpsilonTestBase(object):
         self.processes.append(p)
         p.wait()
         for d in ['adminconfig', 'users', 'transactions', 'sessions',
-                  'saml2sessions']:
+                  'saml2.sessions.db']:
             cmd = ['/usr/bin/createdb', '-h', addr, '-p', port, d]
             subprocess.check_call(cmd, env=env)
 

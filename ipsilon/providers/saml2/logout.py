@@ -2,7 +2,6 @@
 
 from ipsilon.providers.common import ProviderPageBase
 from ipsilon.providers.common import InvalidRequest
-from ipsilon.providers.saml2.sessions import SAMLSessionFactory
 from ipsilon.providers.saml2.auth import UnknownProvider
 from ipsilon.util.user import UserSession
 import cherrypy
@@ -204,7 +203,7 @@ class LogoutRequest(ProviderPageBase):
 
         us = UserSession()
 
-        saml_sessions = SAMLSessionFactory()
+        saml_sessions = self.cfg.idp.sessionfactory
 
         if lasso.SAML2_FIELD_REQUEST in message:
             self._handle_logout_request(us, logout, saml_sessions, message)

@@ -1,11 +1,12 @@
 # Copyright (C) 2013 Ipsilon project Contributors, for license see COPYING
 
 import cherrypy
+import datetime
 from ipsilon.util.log import Log
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column, Text
 from sqlalchemy.pool import QueuePool, SingletonThreadPool
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, and_
 import ConfigParser
 import os
 import uuid
@@ -513,9 +514,12 @@ class TranStore(Store):
 
 class SAML2SessionStore(Store):
 
-    def __init__(self, path=None):
-        super(SAML2SessionStore, self).__init__('saml2.sessions.db')
+    def __init__(self, database_url):
+        super(SAML2SessionStore, self).__init__(database_url=database_url)
         self.table = 'sessions'
+        # pylint: disable=protected-access
+        table = SqlQuery(self._db, self.table, UNIQUE_DATA_COLUMNS)._table
+        table.create(checkfirst=True)
 
     def _get_unique_id_from_column(self, name, value):
         """
@@ -532,6 +536,16 @@ class SAML2SessionStore(Store):
         elif count != 1:
             raise ValueError("Multiple entries returned")
         return data.keys()[0]
+
+    def remove_expired_sessions(self):
+        # pylint: disable=protected-access
+        table = SqlQuery(self._db, self.table, UNIQUE_DATA_COLUMNS)._table
+        sel = select([table.columns.uuid]). \
+            where(and_(table.c.name == 'expiration_time',
+                       table.c.value <= datetime.datetime.now()))
+        # pylint: disable=no-value-for-parameter
+        d = table.delete().where(table.c.uuid.in_(sel))
+        d.execute()
 
     def get_data(self, idval=None, name=None, value=None):
         return self.get_unique_data(self.table, idval, name, value)

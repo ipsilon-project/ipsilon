@@ -5,7 +5,6 @@ from ipsilon.providers.common import AuthenticationError, InvalidRequest
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import InvalidProviderId
 from ipsilon.providers.saml2.provider import NameIdNotAllowed
-from ipsilon.providers.saml2.sessions import SAMLSessionFactory
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.util.policy import Policy
 from ipsilon.util.user import UserSession
@@ -275,7 +274,7 @@ class AuthenticateRequest(ProviderPageBase):
 
         self.debug('Assertion: %s' % login.assertion.dump())
 
-        saml_sessions = SAMLSessionFactory()
+        saml_sessions = self.cfg.idp.sessionfactory
 
         lasso_session = lasso.Session()
         lasso_session.addAssertion(login.remoteProviderId, login.assertion)

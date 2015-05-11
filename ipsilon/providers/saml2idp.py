@@ -8,7 +8,7 @@ from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.rest import Saml2RestBase
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.providers.saml2.sessions import SAMLSessionFactory
-from ipsilon.providers.saml2.sessions import expire_sessions
+from ipsilon.util.data import SAML2SessionStore
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
@@ -215,6 +215,7 @@ class IdpProvider(ProviderBase):
         self.rest = None
         self.page = None
         self.idp = None
+        self.sessionfactory = None
         self.description = """
 Provides SAML 2.0 authentication infrastructure. """
 
@@ -272,6 +273,10 @@ Provides SAML 2.0 authentication infrastructure. """
                 'default allowed attributes',
                 'Defines a list of allowed attributes, applied after mapping',
                 ['*']),
+            pconfig.String(
+                'session database url',
+                'Database URL for SAML2 sessions',
+                'saml2.sessions.db.sqlite'),
         )
         if cherrypy.config.get('debug', False):
             import logging
@@ -281,7 +286,12 @@ Provides SAML 2.0 authentication infrastructure. """
             logger.addHandler(lh)
             logger.setLevel(logging.DEBUG)
 
-        bt = cherrypy.process.plugins.BackgroundTask(60, expire_sessions)
+        store = SAML2SessionStore(
+            database_url=self.get_config_value('session database url')
+        )
+        bt = cherrypy.process.plugins.BackgroundTask(
+            60, store.remove_expired_sessions
+        )
         bt.start()
 
     @property
@@ -344,9 +354,13 @@ Provides SAML 2.0 authentication infrastructure. """
 
     def init_idp(self):
         idp = None
+        self.sessionfactory = SAMLSessionFactory(
+            database_url=self.get_config_value('session database url')
+        )
         # Init IDP data
         try:
-            idp = IdentityProvider(self)
+            idp = IdentityProvider(self,
+                                   sessionfactory=self.sessionfactory)
         except Exception, e:  # pylint: disable=broad-except
             self.debug('Failed to init SAML2 provider: %r' % e)
             return None
@@ -385,7 +399,7 @@ Provides SAML 2.0 authentication infrastructure. """
         us = UserSession()
         user = us.get_user()
 
-        saml_sessions = SAMLSessionFactory()
+        saml_sessions = self.sessionfactory
         session = saml_sessions.get_next_logout()
         if session is None:
             return
@@ -459,6 +473,8 @@ class Installer(ProviderInstaller):
                            help=('Metadata validity period in days '
                                  '(default - %d)' %
                                  METADATA_DEFAULT_VALIDITY_PERIOD))
+        group.add_argument('--saml2-session-dburl',
+                           help='session database URL')
 
     def configure(self, opts, changes):
         if opts['saml2'] != 'yes':
@@ -497,7 +513,11 @@ class Installer(ProviderInstaller):
                   'idp certificate file': cert.cert,
                   'idp key file': cert.key,
                   'idp nameid salt': uuid.uuid4().hex,
-                  'idp metadata validity': opts['saml2_metadata_validity']}
+                  'idp metadata validity': opts['saml2_metadata_validity'],
+                  'session database url': opts['saml2_session_dburl'] or
+                  opts['database_url'] % {
+                      'datadir': opts['data_dir'],
+                      'dbname': 'saml2.sessions.db'}}
         po.save_plugin_config(config)
 
         # Update global config to add login plugin

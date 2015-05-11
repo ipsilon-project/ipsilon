@@ -11,23 +11,6 @@ LOGGING_OUT = 4
 LOGGED_OUT = 8
 
 
-def expire_sessions():
-    """
-    Find all expired sessions and remove them. This is executed as a
-    background cherrypy task.
-    """
-    ss = SAML2SessionStore()
-    data = ss.get_data()
-    now = datetime.datetime.now()
-    for idval in data:
-        r = data[idval]
-        exp = r.get('expiration_time', None)
-        if exp is not None:
-            exp = datetime.datetime.strptime(exp, '%Y-%m-%d %H:%M:%S.%f')
-            if exp < now:
-                ss.remove_session(idval)
-
-
 class SAMLSession(Log):
     """
     A SAML login session.
@@ -118,8 +101,8 @@ class SAMLSessionFactory(Log):
 
     Returns a SAMLSession object representing the new session.
     """
-    def __init__(self):
-        self._ss = SAML2SessionStore()
+    def __init__(self, database_url):
+        self._ss = SAML2SessionStore(database_url=database_url)
         self.user = None
 
     def _data_to_samlsession(self, uuidval, data):
@@ -288,10 +271,9 @@ if __name__ == '__main__':
     provider2 = "http://127.0.0.11/saml2"
 
     # temporary values to simulate cherrypy
-    cherrypy_config['saml2.sessions.db'] = '/tmp/saml2sessions.sqlite'
     cherrypy_config['tools.sessions.timeout'] = 60
 
-    factory = SAMLSessionFactory()
+    factory = SAMLSessionFactory('/tmp/saml2sessions.sqlite')
     factory.wipe_data()
 
     sess1 = factory.add_session('_123456', provider1, "admin", "<Login/>")

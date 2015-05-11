@@ -266,12 +266,13 @@ class ServiceProviderCreator(object):
 
 
 class IdentityProvider(Log):
-    def __init__(self, config):
+    def __init__(self, config, sessionfactory):
         self.server = lasso.Server(config.idp_metadata_file,
                                    config.idp_key_file,
                                    None,
                                    config.idp_certificate_file)
         self.server.role = lasso.PROVIDER_ROLE_IDP
+        self.sessionfactory = sessionfactory
 
     def add_provider(self, sp):
         self.server.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP,
