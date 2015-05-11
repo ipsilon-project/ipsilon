@@ -57,8 +57,14 @@ Alias /sp ${HTTPDIR}/sp
 <Directory ${HTTPDIR}/sp>
     Require all granted
 </Directory>
+
+Alias /open ${HTTPDIR}/open
+
+<Directory ${HTTPDIR}/open>
+</Directory>
 """
     index = """WORKS!"""
+    logged_out = """Logged out"""
 
     t = Template(location)
     text = t.substitute({'HTTPDIR': httpdir})
@@ -68,6 +74,9 @@ Alias /sp ${HTTPDIR}/sp
     os.mkdir(httpdir + '/sp')
     with open(httpdir + '/sp/index.html', 'w') as f:
         f.write(index)
+    os.mkdir(httpdir + '/open')
+    with open(httpdir + '/open/logged_out.html', 'w') as f:
+        f.write(logged_out)
 
 
 class IpsilonTest(IpsilonTestBase):
@@ -120,7 +129,7 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'http://127.0.0.11:45081')
 
-    print "test1: Authenticate to IDP ...",
+    print "pgdb: Authenticate to IDP ...",
     sys.stdout.flush()
     try:
         print 'Stress-testing the database connections...',
@@ -134,7 +143,7 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Add SP Metadata to IDP ...",
+    print "pgdb: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, spname)
     except Exception, e:  # pylint: disable=broad-except
@@ -142,10 +151,21 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Access SP Protected Area ...",
+    print "pgdb: Access SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "pgdb: Logout from SP ...",
+    try:
+        page = sess.fetch_page(idpname, '%s/%s?%s' % (
+            'http://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+        page.expected_value('text()', 'Logged out')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
