@@ -115,6 +115,9 @@ def saml2():
                     logger.error("Failed to read password file!\n" +
                                  "Error: [%s]" % e)
                     raise
+        elif ('IPSILON_ADMIN_PASSWORD' in os.environ) and \
+             (os.environ['IPSILON_ADMIN_PASSWORD']):
+            admin_password = os.environ['IPSILON_ADMIN_PASSWORD']
         else:
             admin_password = getpass.getpass('%s password: ' %
                                              args['admin_user'])
