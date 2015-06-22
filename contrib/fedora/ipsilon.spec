@@ -2,7 +2,7 @@
 
 Name:       ipsilon
 Version:    1.0.0
-Release:    1%{?builddate}%{?gittag}%{?dist}
+Release:    2%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
 Group:      System Environment/Base
@@ -68,6 +68,7 @@ License:        GPLv3+
 Requires:       %{name}-filesystem = %{version}-%{release}
 Requires:       %{name}-saml2-base = %{version}-%{release}
 Requires:       mod_auth_mellon
+Requires:       mod_ssl
 BuildArch:      noarch
 
 %description client
@@ -364,6 +365,9 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Mon Jun 22 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.0.0-2
+- Added mod_ssl requirement for ipsilon-client
+
 * Mon May 11 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.0.0-1
 - Release 1.0.0
 
