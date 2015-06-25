@@ -29,6 +29,8 @@ SAML2_SERVICE_MAP = {
                  lasso.SAML2_METADATA_BINDING_SOAP),
     'logout-redirect': ('SingleLogoutService',
                         lasso.SAML2_METADATA_BINDING_REDIRECT),
+    'slo-soap': ('SingleLogoutService',
+                 lasso.SAML2_METADATA_BINDING_SOAP),
     'response-post': ('AssertionConsumerService',
                       lasso.SAML2_METADATA_BINDING_POST)
 }

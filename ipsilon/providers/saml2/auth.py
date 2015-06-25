@@ -278,10 +278,13 @@ class AuthenticateRequest(ProviderPageBase):
 
         lasso_session = lasso.Session()
         lasso_session.addAssertion(login.remoteProviderId, login.assertion)
+        provider = ServiceProvider(self.cfg, login.remoteProviderId)
         saml_sessions.add_session(login.assertion.id,
                                   login.remoteProviderId,
                                   user.name,
-                                  lasso_session.dump())
+                                  lasso_session.dump(),
+                                  None,
+                                  provider.logout_mechs)
 
     def saml2error(self, login, code, message):
         status = lasso.Samlp2Status()

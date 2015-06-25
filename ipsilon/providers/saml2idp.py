@@ -131,7 +131,7 @@ class Continue(AuthenticateRequest):
         return self.auth(login)
 
 
-class RedirectLogout(LogoutRequest):
+class Logout(LogoutRequest):
 
     def GET(self, *args, **kwargs):
         query = cherrypy.request.query_string
@@ -159,7 +159,7 @@ class SLO(ProviderPageBase):
     def __init__(self, *args, **kwargs):
         super(SLO, self).__init__(*args, **kwargs)
         self.debug('SLO init')
-        self.Redirect = RedirectLogout(*args, **kwargs)
+        self.Redirect = Logout(*args, **kwargs)
 
 
 # one week
@@ -394,13 +394,18 @@ Provides SAML 2.0 authentication infrastructure. """
         Logout all SP sessions when the logout comes from the IdP.
 
         For the current user only.
+
+        Only use HTTP-Redirect to start the logout. This is guaranteed
+        to be supported in SAML 2.
         """
         self.debug("IdP-initiated SAML2 logout")
         us = UserSession()
         user = us.get_user()
 
         saml_sessions = self.sessionfactory
-        session = saml_sessions.get_next_logout()
+        # pylint: disable=unused-variable
+        (mech, session) = saml_sessions.get_next_logout(
+            logout_mechs=[lasso.SAML2_METADATA_BINDING_REDIRECT])
         if session is None:
             return
 
@@ -418,7 +423,8 @@ Provides SAML 2.0 authentication infrastructure. """
         # be redirected to when all SP's are logged out.
         idpurl = self._root.instance_base_url()
         session_id = "_" + uuid.uuid4().hex.upper()
-        saml_sessions.add_session(session_id, idpurl, user.name, "")
+        saml_sessions.add_session(session_id, idpurl, user.name, "", "",
+                                  [lasso.SAML2_METADATA_BINDING_REDIRECT])
         init_session = saml_sessions.get_session_by_id(session_id)
         saml_sessions.start_logout(init_session, relaystate=idpurl)
 

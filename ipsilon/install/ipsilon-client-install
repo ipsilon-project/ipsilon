@@ -97,6 +97,7 @@ def saml2():
     m.set_entity_id(url_sp)
     m.add_certs(c)
     m.add_service(SAML2_SERVICE_MAP['logout-redirect'], url_logout)
+    m.add_service(SAML2_SERVICE_MAP['slo-soap'], url_logout)
     m.add_service(SAML2_SERVICE_MAP['response-post'], url_post, index="0")
     m.add_allowed_name_format(SAML2_NAMEID_MAP[args['saml_nameid']])
     sp_metafile = os.path.join(path, 'metadata.xml')

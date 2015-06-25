@@ -3,8 +3,9 @@
 from ipsilon.providers.common import ProviderException
 from ipsilon.util import config as pconfig
 from ipsilon.util.config import ConfigHelper
-from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP
+from ipsilon.tools.saml2metadata import SAML2_NAMEID_MAP, NSMAP
 from ipsilon.util.log import Log
+from lxml import etree
 import lasso
 import re
 
@@ -49,6 +50,14 @@ class ServiceProvider(ServiceProviderConfig):
         self._properties = data[idval]
         self._staging = dict()
         self.load_config()
+        self.logout_mechs = []
+        xmldoc = etree.XML(str(data[idval]['metadata']))
+        logout = xmldoc.xpath('//md:EntityDescriptor'
+                              '/md:SPSSODescriptor'
+                              '/md:SingleLogoutService',
+                              namespaces=NSMAP)
+        for service in logout:
+            self.logout_mechs.append(service.values()[0])
 
     def load_config(self):
         self.new_config(

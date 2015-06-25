@@ -4,8 +4,10 @@ from ipsilon.providers.common import ProviderPageBase
 from ipsilon.providers.common import InvalidRequest
 from ipsilon.providers.saml2.auth import UnknownProvider
 from ipsilon.util.user import UserSession
+from ipsilon.util.constants import SOAP_MEDIA_TYPE
 import cherrypy
 import lasso
+import requests
 
 
 class LogoutRequest(ProviderPageBase):
@@ -58,7 +60,7 @@ class LogoutRequest(ProviderPageBase):
         # all the session indexes and mark them as logging out but only one
         # is needed to handle the request.
         if len(session_indexes) < 1:
-            self.error('SLO empty session Indexes: %s')
+            self.error('SLO empty session Indexes')
             raise cherrypy.HTTPError(400, 'Invalid logout request')
         session = saml_sessions.get_session_by_id(session_indexes[0])
         if session:
@@ -181,11 +183,36 @@ class LogoutRequest(ProviderPageBase):
         else:
             raise cherrypy.HTTPError(400, 'Not logged in')
 
+    def _soap_logout(self, logout):
+        """
+        Send a SOAP logout request over HTTP and return the result.
+        """
+        headers = {'Content-Type': SOAP_MEDIA_TYPE}
+        try:
+            response = requests.post(logout.msgUrl, data=logout.msgBody,
+                                     headers=headers)
+        except Exception as e:  # pylint: disable=broad-except
+            self.error('SOAP HTTP request failed: (%s) (on %s)' %
+                       (e, logout.msgUrl))
+            raise
+
+        if response.status_code != 200:
+            self.error('SOAP error (%s) (on %s)' %
+                       (response.status, logout.msgUrl))
+            raise InvalidRequest('SOAP HTTP error code', response.status_code)
+
+        if not response.text:
+            self.error('Empty SOAP response')
+            raise InvalidRequest('No content in SOAP response')
+
+        return response.text
+
     def logout(self, message, relaystate=None, samlresponse=None):
         """
-        Handle HTTP Redirect logout. This is an asynchronous logout
-        request process that relies on the HTTP agent to forward
-        logout requests to any other SP's that are also logged in.
+        Handle HTTP logout. The supported logout methods are stored
+        in each session. First all the SOAP sessions are logged out
+        then the HTTP Redirect method is used for any remaining
+        sessions.
 
         The basic process is this:
          1. A logout request is received. It is processed and the response
@@ -198,6 +225,8 @@ class LogoutRequest(ProviderPageBase):
          Repeat steps 2-3 until only the initial logout request is
          left unhandled, at which time the pre-generated response is sent
          back to the SP that originated the logout request.
+
+        The final logout response is always a redirect.
         """
         logout = self.cfg.idp.get_logout_handler()
 
@@ -217,8 +246,13 @@ class LogoutRequest(ProviderPageBase):
         # Fall through to handle any remaining sessions.
 
         # Find the next SP to logout and send a LogoutRequest
-        session = saml_sessions.get_next_logout()
-        if session:
+        logout_order = [
+            lasso.SAML2_METADATA_BINDING_SOAP,
+            lasso.SAML2_METADATA_BINDING_REDIRECT,
+        ]
+        (logout_mech, session) = saml_sessions.get_next_logout(
+            logout_mechs=logout_order)
+        while session:
             self.debug('Going to log out %s' % session.provider_id)
 
             try:
@@ -227,8 +261,12 @@ class LogoutRequest(ProviderPageBase):
                 self.error('Failed to load session: %s' % e)
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                             % e)
-
-            logout.initRequest(session.provider_id, lasso.HTTP_METHOD_REDIRECT)
+            if logout_mech == lasso.SAML2_METADATA_BINDING_REDIRECT:
+                logout.initRequest(session.provider_id,
+                                   lasso.HTTP_METHOD_REDIRECT)
+            else:
+                logout.initRequest(session.provider_id,
+                                   lasso.HTTP_METHOD_SOAP)
 
             try:
                 logout.buildRequestMsg()
@@ -243,7 +281,7 @@ class LogoutRequest(ProviderPageBase):
             indexes = saml_sessions.get_session_id_by_provider_id(
                 session.provider_id
             )
-            self.debug('Requesting logout for sessions %s' % indexes)
+            self.debug('Requesting logout for sessions %s' % (indexes,))
             req = logout.get_request()
             req.setSessionIndexes(indexes)
 
@@ -253,13 +291,34 @@ class LogoutRequest(ProviderPageBase):
 
             self.debug('Request logout ID %s for session ID %s' %
                        (logout.request.id, session.session_id))
-            self.debug('Redirecting to another SP to logout on %s at %s' %
-                       (logout.remoteProviderId, logout.msgUrl))
 
-            raise cherrypy.HTTPRedirect(logout.msgUrl)
+            if logout_mech == lasso.SAML2_METADATA_BINDING_REDIRECT:
+                self.debug('Redirecting to another SP to logout on %s at %s' %
+                           (logout.remoteProviderId, logout.msgUrl))
+                raise cherrypy.HTTPRedirect(logout.msgUrl)
+            else:
+                self.debug('SOAP request to another SP to logout on %s at %s' %
+                           (logout.remoteProviderId, logout.msgUrl))
+                if logout.msgBody:
+                    message = self._soap_logout(logout)
+                    try:
+                        self._handle_logout_response(us,
+                                                     logout,
+                                                     saml_sessions,
+                                                     message,
+                                                     samlresponse)
+                    except Exception as e:  # pylint: disable=broad-except
+                        self.error('SOAP SLO failed %s' % e)
+                else:
+                    self.error('Provider does not support SOAP')
 
-        # Otherwise we're done, respond to the original request using the
-        # response we cached earlier.
+            (logout_mech, session) = saml_sessions.get_next_logout(
+                logout_mechs=logout_order)
+
+        # done while
+
+        # All sessions should be logged out now. Respond to the
+        # original request using the response we cached earlier.
 
         try:
             session = saml_sessions.get_initial_logout()

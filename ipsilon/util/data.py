@@ -551,6 +551,10 @@ class SAML2SessionStore(Store):
         return self.get_unique_data(self.table, idval, name, value)
 
     def new_session(self, datum):
+        if 'supported_logout_mechs' in datum:
+            datum['supported_logout_mechs'] = ','.join(
+                datum['supported_logout_mechs']
+            )
         return self.new_unique_data(self.table, datum)
 
     def get_session(self, session_id=None, request_id=None):
@@ -567,7 +571,7 @@ class SAML2SessionStore(Store):
 
     def get_user_sessions(self, user):
         """
-        Retrun a list of all sessions for a given user.
+        Return a list of all sessions for a given user.
         """
         rows = self.get_unique_data(self.table, name='user', value=user)
 
@@ -575,6 +579,8 @@ class SAML2SessionStore(Store):
         logged_in = []
         for r in rows:
             data = self.get_unique_data(self.table, uuidval=r)
+            data[r]['supported_logout_mechs'] = data[r].get(
+                'supported_logout_mechs', '').split(',')
             logged_in.append(data)
 
         return logged_in
