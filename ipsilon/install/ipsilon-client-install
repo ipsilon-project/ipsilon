@@ -330,9 +330,9 @@ def parse_args():
                         help="Where saml2 authentication is enforced")
     parser.add_argument('--saml-sp', default='/saml2',
                         help="Where saml communication happens")
-    parser.add_argument('--saml-sp-logout', default='/saml2/logout',
+    parser.add_argument('--saml-sp-logout', default=None,
                         help="Single Logout URL")
-    parser.add_argument('--saml-sp-post', default='/saml2/postResponse',
+    parser.add_argument('--saml-sp-post', default=None,
                         help="Post response URL")
     parser.add_argument('--saml-secure-setup', action='store_true',
                         default=True, help="Turn on all security checks")
@@ -363,7 +363,7 @@ def parse_args():
     path_args = ['saml_base', 'saml_auth', 'saml_sp', 'saml_sp_logout',
                  'saml_sp_post']
     for path_arg in path_args:
-        if not args[path_arg].startswith('/'):
+        if args[path_arg] is not None and not args[path_arg].startswith('/'):
             raise ValueError('--%s must begin with a / character.' %
                              path_arg.replace('_', '-'))
 
@@ -374,9 +374,14 @@ def parse_args():
 
     # The saml_sp_logout and saml_sp_post settings must be subpaths
     # of saml_sp (the mellon endpoint).
-    path_args = ['saml_sp_logout', 'saml_sp_post']
-    for path_arg in path_args:
-        if not args[path_arg].startswith(args['saml_sp']):
+    path_args = {'saml_sp_logout': 'logout',
+                 'saml_sp_post': 'postResponse'}
+    for path_arg, default_path in path_args.items():
+        if args[path_arg] is None:
+            args[path_arg] = '%s/%s' % (args['saml_sp'].rstrip('/'),
+                                        default_path)
+
+        elif not args[path_arg].startswith(args['saml_sp']):
             raise ValueError('--%s must be a subpath of --saml-sp' %
                              path_arg.replace('_', '-'))
 
