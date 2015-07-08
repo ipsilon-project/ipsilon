@@ -104,7 +104,6 @@ Provides OpenID 2.0 authentication infrastructure. """
         return self.get_config_value('default allowed attributes')
 
     def get_tree(self, site):
-        self.init_idp()
         self.page = OpenID(site, self)
         # self.admin = AdminPage(site, self)
 
