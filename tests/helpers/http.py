@@ -30,7 +30,7 @@ class PageTree(object):
 
     def first_value(self, rule):
         result = self.tree.xpath(rule)
-        if type(result) is list:
+        if isinstance(result, list):
             if len(result) > 0:
                 result = result[0]
             else:
@@ -39,7 +39,7 @@ class PageTree(object):
 
     def all_values(self, rule):
         result = self.tree.xpath(rule)
-        if type(result) is list:
+        if isinstance(result, list):
             return result
         return [result]
 
@@ -121,7 +121,7 @@ class HttpSessions(object):
         return values
 
     def handle_login_form(self, idp, page):
-        if type(page) != PageTree:
+        if not isinstance(page, PageTree):
             raise TypeError("Expected PageTree object")
 
         srv = self.servers[idp]
@@ -151,7 +151,7 @@ class HttpSessions(object):
                 {'headers': headers, 'data': payload}]
 
     def handle_return_form(self, page):
-        if type(page) != PageTree:
+        if not isinstance(page, PageTree):
             raise TypeError("Expected PageTree object")
 
         try:
@@ -177,7 +177,7 @@ class HttpSessions(object):
                 {'headers': headers, 'data': payload}]
 
     def handle_openid_form(self, page):
-        if type(page) != PageTree:
+        if not isinstance(page, PageTree):
             raise TypeError("Expected PageTree object")
 
         if not page.first_value('//title/text()') == \
@@ -207,7 +207,7 @@ class HttpSessions(object):
                 {'headers': headers, 'data': payload}]
 
     def handle_openid_consent_form(self, page):
-        if type(page) != PageTree:
+        if not isinstance(page, PageTree):
             raise TypeError("Expected PageTree object")
 
         try:
