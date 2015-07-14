@@ -85,7 +85,7 @@ class LoginManagerBase(ConfigHelper, PluginObject):
             trans.wipe()
         raise cherrypy.HTTPRedirect(redirect)
 
-    def auth_failed(self, trans):
+    def auth_failed(self, trans, message=None):
         # try with next module
         next_login = self.next_login()
         if next_login:
@@ -104,7 +104,7 @@ class LoginManagerBase(ConfigHelper, PluginObject):
         # destroy session and return error
         if 'login_return' not in transdata:
             session.logout(None)
-            raise cherrypy.HTTPError(401)
+            raise cherrypy.HTTPError(401, message)
 
         raise cherrypy.HTTPRedirect(transdata['login_return'])
 

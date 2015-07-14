@@ -9,6 +9,15 @@ from string import Template
 import cherrypy
 import subprocess
 
+# Translate PAM errors into more human-digestible values and eventually
+# other languages.
+PAM_AUTH_ERRORS = {
+    "Authentication token is no longer valid; new one required":
+        "Password is expired",
+    "Authentication failure":
+        "Authentication failure",
+}
+
 
 class Form(LoginFormBase):
 
@@ -19,12 +28,13 @@ class Form(LoginFormBase):
         if not user.is_anonymous:
             return self.lm.auth_successful(self.trans, user.name, 'password')
         else:
-            try:
-                error = cherrypy.request.headers['EXTERNAL_AUTH_ERROR']
-            except KeyError:
-                error = "Unknown error using external authentication"
-                cherrypy.log.error("Error: %s" % error)
-            return self.lm.auth_failed(self.trans)
+            error = cherrypy.request.wsgi_environ.get(
+                'EXTERNAL_AUTH_ERROR',
+                'Unknown error using external authentication'
+            )
+            error = PAM_AUTH_ERRORS.get(error, error)
+            cherrypy.log.error("Error: %s" % error)
+            return self.lm.auth_failed(self.trans, error)
 
 
 class LoginManager(LoginManagerBase):
