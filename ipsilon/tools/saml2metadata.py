@@ -97,11 +97,11 @@ class Metadata(object):
         elif isinstance(exp, datetime.datetime):
             d = exp
         elif isinstance(exp, datetime.timedelta):
-            d = datetime.datetime.now() + exp
+            d = datetime.datetime.utcnow() + exp
         else:
             raise TypeError('Invalid expiration date type')
 
-        self.root.set('validUntil', d.isoformat())
+        self.root.set('validUntil', d.isoformat() + 'Z')
 
     def add_cert(self, certdata, use):
         desc = mdElement(self.role, 'KeyDescriptor')
