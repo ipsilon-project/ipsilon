@@ -65,7 +65,9 @@ for authentication. """
             pconfig.String(
                 'service name',
                 'The name of the PAM service used to authenticate.',
-                'remote'),
+                'remote',
+                readonly=True,
+                ),
             pconfig.String(
                 'username text',
                 'Text used to ask for the username at login time.',

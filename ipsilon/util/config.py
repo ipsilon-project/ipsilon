@@ -70,18 +70,21 @@ class Config(Log):
 
 class Option(Log):
 
-    def __init__(self, name, description):
+    def __init__(self, name, description, readonly=False):
         self.name = name
         self.description = description
         self._default_value = None
         self._assigned_value = None
+        self._readonly = readonly
 
     def __repr__(self):
-        return "%s: %s {%s}, value = %s [def: %s]" % (self.__class__,
-                                                      self.name,
-                                                      self.description,
-                                                      self._assigned_value,
-                                                      self._default_value)
+        return "%s: %s {%s}, value = %s [def: %s] readonly=%s" % (
+            self.__class__,
+            self.name,
+            self.description,
+            self._assigned_value,
+            self._default_value,
+            self._readonly)
 
     def __str__(self):
         return '%s=%s' % (self.name, self.get_value())
@@ -113,11 +116,14 @@ class Option(Log):
             raise ValueError('Value must be string')
         self._assigned_value = value
 
+    def is_readonly(self):
+        return self._readonly
+
 
 class String(Option):
 
-    def __init__(self, name, description, default_value=None):
-        super(String, self).__init__(name, description)
+    def __init__(self, name, description, default_value=None, readonly=False):
+        super(String, self).__init__(name, description, readonly=readonly)
         self._default_value = str(default_value)
 
     def set_value(self, value):
@@ -132,8 +138,9 @@ class String(Option):
 
 class Template(Option):
 
-    def __init__(self, name, description, default_template=None):
-        super(Template, self).__init__(name, description)
+    def __init__(self, name, description, default_template=None,
+                 readonly=False):
+        super(Template, self).__init__(name, description, readonly=readonly)
         self._default_value = str(default_template)
 
     def set_value(self, value):
@@ -154,8 +161,8 @@ class Template(Option):
 
 class List(Option):
 
-    def __init__(self, name, description, default_list=None):
-        super(List, self).__init__(name, description)
+    def __init__(self, name, description, default_list=None, readonly=False):
+        super(List, self).__init__(name, description, readonly=readonly)
         if default_list:
             self._default_value = default_list
         else:
@@ -226,8 +233,9 @@ class MappingList(ComplexList):
 
 class Choice(Option):
 
-    def __init__(self, name, description, allowed=None, default=None):
-        super(Choice, self).__init__(name, description)
+    def __init__(self, name, description, allowed=None, default=None,
+                 readonly=False):
+        super(Choice, self).__init__(name, description, readonly=readonly)
         if allowed:
             self._allowed_values = list(allowed)
         else:
@@ -295,8 +303,9 @@ class Choice(Option):
 
 class Pick(Option):
 
-    def __init__(self, name, description, allowed, default_value):
-        super(Pick, self).__init__(name, description)
+    def __init__(self, name, description, allowed, default_value,
+                 readonly=False):
+        super(Pick, self).__init__(name, description, readonly=readonly)
         self._allowed_values = list(allowed)
         if default_value not in self._allowed_values:
             raise ValueError('The default value is not in the allowed list')
@@ -320,9 +329,11 @@ class Pick(Option):
 
 class Condition(Pick):
 
-    def __init__(self, name, description, default_value=False):
+    def __init__(self, name, description, default_value=False,
+                 readonly=False):
         super(Condition, self).__init__(name, description,
-                                        [True, False], default_value)
+                                        [True, False], default_value,
+                                        readonly=readonly)
 
     def import_value(self, value):
         self._assigned_value = value == 'True'

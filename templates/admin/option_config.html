@@ -59,9 +59,16 @@
                   {%- if value %}
                     value="{{ value }}"
                   {%- endif -%}
+                  {% if v.is_readonly() -%}
+                    disabled
+                  {%- endif -%}
                 >
               {% elif v.__class__.__name__ == 'List' -%}
-                <textarea class="form-control" name="{{ v.name }}">
+                <textarea class="form-control" name="{{ v.name }}"
+                  {% if v.is_readonly() -%}
+                    disabled
+                  {%- endif -%}
+                >
                   {%- if value %}
                     {{- value|join('\n') -}}
                   {%- endif -%}
@@ -74,6 +81,9 @@
                     <input type="checkbox" name="{{ v.name }}_{{ e }}"
                       {%- if value and e in value %}
                         checked="true"
+                      {%- endif -%}
+                      {% if v.is_readonly() -%}
+                        disabled
                       {%- endif -%}
                     >&nbsp;{{ e }}
                   </div>
@@ -88,6 +98,9 @@
                       {%- if e == value %}
                         checked="true"
                       {%- endif -%}
+                      {% if v.is_readonly() -%}
+                        disabled
+                      {%- endif -%}
                     >&nbsp;{{ e }}
                   </div>
                 {% endfor %}
@@ -97,6 +110,9 @@
                   {%- if value %}
                     checked="true"
                   {% endif -%}
+                  {% if v.is_readonly() -%}
+                    disabled
+                  {%- endif -%}
                 >
               {% elif v.__class__.__name__ == 'ComplexList' -%}
                 <table class="table table-striped extensible-table">
@@ -111,6 +127,9 @@
                           value="{{ line|join(' / ') }}"
                         {%- else -%}
                           value="{{ line }}"
+                        {%- endif -%}
+                        {% if v.is_readonly() -%}
+                          disabled
                         {%- endif -%}
                       >
                     </td>
