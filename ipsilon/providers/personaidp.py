@@ -54,7 +54,6 @@ Provides Persona authentication infrastructure. """
         return self.get_config_value('allowed domains')
 
     def get_tree(self, site):
-        self.init_idp()
         self.page = Persona(site, self)
         # self.admin = AdminPage(site, self)
 
