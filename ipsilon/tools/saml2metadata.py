@@ -86,6 +86,8 @@ class Metadata(object):
             raise ValueError('invalid role: %s' % role)
         self.role = mdElement(self.root, description)
         self.role.set('protocolSupportEnumeration', lasso.SAML2_PROTOCOL_HREF)
+        if role == IDP_ROLE:
+            self.role.set('WantAuthnRequestsSigned', 'true')
         return self.role
 
     def set_expiration(self, exp):
