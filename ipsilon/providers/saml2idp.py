@@ -346,7 +346,6 @@ Provides SAML 2.0 authentication infrastructure. """
         return self.get_config_value('default allowed attributes')
 
     def get_tree(self, site):
-        self.idp = self.init_idp()
         self.page = SAML2(site, self)
         self.admin = Saml2AdminPage(site, self)
         self.rest = Saml2RestBase(site, self)
