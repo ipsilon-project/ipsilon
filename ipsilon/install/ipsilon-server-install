@@ -434,7 +434,8 @@ if __name__ == '__main__':
         else:
             install(fplugins, opts)
     except Exception, e:  # pylint: disable=broad-except
-        logger.exception(e)
+        logger.debug(e, exc_info=1)
+
         if 'uninstall' in opts and opts['uninstall'] is True:
             logger.info('Uninstallation aborted.')
         else:
