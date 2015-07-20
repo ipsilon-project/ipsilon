@@ -61,21 +61,32 @@ class LDAP(LoginFormBase, Log):
         username = kwargs.get("login_name")
         password = kwargs.get("login_password")
         userattrs = None
-        authed = False
+        authok = False
         errmsg = None
 
         if username and password:
             try:
                 userattrs = self._authenticate(username, password)
-                authed = True
-            except Exception, e:  # pylint: disable=broad-except
+                authok = True
+            except ldap.INVALID_CREDENTIALS as e:
                 errmsg = "Authentication failed"
+                self.error(errmsg)
+            except ldap.LDAPError as e:
+                errmsg = 'Internal system error'
+                if isinstance(e, ldap.TIMEOUT):
+                    self.error('LDAP request timed out')
+                else:
+                    desc = e.args[0]['desc'].strip()
+                    info = e.args[0].get('info', '').strip()
+                    self.error("%s: %s %s" % (e.__class__.__name__,
+                                              desc, info))
+            except Exception as e:  # pylint: disable=broad-except
+                errmsg = 'Internal system error'
                 self.error("Exception raised: [%s]" % repr(e))
         else:
-            errmsg = "Username or password is missing"
-            self.error(errmsg)
+            self.error("Username or password is missing")
 
-        if authed:
+        if authok:
             return self.lm.auth_successful(self.trans, username, 'password',
                                            userdata=userattrs)
 

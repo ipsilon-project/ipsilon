@@ -300,7 +300,7 @@ class HttpSessions(object):
                 raise ValueError("Unhandled status (%d) on url %s" % (
                                  r.status_code, url))
 
-    def auth_to_idp(self, idp, krb=False):
+    def auth_to_idp(self, idp, krb=False, rule=None, expected=None):
 
         srv = self.servers[idp]
         target_url = '%s/%s/' % (srv['baseuri'], idp)
@@ -316,8 +316,12 @@ class HttpSessions(object):
 
         page = self.fetch_page(idp, url, krb=krb)
 
-        page.expected_value('//div[@id="welcome"]/p/text()',
-                            'Welcome %s!' % srv['user'])
+        if rule is None:
+            rule = '//div[@id="welcome"]/p/text()'
+        if expected is None:
+            expected = 'Welcome %s!' % srv['user']
+
+        page.expected_value(rule, expected)
 
     def logout_from_idp(self, idp):
 
