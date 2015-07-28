@@ -70,7 +70,7 @@ class SPS(RestProviderBase):
         else:
             data = idp.get_data()
 
-        for idval in data.keys():
+        for idval in data:
             result = dict(provider=data[idval].get('name'),
                           metadata=data[idval].get('metadata'),)
             results.append(result)

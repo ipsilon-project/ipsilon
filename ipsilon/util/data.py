@@ -23,7 +23,7 @@ class SqlStore(Log):
 
     @classmethod
     def get_connection(cls, name):
-        if name not in cls.__instances.keys():
+        if name not in cls.__instances:
             if cherrypy.config.get('db.conn.log', False):
                 logging.debug('SqlStore new: %s', name)
             cls.__instances[name] = SqlStore(name)

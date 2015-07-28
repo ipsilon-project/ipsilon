@@ -85,7 +85,7 @@ def check_info_plugin(s, idp_name, urlbase, expected):
     data.pop('MELLON_IDP')
     data.pop('MELLON_NAME_ID')
 
-    for key in expected.keys():
+    for key in expected:
         item = data.pop('MELLON_' + key)
         if item != expected[key]:
             raise ValueError('Expected %s, got %s' % (expected[key], item))

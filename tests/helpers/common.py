@@ -101,10 +101,10 @@ class IpsilonTestBase(object):
                          nameid='unspecified'):
         newconf = ConfigParser.ConfigParser()
         newconf.add_section('globals')
-        for k in global_opts.keys():
+        for k in global_opts:
             newconf.set('globals', k, global_opts[k])
         newconf.add_section('arguments')
-        for k in args_opts.keys():
+        for k in args_opts:
             newconf.set('arguments', k, args_opts[k])
 
         profile = io.BytesIO()

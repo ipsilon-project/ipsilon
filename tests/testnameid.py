@@ -55,7 +55,7 @@ def generate_sp_list():
     splist = []
     spport = 45081
 
-    for nameid in SAML2_NAMEID_MAP.keys():
+    for nameid in SAML2_NAMEID_MAP:
         nameid = nameid
         spdata = {'nameid': nameid, 'addr': '127.0.0.11', 'port': str(spport)}
         splist.append(spdata)

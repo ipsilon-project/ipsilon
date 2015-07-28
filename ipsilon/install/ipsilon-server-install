@@ -313,7 +313,7 @@ def parse_config_profile(args):
             if g in globals():
                 globals()[g] = val
             else:
-                for k in globals().keys():
+                for k in globals():
                     if k.lower() == g.lower():
                         globals()[k] = val
                         break

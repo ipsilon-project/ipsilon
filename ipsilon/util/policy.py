@@ -77,7 +77,7 @@ class Policy(Log):
         # If ignore_case is True,
         # then PD translates case insensitively prefixes
         PD = dict()
-        for k in attributes.keys():
+        for k in attributes:
             if ignore_case:
                 # note duplicates that differ only by case
                 # will be lost here, beware!
