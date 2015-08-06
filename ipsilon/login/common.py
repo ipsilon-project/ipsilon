@@ -184,7 +184,9 @@ class LoginFormBase(LoginPageBase):
         if other_login_stacks:
             other_stacks = list()
             for ls in other_login_stacks:
-                url = '%s?%s' % (ls.path, self.trans.get_GET_arg())
+                url = '%s/login/%s?%s' % (
+                    self.basepath, ls.path, self.trans.get_GET_arg()
+                )
                 name = ls.name
                 other_stacks.append({'url': url, 'name': name})
 
