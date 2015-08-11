@@ -10,12 +10,15 @@ except ImportError:
     import pickle
 
 
-SESSION_COLUMNS = ['id', 'data', 'expiration_time']
+SESSION_TABLE = {'columns': ['id', 'data', 'expiration_time'],
+                 'primary_key': ('id', ),
+                 'indexes': [('expiration_time',)]
+                 }
 
 
 class SessionStore(Store):
     def _initialize_schema(self):
-        q = self._query(self._db, 'sessions', SESSION_COLUMNS,
+        q = self._query(self._db, 'sessions', SESSION_TABLE,
                         trans=False)
         q.create()
 
@@ -44,12 +47,12 @@ class SqlSession(Session):
         cls._db = cls._store._db
 
     def _exists(self):
-        q = SqlQuery(self._db, 'sessions', SESSION_COLUMNS)
+        q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
         result = q.select({'id': self.id})
         return True if result.fetchone() else False
 
     def _load(self):
-        q = SqlQuery(self._db, 'sessions', SESSION_COLUMNS)
+        q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
         result = q.select({'id': self.id})
         r = result.fetchone()
         if r:
@@ -59,7 +62,7 @@ class SqlSession(Session):
     def _save(self, expiration_time):
         q = None
         try:
-            q = SqlQuery(self._db, 'sessions', SESSION_COLUMNS, trans=True)
+            q = SqlQuery(self._db, 'sessions', SESSION_TABLE, trans=True)
             q.delete({'id': self.id})
             data = pickle.dumps((self._data, expiration_time), self._proto)
             q.insert((self.id, base64.b64encode(data), expiration_time))
@@ -70,7 +73,7 @@ class SqlSession(Session):
             raise
 
     def _delete(self):
-        q = SqlQuery(self._db, 'sessions', SESSION_COLUMNS)
+        q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
         q.delete({'id': self.id})
 
     # copy what RamSession does for now

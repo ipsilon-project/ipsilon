@@ -1,6 +1,6 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
-from ipsilon.util.data import Store, UNIQUE_DATA_COLUMNS
+from ipsilon.util.data import Store, UNIQUE_DATA_TABLE
 
 from openid import oidutil
 from openid.association import Association
@@ -79,7 +79,7 @@ class OpenIDStore(Store, OpenIDStoreInterface):
                 self.del_unique_data('association', iden)
 
     def _initialize_schema(self):
-        q = self._query(self._db, 'association', UNIQUE_DATA_COLUMNS,
+        q = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
 
