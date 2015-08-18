@@ -60,7 +60,9 @@ else:
 template_loaders.append(FileSystemLoader(
     os.path.join(cherrypy.config['base.dir'],
                  default_template_dir)))
-template_env = Environment(loader=ChoiceLoader(template_loaders))
+template_env = Environment(loader=ChoiceLoader(template_loaders),
+                           autoescape=True,
+                           extensions=['jinja2.ext.autoescape'])
 
 if __name__ == "__main__":
     conf = {'/': {'tools.staticdir.root': os.getcwd()},
