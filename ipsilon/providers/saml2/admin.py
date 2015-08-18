@@ -192,8 +192,9 @@ class SPAdminPage(AdminPage):
                         if (not self.user.is_admin and
                                 self.user.name != self.sp.owner):
                             raise UnauthorizedUser("Unauthorized to set owner")
-                    elif key in ['Owner', 'Default NameID', 'Allowed NameIDs',
-                                 'Attribute Mapping', 'Allowed Attributes']:
+                    elif key in ['User Owner', 'Default NameID',
+                                 'Allowed NameIDs', 'Attribute Mapping',
+                                 'Allowed Attributes']:
                         if not self.user.is_admin:
                             raise UnauthorizedUser(
                                 "Unauthorized to set %s" % key
