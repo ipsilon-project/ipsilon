@@ -90,6 +90,7 @@ wrappers:
 	#SOCKET_WRAPPER_DEFAULT_IFACE=9
 
 tests: wrappers
+	rm -rf testdir
 	PYTHONPATH=./ ./tests/tests.py --test=test1
 	PYTHONPATH=./ ./tests/tests.py --test=testlogout
 	PYTHONPATH=./ ./tests/tests.py --test=testnameid
