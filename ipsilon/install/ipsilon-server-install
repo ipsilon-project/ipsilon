@@ -30,14 +30,10 @@ STATICDIR = '/usr/share/ipsilon'
 WSGI_SOCKET_PREFIX = None
 
 
-class ConfigurationError(Exception):
+class ConfigurationError(StandardError):
 
     def __init__(self, message):
-        super(ConfigurationError, self).__init__(message)
-        self.message = message
-
-    def __str__(self):
-        return repr(self.message)
+        StandardError.__init__(self, message)
 
 
 #Silence cherrypy logging to screen
@@ -181,7 +177,8 @@ def install(plugins, args):
         plugin = plugins['Environment Helpers'][plugin_name]
         plugin_changes = {}
         if plugin.configure_server(args, plugin_changes) == False:
-            logger.info('Configuration of environment helper %s failed' % plugin_name)
+            msg = 'Configuration of environment helper %s failed' % plugin_name
+            raise ConfigurationError(msg)
         changes['env_helper'][plugin_name] = plugin_changes
 
     logger.info('Configuring login managers')
@@ -192,7 +189,8 @@ def install(plugins, args):
             sys.exit('Login provider %s not installed' % plugin_name)
         plugin_changes = {}
         if plugin.configure(args, plugin_changes) == False:
-            logger.info('Configuration of login manager %s failed' % plugin_name)
+            msg = 'Configuration of login manager %s failed' % plugin_name
+            raise ConfigurationError(msg)
         changes['login_manager'][plugin_name] = plugin_changes
 
     logger.info('Configuring Info provider')
@@ -200,7 +198,8 @@ def install(plugins, args):
         plugin = plugins['Info Provider'][plugin_name]
         plugin_changes = {}
         if plugin.configure(args, plugin_changes) == False:
-            logger.info('Configuration of info provider %s failed' % plugin_name)
+            msg = 'Configuration of info provider %s failed' % plugin_name
+            raise ConfigurationError(msg)
         changes['info_provider'][plugin_name] = plugin_changes
 
     logger.info('Configuring Authentication Providers')
@@ -208,7 +207,8 @@ def install(plugins, args):
         plugin = plugins['Auth Providers'][plugin_name]
         plugin_changes = {}
         if plugin.configure(args, plugin_changes) == False:
-            logger.info('Configuration of auth provider %s failed' % plugin_name)
+            msg = 'Configuration of auth provider %s failed' % plugin_name
+            raise ConfigurationError(msg)
         changes['auth_provider'][plugin_name] = plugin_changes
 
     # Save any changes that were made

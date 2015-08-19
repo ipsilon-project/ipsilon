@@ -8,6 +8,30 @@ from ipsilon.util import config as pconfig
 from ipsilon.info.infoldap import InfoProvider as LDAPInfo
 import ldap
 import subprocess
+import logging
+
+
+def ldap_connect(server_url, tls):
+    tls = tls.lower()
+    tls_req_opt = None
+    if tls == "never":
+        tls_req_opt = ldap.OPT_X_TLS_NEVER
+    elif tls == "demand":
+        tls_req_opt = ldap.OPT_X_TLS_DEMAND
+    elif tls == "allow":
+        tls_req_opt = ldap.OPT_X_TLS_ALLOW
+    elif tls == "try":
+        tls_req_opt = ldap.OPT_X_TLS_TRY
+    if tls_req_opt is not None:
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, tls_req_opt)
+
+    conn = ldap.initialize(server_url)
+
+    if tls != "notls":
+        if not server_url.startswith("ldaps"):
+            conn.start_tls_s()
+
+    return conn
 
 
 class LDAP(LoginFormBase, Log):
@@ -17,26 +41,7 @@ class LDAP(LoginFormBase, Log):
         self.ldap_info = None
 
     def _ldap_connect(self):
-
-        tls = self.lm.tls.lower()
-        tls_req_opt = None
-        if tls == "never":
-            tls_req_opt = ldap.OPT_X_TLS_NEVER
-        elif tls == "demand":
-            tls_req_opt = ldap.OPT_X_TLS_DEMAND
-        elif tls == "allow":
-            tls_req_opt = ldap.OPT_X_TLS_ALLOW
-        elif tls == "try":
-            tls_req_opt = ldap.OPT_X_TLS_TRY
-        if tls_req_opt is not None:
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, tls_req_opt)
-
-        conn = ldap.initialize(self.lm.server_url)
-
-        if tls != "notls":
-            if not self.lm.server_url.startswith("ldaps"):
-                conn.start_tls_s()
-        return conn
+        return ldap_connect(self.lm.server_url, self.lm.tls)
 
     def _authenticate(self, username, password):
 
@@ -200,7 +205,9 @@ class Installer(LoginManagerInstaller):
                            help='LDAP Server Url')
         group.add_argument('--ldap-bind-dn-template', action='store',
                            help='LDAP Bind DN Template')
-        group.add_argument('--ldap-tls-level', action='store', default=None,
+        group.add_argument('--ldap-tls-level', default='Demand',
+                           choices=['Demand', 'Allow', 'Try', 'Never',
+                                    'NoTLS'],
                            help='LDAP TLS level')
         group.add_argument('--ldap-base-dn', action='store',
                            help='LDAP Base DN')
@@ -218,7 +225,17 @@ class Installer(LoginManagerInstaller):
         config = dict()
         if 'ldap_server_url' in opts:
             config['server url'] = opts['ldap_server_url']
+        else:
+            logging.error('LDAP Server URL is required')
+            return False
         if 'ldap_bind_dn_template' in opts:
+            try:
+                opts['ldap_bind_dn_template'] % {'username': 'test'}
+            except KeyError:
+                logging.error(
+                    'Bind DN template does not container %(username)s'
+                )
+                return False
             config['bind dn template'] = opts['ldap_bind_dn_template']
         if 'ldap_tls_level' in opts and opts['ldap_tls_level'] is not None:
             config['tls'] = opts['ldap_tls_level']
@@ -226,6 +243,30 @@ class Installer(LoginManagerInstaller):
             config['tls'] = 'Demand'
         if 'ldap_base_dn' in opts and opts['ldap_base_dn'] is not None:
             config['base dn'] = opts['ldap_base_dn']
+            test_dn = config['base dn']
+        else:
+            # default set in the config object
+            test_dn = 'dc=example,dc=com'
+
+        # Test the LDAP connection anonymously
+        try:
+            lh = ldap_connect(config['server url'], config['tls'])
+            lh.simple_bind_s('', '')
+            lh.search_s(test_dn, ldap.SCOPE_BASE,
+                        attrlist=['objectclasses'])
+        except ldap.INSUFFICIENT_ACCESS:
+            logging.warn('Anonymous access not allowed, continuing')
+        except ldap.UNWILLING_TO_PERFORM:  # probably minSSF issue
+            logging.warn('LDAP server unwilling to perform, expect issues')
+        except ldap.SERVER_DOWN:
+            logging.warn('LDAP server is down')
+        except ldap.NO_SUCH_OBJECT:
+            logging.error('Base DN not found')
+            return False
+        except ldap.LDAPError as e:
+            logging.error(e)
+            return False
+
         po.save_plugin_config(config)
 
         # Update global config to add login plugin
