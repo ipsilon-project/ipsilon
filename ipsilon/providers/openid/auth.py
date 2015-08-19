@@ -26,7 +26,8 @@ class AuthenticateRequest(ProviderPageBase):
         try:
             # generate a new id or get current one
             self.trans = Transaction('openid', **kwargs)
-            if self.trans.cookie.value != self.trans.provider:
+            if (self.trans.cookie and
+                    self.trans.cookie.value != self.trans.provider):
                 self.debug('Invalid transaction, %s != %s' % (
                            self.trans.cookie.value, self.trans.provider))
         except Exception, e:  # pylint: disable=broad-except
