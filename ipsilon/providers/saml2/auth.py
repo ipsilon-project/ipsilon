@@ -211,6 +211,8 @@ class AuthenticateRequest(ProviderPageBase):
             login.assertion.subject.nameId.content = nameid
         else:
             self.trans.wipe()
+            self.error('Authentication succeeded but it was not ' +
+                       'provided by NameID %s' % nameidfmt)
             raise AuthenticationError("Unavailable Name ID type",
                                       lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
