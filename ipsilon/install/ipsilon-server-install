@@ -405,7 +405,7 @@ def parse_args(plugins):
     else:
         args['lm_order'] = args['lm_order'].split(',')
 
-    if len(args['lm_order']) == 0:
+    if len(args['lm_order']) == 0 and args['ipa'] != 'yes':
         sys.exit('No login plugins are enabled.')
 
     #FIXME: check instance is only alphanums
