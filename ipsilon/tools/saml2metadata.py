@@ -32,7 +32,9 @@ SAML2_SERVICE_MAP = {
     'slo-soap': ('SingleLogoutService',
                  lasso.SAML2_METADATA_BINDING_SOAP),
     'response-post': ('AssertionConsumerService',
-                      lasso.SAML2_METADATA_BINDING_POST)
+                      lasso.SAML2_METADATA_BINDING_POST),
+    'response-paos': ('AssertionConsumerService',
+                      lasso.SAML2_METADATA_BINDING_PAOS),
 }
 
 EDESC = '{%s}EntityDescriptor' % lasso.SAML2_METADATA_HREF

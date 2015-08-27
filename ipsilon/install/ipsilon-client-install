@@ -89,6 +89,7 @@ def saml2():
     url_sp = url + args['saml_sp']
     url_logout = url + args['saml_sp_logout']
     url_post = url + args['saml_sp_post']
+    url_paos = url + args['saml_sp_paos']
 
     # Generate metadata
     m = Metadata('sp')
@@ -99,7 +100,10 @@ def saml2():
     m.add_service(SAML2_SERVICE_MAP['logout-redirect'], url_logout)
     if not args['no_saml_soap_logout']:
         m.add_service(SAML2_SERVICE_MAP['slo-soap'], url_logout)
-    m.add_service(SAML2_SERVICE_MAP['response-post'], url_post, index="0")
+    m.add_service(SAML2_SERVICE_MAP['response-post'], url_post,
+                  index="0", isDefault="true")
+    m.add_service(SAML2_SERVICE_MAP['response-paos'], url_paos,
+                  index="1")
     m.add_allowed_name_format(SAML2_NAMEID_MAP[args['saml_nameid']])
     sp_metafile = os.path.join(path, 'metadata.xml')
     m.output(sp_metafile)
@@ -336,6 +340,8 @@ def parse_args():
                         help="Single Logout URL")
     parser.add_argument('--saml-sp-post', default=None,
                         help="Post response URL")
+    parser.add_argument('--saml-sp-paos', default=None,
+                        help="PAOS response URL, used for ECP")
     parser.add_argument('--no-saml-soap-logout', action='store_true',
                         default=False,
                         help="Disable Single Logout over SOAP")
@@ -366,7 +372,7 @@ def parse_args():
 
     # Validate that all path options begin with '/'
     path_args = ['saml_base', 'saml_auth', 'saml_sp', 'saml_sp_logout',
-                 'saml_sp_post']
+                 'saml_sp_post', 'saml_sp_paos']
     for path_arg in path_args:
         if args[path_arg] is not None and not args[path_arg].startswith('/'):
             raise ValueError('--%s must begin with a / character.' %
@@ -377,10 +383,11 @@ def parse_args():
     if not args['saml_sp'].startswith(args['saml_base']):
         raise ValueError('--saml-sp must be a subpath of --saml-base.')
 
-    # The saml_sp_logout and saml_sp_post settings must be subpaths
-    # of saml_sp (the mellon endpoint).
+    # The saml_sp_logout, saml_sp_post and saml_sp_paos settings must
+    # be subpaths of saml_sp (the mellon endpoint).
     path_args = {'saml_sp_logout': 'logout',
-                 'saml_sp_post': 'postResponse'}
+                 'saml_sp_post': 'postResponse',
+                 'saml_sp_paos': 'paosResponse'}
     for path_arg, default_path in path_args.items():
         if args[path_arg] is None:
             args[path_arg] = '%s/%s' % (args['saml_sp'].rstrip('/'),
