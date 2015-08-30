@@ -5,7 +5,7 @@ import imp
 import cherrypy
 import inspect
 import logging
-from ipsilon.util.data import AdminStore
+from ipsilon.util.data import AdminStore, Store
 from ipsilon.util.log import Log
 
 
@@ -146,7 +146,14 @@ class PluginObject(Log):
             return
 
         self.refresh_plugin_config()
-        self.on_enable()
+        is_upgrade = Store._is_upgrade  # pylint: disable=protected-access
+        try:
+            Store._is_upgrade = True  # pylint: disable=protected-access
+            self.on_enable()
+            for store in self.used_datastores():
+                store.upgrade_database()
+        finally:
+            Store._is_upgrade = is_upgrade  # pylint: disable=protected-access
         self.is_enabled = True
         self.debug('Plugin enabled: %s' % self.name)
 
@@ -158,6 +165,9 @@ class PluginObject(Log):
 
         self.is_enabled = False
         self.debug('Plugin disabled: %s' % self.name)
+
+    def used_datastores(self):
+        return []
 
     def import_config(self, config):
         self._config = config

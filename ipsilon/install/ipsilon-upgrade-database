@@ -1,0 +1,14 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
+
+import sys
+from ipsilon import find_config
+from ipsilon.tools import dbupgrade
+
+
+try:
+    dbupgrade.execute_upgrade(find_config())
+except Exception as ex:
+    print ex
+    sys.exit(1)

@@ -80,6 +80,7 @@ if __name__ == '__main__':
     penv.update(os.environ)
     penv['PYTHONPATH'] = os.getcwd()
 
+    schema_init = os.path.join(os.getcwd(), 'ipsilon/install/ipsilon-upgrade-database')
     exe = os.path.join(os.getcwd(), 'ipsilon/ipsilon')
 
     if args['cleanup']:
@@ -97,5 +98,9 @@ if __name__ == '__main__':
 
     os.chdir(args['workdir'])
 
-    p = subprocess.Popen([exe, conf], env=penv)
+    p = subprocess.Popen([schema_init, conf], env=penv)
     p.wait()
+
+    if p.returncode == 0:
+        p = subprocess.Popen([exe, conf], env=penv)
+        p.wait()

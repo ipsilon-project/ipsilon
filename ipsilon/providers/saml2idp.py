@@ -342,6 +342,10 @@ Provides SAML 2.0 authentication infrastructure. """
         self.rest = Saml2RestBase(site, self)
         return self.page
 
+    def used_datastores(self):
+        # pylint: disable=protected-access
+        return [self.sessionfactory._ss]
+
     def init_idp(self):
         idp = None
         self.sessionfactory = SAMLSessionFactory(

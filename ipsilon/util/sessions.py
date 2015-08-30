@@ -2,7 +2,7 @@
 
 import base64
 from cherrypy.lib.sessions import Session
-from ipsilon.util.data import SqlStore, SqlQuery
+from ipsilon.util.data import Store, SqlQuery
 import threading
 try:
     import cPickle as pickle
@@ -13,10 +13,21 @@ except ImportError:
 SESSION_COLUMNS = ['id', 'data', 'expiration_time']
 
 
+class SessionStore(Store):
+    def _initialize_schema(self):
+        q = self._query(self._db, 'sessions', SESSION_COLUMNS,
+                        trans=False)
+        q.create()
+
+    def _upgrade_schema(self, old_version):
+        raise NotImplementedError()
+
+
 class SqlSession(Session):
 
     dburi = None
     _db = None
+    _store = None
     _proto = 2
     locks = {}
 
@@ -28,7 +39,9 @@ class SqlSession(Session):
             if k == 'storage_dburi':
                 cls.dburi = v
 
-        cls._db = SqlStore(cls.dburi)
+        cls._store = SessionStore(database_url=cls.dburi)
+        # pylint: disable=protected-access
+        cls._db = cls._store._db
 
     def _exists(self):
         q = SqlQuery(self._db, 'sessions', SESSION_COLUMNS)

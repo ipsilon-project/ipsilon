@@ -19,6 +19,7 @@ class IdpProvider(ProviderBase):
         super(IdpProvider, self).__init__('openid', 'openid', *pargs)
         self.mapping = InfoMapping()
         self.page = None
+        self.datastore = None
         self.server = None
         self.basepath = None
         self.extensions = LoadExtensions()
@@ -109,9 +110,13 @@ Provides OpenID 2.0 authentication infrastructure. """
 
         return self.page
 
+    def used_datastores(self):
+        return [self.datastore]
+
     def init_idp(self):
+        self.datastore = OpenIDStore(self.get_config_value('database url'))
         self.server = Server(
-            OpenIDStore(self.get_config_value('database url')),
+            self.datastore,
             op_endpoint=self.endpoint_url)
 
         # Expose OpenID presence in the root

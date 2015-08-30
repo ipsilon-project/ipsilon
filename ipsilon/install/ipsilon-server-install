@@ -6,7 +6,7 @@ from ipsilon.info.common import InfoProviderInstall
 from ipsilon.providers.common import ProvidersInstall
 from ipsilon.helpers.common import EnvHelpersInstall
 from ipsilon.util.data import UserStore
-from ipsilon.tools import files
+from ipsilon.tools import files, dbupgrade
 import ConfigParser
 import argparse
 import cherrypy
@@ -160,15 +160,18 @@ def install(plugins, args):
                'info_provider': {},
                'auth_provider': {}}
 
-    # Move pre-existing admin db away
+    # Move pre-existing dbs away
     admin_db = cherrypy.config['admin.config.db']
     if os.path.exists(admin_db):
         shutil.move(admin_db, '%s.backup.%s' % (admin_db, now))
-
-    # Rebuild user db
     users_db = cherrypy.config['user.prefs.db']
     if os.path.exists(users_db):
         shutil.move(users_db, '%s.backup.%s' % (users_db, now))
+
+    # Initialize initial database schemas
+    dbupgrade.execute_upgrade(ipsilon_conf)
+
+    # Store primary admin
     db = UserStore()
     db.save_user_preferences(args['admin_user'], {'is_admin': 1})
 
@@ -216,6 +219,9 @@ def install(plugins, args):
     changes = json.dumps(changes)
     with open(install_changes, 'w+') as f:
         f.write(changes)
+
+    # Initialize extra database schemas
+    dbupgrade.execute_upgrade(ipsilon_conf)
 
     # Fixup permissions so only the ipsilon user can read these files
     files.fix_user_dirs(instance_conf, opts['system_user'])

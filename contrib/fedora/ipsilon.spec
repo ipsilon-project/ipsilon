@@ -239,6 +239,7 @@ install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_libexecdir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
+mv %{buildroot}/%{_bindir}/ipsilon-upgrade-database %{buildroot}/%{_sbindir}
 mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
 rm -fr %{buildroot}%{python2_sitelib}/tests
 ln -s %{_datadir}/fonts %{buildroot}%{_datadir}/ipsilon/ui/fonts
@@ -283,6 +284,7 @@ fi
 
 %files
 %{_sbindir}/ipsilon-server-install
+%{_sbindir}/ipsilon-upgrade-database
 %{_datadir}/ipsilon/templates/install/*.conf
 %{_datadir}/ipsilon/ui/saml2sp
 %dir %{python2_sitelib}/ipsilon/helpers
@@ -293,6 +295,7 @@ fi
 %{_defaultdocdir}/%{name}-%{version}
 %{python2_sitelib}/ipsilon/admin
 %{python2_sitelib}/ipsilon/rest
+%{python2_sitelib}/ipsilon/tools/dbupgrade.py*
 %dir %{python2_sitelib}/ipsilon/login
 %{python2_sitelib}/ipsilon/login/__init__*
 %{python2_sitelib}/ipsilon/login/common*

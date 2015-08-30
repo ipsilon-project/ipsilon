@@ -1,6 +1,6 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
-from ipsilon.util.data import Store
+from ipsilon.util.data import Store, UNIQUE_DATA_COLUMNS
 
 from openid import oidutil
 from openid.association import Association
@@ -77,3 +77,11 @@ class OpenIDStore(Store, OpenIDStoreInterface):
             if ((int(assocs[iden]['issued']) + int(assocs[iden]['lifetime']))
                     < time()):
                 self.del_unique_data('association', iden)
+
+    def _initialize_schema(self):
+        q = self._query(self._db, 'association', UNIQUE_DATA_COLUMNS,
+                        trans=False)
+        q.create()
+
+    def _upgrade_schema(self, old_version):
+        raise NotImplementedError()
