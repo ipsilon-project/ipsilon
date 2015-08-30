@@ -8,7 +8,6 @@ from ipsilon.providers.saml2.admin import Saml2AdminPage
 from ipsilon.providers.saml2.rest import Saml2RestBase
 from ipsilon.providers.saml2.provider import IdentityProvider
 from ipsilon.providers.saml2.sessions import SAMLSessionFactory
-from ipsilon.util.data import SAML2SessionStore
 from ipsilon.tools.certs import Certificate
 from ipsilon.tools import saml2metadata as metadata
 from ipsilon.tools import files
@@ -286,14 +285,6 @@ Provides SAML 2.0 authentication infrastructure. """
             logger.addHandler(lh)
             logger.setLevel(logging.DEBUG)
 
-        store = SAML2SessionStore(
-            database_url=self.get_config_value('session database url')
-        )
-        bt = cherrypy.process.plugins.BackgroundTask(
-            60, store.remove_expired_sessions
-        )
-        bt.start()
-
     @property
     def allow_self_registration(self):
         return self.get_config_value('allow self registration')
@@ -356,6 +347,12 @@ Provides SAML 2.0 authentication infrastructure. """
         self.sessionfactory = SAMLSessionFactory(
             database_url=self.get_config_value('session database url')
         )
+        # Schedule cleanups
+        # pylint: disable=protected-access
+        bt = cherrypy.process.plugins.BackgroundTask(
+            60, self.sessionfactory._ss.remove_expired_sessions
+        )
+        bt.start()
         # Init IDP data
         try:
             idp = IdentityProvider(self,
