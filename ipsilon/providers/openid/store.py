@@ -84,4 +84,14 @@ class OpenIDStore(Store, OpenIDStoreInterface):
         q.create()
 
     def _upgrade_schema(self, old_version):
-        raise NotImplementedError()
+        if old_version == 1:
+            # In schema version 2, we added indexes and primary keys
+            # pylint: disable=protected-access
+            table = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
+                                trans=False)._table
+            self._db.add_constraint(table.primary_key)
+            for index in table.indexes:
+                self._db.add_index(index)
+            return 2
+        else:
+            raise NotImplementedError()

@@ -6,7 +6,8 @@ from ipsilon.util.log import Log
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData, Table, Column, Text
 from sqlalchemy.pool import QueuePool, SingletonThreadPool
-from sqlalchemy.schema import PrimaryKeyConstraint, Index
+from sqlalchemy.schema import (PrimaryKeyConstraint, Index, AddConstraint,
+                               CreateIndex)
 from sqlalchemy.sql import select, and_
 import ConfigParser
 import os
@@ -29,7 +30,16 @@ class DatabaseError(Exception):
     pass
 
 
-class SqlStore(Log):
+class BaseStore(Log):
+    # Some helper functions used for upgrades
+    def add_constraint(self, table):
+        raise NotImplementedError()
+
+    def add_index(self, index):
+        raise NotImplementedError()
+
+
+class SqlStore(BaseStore):
     __instances = {}
 
     @classmethod
@@ -60,6 +70,18 @@ class SqlStore(Log):
             pool_args = {'poolclass': SingletonThreadPool}
         self._dbengine = create_engine(engine_name, **pool_args)
         self.is_readonly = False
+
+    def add_constraint(self, constraint):
+        if self._dbengine.dialect.name != 'sqlite':
+            # It is impossible to add constraints to a pre-existing table for
+            #  SQLite
+            # source: http://www.sqlite.org/omitted.html
+            create_constraint = AddConstraint(constraint, bind=self._dbengine)
+            create_constraint.execute()
+
+    def add_index(self, index):
+        add_index = CreateIndex(index, bind=self._dbengine)
+        add_index.execute()
 
     def debug(self, fact):
         if self.db_conn_log:
@@ -151,7 +173,7 @@ class SqlQuery(Log):
         self._con.execute(self._table.delete(self._where(kvfilter)))
 
 
-class FileStore(Log):
+class FileStore(BaseStore):
 
     def __init__(self, name):
         self._filename = name
@@ -173,6 +195,12 @@ class FileStore(Log):
             self._config.optionxform = str
             self._config.read(self._filename)
         return self._config
+
+    def add_constraint(self, table):
+        raise NotImplementedError()
+
+    def add_index(self, index):
+        raise NotImplementedError()
 
 
 class FileQuery(Log):
@@ -350,6 +378,7 @@ class Store(Log):
         #  themselves.
         # They might implement downgrading if that's feasible, or just throw
         #  NotImplementedError
+        # Should return the new schema version
         raise NotImplementedError()
 
     def upgrade_database(self):
@@ -361,8 +390,17 @@ class Store(Log):
             self._store_new_schema_version(self._code_schema_version())
         elif old_schema_version != self._code_schema_version():
             # Upgrade from old_schema_version to code_schema_version
-            self._upgrade_schema(old_schema_version)
-            self._store_new_schema_version(self._code_schema_version())
+            self.debug('Upgrading from schema version %i' % old_schema_version)
+            new_version = self._upgrade_schema(old_schema_version)
+            if not new_version:
+                error = ('Schema upgrade error: %s did not provide a ' +
+                         'new schema version number!' %
+                         self.__class__.__name__)
+                self.error(error)
+                raise Exception(error)
+            self._store_new_schema_version(new_version)
+            # Check if we are now up-to-date
+            self.upgrade_database()
 
     @property
     def is_readonly(self):
@@ -563,7 +601,21 @@ class AdminStore(Store):
             q.create()
 
     def _upgrade_schema(self, old_version):
-        raise NotImplementedError()
+        if old_version == 1:
+            # In schema version 2, we added indexes and primary keys
+            for table in ['config',
+                          'info_config',
+                          'login_config',
+                          'provider_config']:
+                # pylint: disable=protected-access
+                table = self._query(self._db, table, OPTIONS_TABLE,
+                                    trans=False)._table
+                self._db.add_constraint(table.primary_key)
+                for index in table.indexes:
+                    self._db.add_index(index)
+            return 2
+        else:
+            raise NotImplementedError()
 
 
 class UserStore(Store):
@@ -588,7 +640,17 @@ class UserStore(Store):
         q.create()
 
     def _upgrade_schema(self, old_version):
-        raise NotImplementedError()
+        if old_version == 1:
+            # In schema version 2, we added indexes and primary keys
+            # pylint: disable=protected-access
+            table = self._query(self._db, 'users', OPTIONS_TABLE,
+                                trans=False)._table
+            self._db.add_constraint(table.primary_key)
+            for index in table.indexes:
+                self._db.add_index(index)
+            return 2
+        else:
+            raise NotImplementedError()
 
 
 class TranStore(Store):
@@ -602,7 +664,17 @@ class TranStore(Store):
         q.create()
 
     def _upgrade_schema(self, old_version):
-        raise NotImplementedError()
+        if old_version == 1:
+            # In schema version 2, we added indexes and primary keys
+            # pylint: disable=protected-access
+            table = self._query(self._db, 'transactions', UNIQUE_DATA_TABLE,
+                                trans=False)._table
+            self._db.add_constraint(table.primary_key)
+            for index in table.indexes:
+                self._db.add_index(index)
+            return 2
+        else:
+            raise NotImplementedError()
 
 
 class SAML2SessionStore(Store):
@@ -693,4 +765,14 @@ class SAML2SessionStore(Store):
         q.create()
 
     def _upgrade_schema(self, old_version):
-        raise NotImplementedError()
+        if old_version == 1:
+            # In schema version 2, we added indexes and primary keys
+            # pylint: disable=protected-access
+            table = self._query(self._db, self.table, UNIQUE_DATA_TABLE,
+                                trans=False)._table
+            self._db.add_constraint(table.primary_key)
+            for index in table.indexes:
+                self._db.add_index(index)
+            return 2
+        else:
+            raise NotImplementedError()
