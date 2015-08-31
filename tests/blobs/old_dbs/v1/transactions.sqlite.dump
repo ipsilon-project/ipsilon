@@ -1,0 +1,14 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "dbinfo" VALUES('TranStore_schema','version','1');
+CREATE TABLE transactions (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+COMMIT;

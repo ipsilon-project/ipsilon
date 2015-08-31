@@ -177,6 +177,7 @@ class IpsilonTestBase(object):
         p = subprocess.Popen(['/usr/sbin/httpd', '-DFOREGROUND', '-f', conf],
                              env=env, preexec_fn=os.setsid)
         self.processes.append(p)
+        return p
 
     def start_pgdb_server(self, datadir, rundir, log, addr, port, env):
         p = subprocess.Popen(['/usr/bin/pg_ctl', 'start', '-D', datadir, '-o',
