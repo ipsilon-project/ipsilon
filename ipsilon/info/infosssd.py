@@ -21,6 +21,7 @@ SSSD_CONF = '/etc/sssd/sssd.conf'
 SSSD_ATTRS = ['mail',
               'street',
               'locality',
+              'st',
               'postalCode',
               'telephoneNumber',
               'givenname',
@@ -35,6 +36,7 @@ sssd_mapping = [
     ['REMOTE_USER_LASTNAME', 'surname'],
     ['REMOTE_USER_STREET', 'street'],
     ['REMOTE_USER_STATE', 'state'],
+    ['REMOTE_USER_CITY', 'city'],
     ['REMOTE_USER_POSTALCODE', 'postcode'],
     ['REMOTE_USER_TELEPHONENUMBER', 'phone'],
 ]
@@ -104,7 +106,8 @@ LoadModule lookup_identity_module modules/mod_lookup_identity.so
 
 <Location /${instance}>
   LookupUserAttr sn REMOTE_USER_LASTNAME
-  LookupUserAttr locality REMOTE_USER_STATE
+  LookupUserAttr st REMOTE_USER_STATE
+  LookupUserAttr locality REMOTE_USER_CITY
   LookupUserAttr street REMOTE_USER_STREET
   LookupUserAttr telephoneNumber REMOTE_USER_TELEPHONENUMBER
   LookupUserAttr givenname REMOTE_USER_FIRSTNAME

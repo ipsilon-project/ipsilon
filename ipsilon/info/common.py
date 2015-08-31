@@ -30,6 +30,7 @@ class InfoMapping(Log):
             'gender': 'Gender',
             'postcode': 'Postal Code',
             'street': 'Street Address',
+            'city': 'City',
             'state': 'State or Province',
             'country': 'Country',
             'phone': 'Telephone Number',
