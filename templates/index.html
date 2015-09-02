@@ -1,9 +1,56 @@
-{% extends "master.html" %}
-{% block main %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ipsilon</title>
+    <meta charset="utf-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ basepath }}/ui/css/patternfly.css" rel="stylesheet" media="screen, print">
+    <link href="{{ basepath }}/ui/css/styles.css" rel="stylesheet" media="screen, print">
+  </head>
+
+  <body class="cards-pf">
+    <nav class="navbar navbar-default navbar-pf navbar-pf-lg" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{{ basepath }}/">
+          <img type="image/svg+xml" src="{{ basepath }}/ui/img/brand.png" alt="Ipsilon" width="auto" height="10px" />
+        </a>
+      </div>
+      <div class="collapse navbar-collapse navbar-collapse-1">
+        {% if user.name %}
+        <ul class="nav navbar-nav navbar-utility">
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <span class="pficon pficon-user"></span>
+                {{ user.fullname }}<b class="caret"></b>
+              </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a href="{{ basepath }}/logout" id="logout">Log Out</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        {% endif %}
+      </div>
+    </nav>
+
 <div class="col-sm-12">
+  <p></p>
   <div id="welcome">
     {% if user.name %}
       <p>Welcome {{ user.fullname }}!</p>
+      <p>Select a Service Provider
+      {% if user.is_admin %}
+          or go to the 
+          <a href="{{ basepath }}/admin" id="admin">Administration Console</a>
+      {% endif %}
+      .</p>
     {% endif %}
   </div>
   <div id="content">
@@ -18,13 +65,91 @@
   </div>
   <div id="authenticated">
     {% if user.name %}
-      <p>
-        {% if user.is_admin %}
-          <a href="{{ basepath }}/admin" id="admin">Administration</a> |
+    <div class="container-fluid">
+      
+      <div class="header">
+                
+        <form role="form" class="search-pf has-button">
+          <div class="form-group has-clear">
+            <div class="search-pf-input-group">
+              <label for="search1" class="sr-only">Search</label>
+              <input id="search1" type="search" class="form-control div-filter" placeholder="Search" providers="providers">
+              <button type="button" class="clear" aria-hidden="true"><span class
+="pficon pficon-close"></span></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-default" type="button"><span class="fa fa-search"></span></button>
+          </div>
+        </form>
+      </div><!-- header -->
+
+      <div class="row thumbnails providers" id="providers">
+      {% for p in providers %}
+        {% if p.visible == '1' %}
+        <div class="col-sm-4 col-md-3 provider">
+          <a
+             {% if p.splink or 0 %}
+               href="{{ p.splink }}"
+             {% else %}
+               href="#"
+             {% endif %}
+             class="thumbnail" data-toggle="tooltip" data-placement="top" title="{{ p.description }}" name="{{ p.name }}">
+            {% if p.imageurl or 0 %}
+              <img src="{{ p.imageurl }}" height=100 width=200>
+            {% else %}
+              <span class="name">
+                <span class="name-icon">{{ p.name[0] }}</span>
+                {{ p.name }}
+              </span>
+            {% endif %}
+          </a>
+        </div>
         {% endif %}
-        <a href="{{ basepath }}/logout" id="logout">Log Out</a>
-      </p>
+      {% endfor %}
+
+      </div><!-- row -->
+
+    
+    </div><!-- /container -->
+
     {% endif %}
   </div>
 </div>
-{% endblock %}
+
+    <!-- JS -->
+    <script src="{{ basepath }}/ui/js/jquery.js"></script>
+    <script src="{{ basepath }}/ui/js/bootstrap.js"></script>
+    <script src="{{ basepath }}/ui/js/patternfly.js"></script>
+    <script src="{{ basepath }}/ui/js/divfilter.js"></script>
+
+    <script>
+      (function($) {
+        $(document).ready(function() {
+          // Hide the clear button if the search input is empty
+          $(".search-pf .has-clear .clear").each(function() {
+            if (!$(this).prev('.form-control').val()) {
+              $(this).hide();
+            }
+          });
+          // Show the clear button upon entering text in the search input
+          $(".search-pf .has-clear .form-control").keyup(function () {
+            var t = $(this);
+            t.next('button').toggle(Boolean(t.val()));
+          });
+          // Upon clicking the clear button, empty the entered text and hide the clear button
+          $(".search-pf .has-clear .clear").click(function () {
+            $(this).prev('.form-control').val('').focus();
+            $(this).hide();
+          });
+        });    
+        
+        $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+    })
+        
+      })(jQuery);
+    </script>      
+
+  </body>
+</html>

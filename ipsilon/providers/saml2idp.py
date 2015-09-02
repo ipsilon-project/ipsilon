@@ -285,6 +285,9 @@ Provides SAML 2.0 authentication infrastructure. """
             logger.addHandler(lh)
             logger.setLevel(logging.DEBUG)
 
+    def get_providers(self):
+        return self.admin.providers
+
     @property
     def allow_self_registration(self):
         return self.get_config_value('allow self registration')

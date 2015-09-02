@@ -61,6 +61,9 @@ class ProviderBase(ConfigHelper, PluginObject):
     def on_disable(self):
         self._root.del_subtree(self.name)
 
+    def get_providers(self):
+        return []
+
 
 class ProviderPageBase(Page):
 

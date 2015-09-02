@@ -51,5 +51,11 @@ class Root(Page):
 
     def root(self):
         self.debug(self.html_heads)
+        providers = []
+        for plugin in self._site['provider_config'].enabled:
+            # pylint: disable=no-member,protected-access
+            obj = self.admin.providers._get_plugin_obj(plugin)
+            providers.extend(obj.get_providers())
+        providers = sorted(providers, key=lambda provider: provider.name)
         return self._template('index.html', title='Ipsilon',
-                              heads=self.html_heads)
+                              providers=providers, heads=self.html_heads)
