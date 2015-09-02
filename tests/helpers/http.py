@@ -347,7 +347,13 @@ class HttpSessions(object):
         headers = {'referer': url}
         if rest:
             expected_status = 201
-            payload = {'metadata': m.content}
+            payload = {
+                'metadata': m.content,
+                'visible': True,
+                'description': sp,
+                'image': 'Zm9v',
+                'splink': 'http://test.example.com/secret/',
+            }
             headers['content-type'] = 'application/x-www-form-urlencoded'
             url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, sp)
             r = self.post(url, headers=headers, data=urlencode(payload))
