@@ -90,13 +90,19 @@ class SPS(RestProviderBase):
         if len(args) != 1:
             return rest_error(400, 'Invalid arguments. Found %d'
                                    ' there should be one.')
+        self.debug('REST POST %s' % kwargs)
         name = args[0]
         metadata = kwargs.get('metadata')
+        description = kwargs.get('description', '')
+        visible = kwargs.get('visible', True)
+        imagefile = kwargs.get('image', None)
+        splink = kwargs.get('splink', '')
 
         obj = self._site[FACILITY].available[self.parent.plugin_name]
         try:
             spc = ServiceProviderCreator(obj)
-            sp = spc.create_from_buffer(name, metadata)
+            sp = spc.create_from_buffer(name, metadata, description,
+                                        visible, imagefile, splink)
         except (InvalidProviderId, ServerAddProviderFailedError) as e:
             self.debug(repr(e))
             return rest_error(400, str(e))

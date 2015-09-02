@@ -1,7 +1,33 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.util.log import Log
+import os
 import json
+import base64
+import imghdr
+import hashlib
+import cherrypy
+
+
+def name_from_image(image):
+    if image is None:
+        return None
+
+    fext = imghdr.what(None, base64.b64decode(image))
+    m = hashlib.sha1()
+    m.update(base64.b64decode(image))
+
+    return '%s.%s' % (m.hexdigest(), fext)
+
+
+def url_from_image(image):
+    if image is None:
+        return None
+
+    return '%s/cache/%s' % (
+        cherrypy.config.get('base.mount', ""),
+        name_from_image(image)
+    )
 
 
 class Config(Log):
@@ -134,6 +160,78 @@ class String(Option):
 
     def import_value(self, value):
         self._str_import_value(value)
+
+
+class Image(Option):
+    """
+    An image has two components: the binary blob of the image itself and
+    the SHA1 sum of the image.
+
+    We only need the image blob when writing to the cache file or
+    updating the database.
+
+    For the purposes of the UI we only need the filename which is
+    the SHA1 sum of file type the blob + file type.
+    """
+
+    def __init__(self, name, description, default_value=None, readonly=False):
+        super(Image, self).__init__(name, description, readonly=readonly)
+        self._image = None
+
+        if default_value:
+            self._image = default_value
+
+        self._assigned_value = url_from_image(self._image)
+        self.__write_cache_file()
+
+    def set_value(self, value):
+        if value is None:
+            return None
+
+        if os.path.exists(self.__filename()):
+            try:
+                os.remove(self.__filename())
+            except IOError as e:
+                self.error('Error removing %s: %s' % (self.__filename(), e))
+
+        self._image = base64.b64encode(value)
+        self._assigned_value = url_from_image(value)
+
+    def export_value(self):
+        if self._image is None:
+            return None
+
+        self.__write_cache_file()
+        return base64.b64decode(self._image)
+
+    def import_value(self, value):
+        if value is None:
+            return None
+
+        if os.path.exists(self.__filename()):
+            try:
+                os.remove(self.__filename())
+            except IOError as e:
+                self.error('Error removing %s: %s' % (self.__filename(), e))
+        self._image = base64.b64encode(value)
+        self._assigned_value = url_from_image(self._image)
+        self.__write_cache_file()
+
+    def __filename(self):
+        if self._image is None:
+            return None
+
+        cdir = cherrypy.config.get('cache_dir', '/var/cache/ipsilon')
+
+        return '%s/%s' % (cdir, name_from_image(self._image))
+
+    def __write_cache_file(self):
+        if self._image is None:
+            return None
+
+        if not os.path.exists(self.__filename()):
+            with open(self.__filename(), 'w') as imagefile:
+                imagefile.write(base64.b64decode(self._image))
 
 
 class Template(Option):
@@ -331,12 +429,18 @@ class Condition(Pick):
 
     def __init__(self, name, description, default_value=False,
                  readonly=False):
+        # The db stores 1/0. Convert the passed-in value if
+        # necessary
+        if default_value in [u'1', 'True', True]:
+            default_value = True
+        else:
+            default_value = False
         super(Condition, self).__init__(name, description,
                                         [True, False], default_value,
                                         readonly=readonly)
 
     def import_value(self, value):
-        self._assigned_value = value == 'True'
+        self._assigned_value = value
 
 
 class ConfigHelper(Log):

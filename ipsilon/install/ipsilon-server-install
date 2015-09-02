@@ -27,6 +27,7 @@ DATADIR = '/var/lib/ipsilon'
 HTTPDCONFD = '/etc/httpd/conf.d'
 BINDIR = '/usr/libexec'
 STATICDIR = '/usr/share/ipsilon'
+CACHEDIR = '/var/cache/httpd/ipsilon'
 WSGI_SOCKET_PREFIX = None
 
 
@@ -98,6 +99,7 @@ def install(plugins, args):
                 'sysuser': args['system_user'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
+                'cachedir': CACHEDIR,
                 'admindb': args['admin_dburi'] or args['database_url'] % {
                     'datadir': args['data_dir'], 'dbname': 'adminconfig'},
                 'usersdb': args['users_dburi'] or args['database_url'] % {

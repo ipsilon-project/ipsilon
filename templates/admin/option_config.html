@@ -28,6 +28,22 @@
                 $(buttonRow).appendTo(ourTable)
             }
         );
+        $(function() {
+            $("#uploadFile").on("change", function()
+            {
+                var files = !!this.files ? this.files : [];
+                if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
+ 
+                if (/^image/.test( files[0].type)){ // only image file
+                    var reader = new FileReader(); // instance of the FileReader
+                    reader.readAsDataURL(files[0]); // read the local file
+ 
+                    reader.onloadend = function(){ // set image data as background of div
+                        $("#imagePreview").css("background-image", "url("+this.result+")");
+                    }
+                }
+            });
+        });
     </script>
 {% endblock %}
 {% block main %}
@@ -48,7 +64,7 @@
     <hr>
 
     <div id="options">
-        <form class="form-horizontal" role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="application/x-www-form-urlencoded">
+        <form class="form-horizontal" role="form" id="{{ name }}" action="{{ action }}" method="post" enctype="multipart/form-data"">
         {% for k, v in config.iteritems() %}
             <div class="form-group">
               <label class="col-sm-2" for="{{ v.name }}">{{ v.name }}:</label>
@@ -63,6 +79,22 @@
                     disabled
                   {%- endif -%}
                 >
+              {% elif v.__class__.__name__ == 'Image' -%}
+                <!-- FIXME: This is limited to a single instance of Image -->
+                {%- if value %}
+                <img src="{{ value }}"
+                   height="100" width="200"
+                >
+                {%- endif -%}
+                <p></p>
+                <input type="file" name="{{ v.name }}"
+                     title="{{ v.name }}"
+                     accept=".png,.jpg"
+                     id="uploadFile"
+                     style="display: none;" />
+                <input type="button" value="Select Image..." onclick="document.getElementById('uploadFile').click();" />
+                <p></p>
+                <div id="imagePreview"></div>
               {% elif v.__class__.__name__ == 'List' -%}
                 <textarea class="form-control" name="{{ v.name }}"
                   {% if v.is_readonly() -%}

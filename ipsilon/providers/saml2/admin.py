@@ -14,6 +14,8 @@ from ipsilon.providers.saml2.provider import InvalidProviderId
 from copy import deepcopy
 import requests
 import logging
+import base64
+from urlparse import urlparse
 
 
 class NewSPAdminPage(AdminPage):
@@ -43,6 +45,10 @@ class NewSPAdminPage(AdminPage):
             #       set the owner in that case
             name = None
             meta = None
+            description = None
+            splink = None
+            visible = False
+            imagefile = None
             if 'content-type' not in cherrypy.request.headers:
                 self.debug("Invalid request, missing content-type")
                 message = "Malformed request"
@@ -55,6 +61,30 @@ class NewSPAdminPage(AdminPage):
             for key, value in kwargs.iteritems():
                 if key == 'name':
                     name = value
+                elif key == 'description':
+                    description = value
+                elif key == 'splink':
+                    # pylint: disable=unused-variable
+                    (scheme, netloc, path, params, query, frag) = urlparse(
+                        value
+                    )
+                    # minimum URL validation
+                    if (scheme not in ['http', 'https'] or not netloc):
+                        message = "Invalid URL for Service Provider link"
+                        message_type = ADMIN_STATUS_ERROR
+                        return self.form_new(message, message_type)
+                    splink = value
+                elif key == 'portalvisible' and value.lower() == 'on':
+                    visible = True
+                elif key == 'imagefile':
+                    if hasattr(value, 'content_type'):
+                        imagefile = value.fullvalue()
+                        if len(imagefile) == 0:
+                            imagefile = None
+                        else:
+                            imagefile = base64.b64encode(imagefile)
+                    else:
+                        self.debug("Invalid format for 'imagefile'")
                 elif key == 'metatext':
                     if len(value) > 0:
                         meta = value
@@ -78,7 +108,8 @@ class NewSPAdminPage(AdminPage):
             if name and meta:
                 try:
                     spc = ServiceProviderCreator(self.parent.cfg)
-                    sp = spc.create_from_buffer(name, meta)
+                    sp = spc.create_from_buffer(name, meta, description,
+                                                visible, imagefile, splink)
                     sp_page = self.parent.add_sp(name, sp)
                     message = "SP Successfully added"
                     message_type = ADMIN_STATUS_OK
@@ -194,7 +225,9 @@ class SPAdminPage(AdminPage):
                             raise UnauthorizedUser("Unauthorized to set owner")
                     elif key in ['User Owner', 'Default NameID',
                                  'Allowed NameIDs', 'Attribute Mapping',
-                                 'Allowed Attributes']:
+                                 'Allowed Attributes', 'Description',
+                                 'Service Provider link',
+                                 'Visible in Portal', 'Image File']:
                         if not self.user.is_admin:
                             raise UnauthorizedUser(
                                 "Unauthorized to set %s" % key
@@ -202,9 +235,12 @@ class SPAdminPage(AdminPage):
 
                 # Make changes in current config
                 for name, option in conf.iteritems():
+                    if name not in new_db_values:
+                        continue
                     value = new_db_values.get(name, False)
                     # A value of None means remove from the data store
-                    if value is False or value == []:
+                    if ((value is False or value == []) and
+                            name != 'Visible in Portal'):
                         continue
                     if name == 'Name':
                         if not self.sp.is_valid_name(value):
@@ -217,6 +253,12 @@ class SPAdminPage(AdminPage):
                         self.parent.rename_sp(option.get_value(), value)
                     elif name == 'User Owner':
                         self.sp.owner = value
+                    elif name == 'Description':
+                        self.sp.description = value
+                    elif name == 'Visible in Portal':
+                        self.sp.visible = value
+                    elif name == 'Service Provider link':
+                        self.sp.splink = value
                     elif name == 'Default NameID':
                         self.sp.default_nameid = value
                     elif name == 'Allowed NameIDs':
@@ -225,6 +267,17 @@ class SPAdminPage(AdminPage):
                         self.sp.attribute_mappings = value
                     elif name == 'Allowed Attributes':
                         self.sp.allowed_attributes = value
+                    elif name == 'Image File':
+                        if hasattr(value, 'content_type'):
+                            # pylint: disable=maybe-no-member
+                            blob = value.fullvalue()
+                            if len(blob) > 0:
+                                self.sp.imagefile = base64.b64encode(blob)
+                        else:
+                            raise InvalidValueFormat(
+                                'Invalid Image file format'
+                            )
+
             except InvalidValueFormat, e:
                 message = str(e)
                 message_type = ADMIN_STATUS_WARN

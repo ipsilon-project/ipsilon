@@ -68,6 +68,23 @@ class ServiceProvider(ServiceProviderConfig):
                 ' Only alphanumeric characters [A-Z,a-z,0-9] and spaces are'
                 '  accepted.',
                 self.name),
+            pconfig.String(
+                'Description',
+                'A description of the SP to show on the Portal.',
+                self.description),
+            pconfig.String(
+                'Service Provider link',
+                'A link to the Service Provider for the Portal.',
+                self.splink),
+            pconfig.Condition(
+                'Visible in Portal',
+                'This SP is visible in the Portal.',
+                self.visible),
+            pconfig.Image(
+                'Image File',
+                'Image to display for this SP in the Portal. Scale to '
+                '100x200 for best results.',
+                self.imagefile),
             pconfig.Pick(
                 'Default NameID',
                 'Default NameID used by Service Providers.',
@@ -105,6 +122,42 @@ class ServiceProvider(ServiceProviderConfig):
     @name.setter
     def name(self, value):
         self._staging['name'] = value
+
+    @property
+    def description(self):
+        return self._properties.get('description', '')
+
+    @description.setter
+    def description(self, value):
+        self._staging['description'] = value
+
+    @property
+    def visible(self):
+        return self._properties.get('visible', True)
+
+    @visible.setter
+    def visible(self, value):
+        self._staging['visible'] = value
+
+    @property
+    def imagefile(self):
+        return self._properties.get('imagefile', '')
+
+    @imagefile.setter
+    def imagefile(self, value):
+        self._staging['imagefile'] = value
+
+    @property
+    def imageurl(self):
+        return pconfig.url_from_image(self._properties['imagefile'])
+
+    @property
+    def splink(self):
+        return self._properties.get('splink', '')
+
+    @splink.setter
+    def splink(self, value):
+        self._staging['splink'] = value
 
     @property
     def owner(self):
@@ -243,7 +296,8 @@ class ServiceProviderCreator(object):
     def __init__(self, config):
         self.cfg = config
 
-    def create_from_buffer(self, name, metabuf):
+    def create_from_buffer(self, name, metabuf, description='',
+                           visible=True, imagefile='', splink=''):
         '''Test and add data'''
 
         if re.search(VALID_IN_NAME, name):
@@ -260,7 +314,16 @@ class ServiceProviderCreator(object):
         data = self.cfg.get_data(name='id', value=spid)
         if len(data) != 0:
             raise InvalidProviderId("Provider Already Exists")
-        datum = {'id': spid, 'name': name, 'type': 'SP', 'metadata': metabuf}
+        datum = {
+            'id': spid,
+            'name': name,
+            'type': 'SP',
+            'metadata': metabuf,
+            'description': description,
+            'visible': visible,
+            'imagefile': imagefile,
+            'splink': splink,
+        }
         self.cfg.new_datum(datum)
 
         data = self.cfg.get_data(name='id', value=spid)
