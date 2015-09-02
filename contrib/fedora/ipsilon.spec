@@ -234,6 +234,7 @@ CFLAGS="%{optflags}" %{__python} setup.py build
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_defaultdocdir}
+mkdir -p %{buildroot}%{_localstatedir}/cache/ipsilon
 # These 0700 permissions are because ipsilon will store private keys here
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
@@ -323,6 +324,7 @@ fi
 %{_libexecdir}/ipsilon
 %dir %attr(0751,root,root) %{_sharedstatedir}/ipsilon
 %dir %attr(0751,root,root) %{_sysconfdir}/ipsilon
+%dir %attr(0750,ipsilon,apache) %{_localstatedir}/cache/ipsilon
 
 %files client
 %{_bindir}/ipsilon-client-install

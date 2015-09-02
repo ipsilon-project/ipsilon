@@ -51,6 +51,7 @@ def config(workdir):
     subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
 
     trans_db = os.path.join(workdir, 'transactions.sqlite')
+    cachedir = os.path.join(workdir, 'cache')
 
     with open(CONF_TEMPLATE) as f:
         conf_template = f.read()
@@ -59,6 +60,7 @@ def config(workdir):
                          'instance': 'idp',
                          'staticdir': os.getcwd(),
                          'datadir': workdir,
+                         'cachedir': cachedir,
                          'admindb': admin_db,
                          'usersdb': users_db,
                          'transdb': trans_db,
@@ -95,6 +97,9 @@ if __name__ == '__main__':
         os.symlink(os.path.join(os.getcwd(), 'ui'),
                    os.path.join(args['workdir'], 'ui'))
 
+    if not os.path.exists(os.path.join(args['workdir'], 'cache')):
+        # This is only used in quickrun. Apache serves this directly
+        os.makedirs(os.path.join(args['workdir'], 'cache'))
 
     os.chdir(args['workdir'])
 

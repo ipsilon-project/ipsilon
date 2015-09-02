@@ -23,6 +23,7 @@ spport = '45081'
 idp_g = {'TEMPLATES': '${TESTDIR}/templates/install',
          'CONFDIR': '${TESTDIR}/etc',
          'DATADIR': '${TESTDIR}/lib',
+         'CACHEDIR': '${TESTDIR}/cache',
          'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'STATICDIR': '${ROOTDIR}',
          'BINDIR': '${ROOTDIR}/ipsilon',

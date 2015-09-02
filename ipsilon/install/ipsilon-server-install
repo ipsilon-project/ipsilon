@@ -27,7 +27,7 @@ DATADIR = '/var/lib/ipsilon'
 HTTPDCONFD = '/etc/httpd/conf.d'
 BINDIR = '/usr/libexec'
 STATICDIR = '/usr/share/ipsilon'
-CACHEDIR = '/var/cache/httpd/ipsilon'
+CACHEDIR = '/var/cache/ipsilon'
 WSGI_SOCKET_PREFIX = None
 
 
@@ -242,6 +242,10 @@ def uninstall(plugins, args):
                               'ipsilon-%s.conf' % args['instance'])
     data_dir = os.path.join(DATADIR, args['instance'])
 
+    tconf = ConfigParser.SafeConfigParser()
+    tconf.read(os.path.join(instance_conf, 'ipsilon.conf'))
+    cache_dir = tconf.get('global', 'cache_dir').replace('"', '')
+
     if not os.path.exists(instance_conf):
         raise Exception('Could not find instance %s configuration'
                         % args['instance'])
@@ -294,6 +298,9 @@ def uninstall(plugins, args):
     shutil.rmtree(instance_conf)
     logger.info('Erasing instance data')
     shutil.rmtree(data_dir)
+    if cache_dir and os.path.exists(cache_dir):
+        for fn in os.listdir(cache_dir):
+            os.unlink(os.path.join(cache_dir, fn))
     logger.info('Uninstalled instance %s' % args['instance'])
 
 

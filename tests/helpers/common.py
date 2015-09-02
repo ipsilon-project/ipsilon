@@ -96,6 +96,7 @@ class IpsilonTestBase(object):
         os.mkdir(os.path.join(self.testdir, 'lib'))
         os.mkdir(os.path.join(self.testdir, 'lib', test.name))
         os.mkdir(os.path.join(self.testdir, 'log'))
+        os.mkdir(os.path.join(self.testdir, 'cache'))
 
     def generate_profile(self, global_opts, args_opts, name, addr, port,
                          nameid='unspecified'):
