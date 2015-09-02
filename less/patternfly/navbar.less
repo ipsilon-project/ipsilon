@@ -11,18 +11,11 @@
   min-height: 0;
   .navbar-brand {
     color: @navbar-pf-active-color;
+    height: auto;
     padding: 12px 0;
     margin: 0 0 0 20px;
-    .ie8 & {
-      background: url('@{img-path}/@{img-brand-ie8}') no-repeat 0 49%;
-      min-width: @navbar-pf-navbar-navbar-brand-min-width;
-    }
     img {
       display: block;
-      .ie8 & {
-        height: 10px;
-        width: 0;
-      }
     }
   }
   .navbar-collapse {
@@ -142,6 +135,59 @@
           }
         }
       }
+      .context-bootstrap-select { // Also see bootstrap-select.less
+        .open > .dropdown-menu {
+          background-color: #fff !important;
+          > .active > a {
+            &, &:active {
+              background-color: @dropdown-link-hover-bg !important;
+              border-color: @dropdown-link-hover-border-color !important;
+              color: @gray-dark !important;
+              small {
+                color: @gray-light !important;
+              }
+            }
+          }
+          > .disabled > a {
+            color: @gray-light !important;
+          }
+          > .selected > a {
+            &, &:active {
+              background-color: @dropdown-link-active-bg !important;
+              border-color: @dropdown-link-active-border-color !important;
+              color: #fff !important;
+              small {
+                color: #70c8e7 !important;
+                color:rgba(225, 255, 255, 0.5) !important;
+              }
+            }
+          }
+          li {
+            > a.opt {
+              border-bottom: 1px solid transparent;
+              border-top: 1px solid transparent;
+              color: @gray-dark;
+              padding-left: 10px;
+              padding-right: 10px;
+            }
+            & a {
+              &:active small {
+                color: #70c8e7 !important;
+                color:rgba(225, 255, 255, 0.5) !important;
+              }
+              &:hover, &:focus {
+                small {
+                  color: @gray-light;
+                }
+              }
+            }
+          }
+        }
+        > .open > .dropdown-menu {
+          padding-bottom: 5px;
+          padding-top: 5px;
+        }
+      }
     }
   }
   .navbar-persistent {
@@ -154,6 +200,12 @@
     float: none;
     .context {
       border-bottom: 1px solid @navbar-pf-navbar-header-border-color;
+      &.context-bootstrap-select .bootstrap-select.btn-group {
+        &, &[class*="span"] {
+          margin: 8px 20px 9px;
+          width: auto; // known bug:  IE8 will make it as wide as the longest string
+        }
+      }
     }
     > li > .navbar-persistent > .dropdown-submenu > a {
       position: relative;
@@ -218,7 +270,7 @@
     }
     .navbar-primary {
       font-size: @font-size-large;
-      #gradient .vertical(@navbar-pf-navbar-primary-bg-color-start, @navbar-pf-navbar-primary-bg-color-stop);
+      #gradient > .vertical(@navbar-pf-navbar-primary-bg-color-start, @navbar-pf-navbar-primary-bg-color-stop);
       &.persistent-secondary {
         .context {
           .dropdown-menu {
@@ -329,7 +381,7 @@
           background-color: @navbar-pf-navbar-primary-hover-bg-color-stop;
           border-top-color: @navbar-pf-navbar-primary-hover-border-color;
           color: @navbar-pf-color;
-          #gradient .vertical(@navbar-pf-navbar-primary-hover-bg-color-start, @navbar-pf-navbar-primary-hover-bg-color-stop);
+          #gradient > .vertical(@navbar-pf-navbar-primary-hover-bg-color-start, @navbar-pf-navbar-primary-hover-bg-color-stop);
         }
       }
       > .active > a, > .active > a:hover, > .active > a:focus, > .open > a, > .open > a:hover, > .open > a:focus {
@@ -338,23 +390,29 @@
         border-top-color: @navbar-pf-navbar-primary-active-border-color;
         .box-shadow(none);
         color: @navbar-pf-active-color;
-        #gradient .vertical(@navbar-pf-navbar-primary-active-bg-color-start, @navbar-pf-navbar-primary-active-bg-color-stop);
+        #gradient > .vertical(@navbar-pf-navbar-primary-active-bg-color-start, @navbar-pf-navbar-primary-active-bg-color-stop);
       }
-      li.dropdown.context {
-        border-bottom: 0;
-        > a {
+      li.context {
+        &.context-bootstrap-select .filter-option {
+          max-width: 160px;
+          text-overflow: ellipsis;
+        }
+        &.dropdown {
+          border-bottom: 0;
+        }
+        > a, &.context-bootstrap-select {
           background-color: @navbar-pf-navbar-primary-context-bg-color-stop;
           border-bottom-color: @navbar-pf-navbar-primary-context-border-color;
           border-right: 1px solid @navbar-pf-navbar-primary-context-border-color;
           border-top-color: @navbar-pf-navbar-primary-context-border-top-color;
           font-weight: 600;
-          #gradient .vertical(@navbar-pf-navbar-primary-context-bg-color-start, @navbar-pf-navbar-primary-context-bg-color-stop);
+          #gradient > .vertical(@navbar-pf-navbar-primary-context-bg-color-start, @navbar-pf-navbar-primary-context-bg-color-stop);
           &:hover {
             background-color: @navbar-pf-navbar-primary-context-hover-bg-color-stop;
             border-bottom-color: @navbar-pf-navbar-primary-context-hover-border-color;
             border-right-color: @navbar-pf-navbar-primary-context-hover-border-color;
             border-top-color: @navbar-pf-navbar-primary-context-hover-border-top-color;
-            #gradient .vertical(@navbar-pf-navbar-primary-context-hover-bg-color-start, @navbar-pf-navbar-primary-context-hover-bg-color-stop);
+            #gradient > .vertical(@navbar-pf-navbar-primary-context-hover-bg-color-start, @navbar-pf-navbar-primary-context-hover-bg-color-stop);
           }
         }
         &.open > a {
@@ -362,12 +420,13 @@
           border-bottom-color: @navbar-pf-navbar-primary-context-active-border-color;
           border-right-color: @navbar-pf-navbar-primary-context-active-border-right-color;
           border-top-color: @navbar-pf-navbar-primary-context-active-border-top-color;
-          #gradient .vertical(@navbar-pf-navbar-primary-context-active-bg-color-start, @navbar-pf-navbar-primary-context-active-bg-color-stop);
+          #gradient > .vertical(@navbar-pf-navbar-primary-context-active-bg-color-start, @navbar-pf-navbar-primary-context-active-bg-color-stop);
         }
       }
     }
     .navbar-utility {
       border-bottom: 0;
+      font-size: @font-size-small;
       position: absolute;
       right: 0;
       top: 0;
@@ -408,7 +467,7 @@
       .dropdown-menu {
         border-top-width: 0 !important;
       }
-      .dropdown-submenu > .dropdown-menu {
+      &.bootstrap-select .dropdown-menu, .dropdown-submenu > .dropdown-menu {
         border-top-width: 1px !important;
       }
     }

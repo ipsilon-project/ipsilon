@@ -32,7 +32,6 @@
   body {
     background: @login-bg-color url("@{img-path}/@{img-bg-login}") repeat-x 50% 0;
     background-size: auto;
-    color: #fff;
     @media (min-width: @screen-sm-min) {
       background-size: 100% auto;
     }
@@ -41,6 +40,7 @@
     background-color: @login-container-bg-color;
     background-color: @login-container-bg-color-rgba;
     clear: right;
+    color: #fff;
     padding-bottom: 40px;
     padding-top: 20px;
     width: auto;
@@ -49,6 +49,10 @@
       padding-left: 80px;
       position: absolute;
       width: 100%;
+    }
+    [class^='alert'] {
+      background: transparent;
+      color: #fff;
     }
     .details {
       p:first-child {
@@ -91,27 +95,6 @@
     }
     .submit {
       text-align: right;
-    }
-  }
-}
-
-.ie8.login-pf {
-  #badge {
-    background: url('@{img-path}/@{img-badge-ie8}') no-repeat;
-    height: @img-badge-ie8-height;
-    width: @img-badge-ie8-width;
-    img {
-      width: 0;
-    }
-  }
-  #brand {
-    background: url('@{img-path-alt}/@{img-brand-lg-ie8}') no-repeat center;
-    background-size: cover auto;
-    @media (min-width: @screen-sm-min) {
-      background-position: 0 0;
-    }
-    img {
-      width: 0;
     }
   }
 }
