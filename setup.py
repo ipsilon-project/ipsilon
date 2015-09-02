@@ -32,6 +32,7 @@ setup(
                   (DATA+'ui/css', glob('ui/css/*.css')),
                   (DATA+'ui/img', glob('ui/img/*')),
                   (DATA+'ui/js', glob('ui/js/*.js')),
+                  (DATA+'ui/fonts-local', glob('ui/fonts-local/*')),
                   (DATA+'ui/saml2sp', glob('ui/saml2sp/*.html')),
                   (DATA+'templates', glob('templates/*.html')),
                   (DATA+'templates/admin', glob('templates/admin/*.html')),

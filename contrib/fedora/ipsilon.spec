@@ -321,6 +321,7 @@ fi
 %{_datadir}/ipsilon/ui/img
 %{_datadir}/ipsilon/ui/js
 %{_datadir}/ipsilon/ui/fonts
+%{_datadir}/ipsilon/ui/fonts-local
 %{_libexecdir}/ipsilon
 %dir %attr(0751,root,root) %{_sharedstatedir}/ipsilon
 %dir %attr(0751,root,root) %{_sysconfdir}/ipsilon

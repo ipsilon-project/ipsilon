@@ -64,9 +64,11 @@ ui-node: less/ipsilon.less less/admin.less
 	#lessc --clean-css less/ipsilon.less ui/css/ipsilon.css
 	#lessc --clean-css less/admin.less ui/css/admin.css
 
-	#FIXME: temporarily disable clean-css fo deveopment
+	# FIXME: temporarily disable clean-css for development
 	lessc less/ipsilon.less ui/css/ipsilon.css
 	lessc less/admin.less ui/css/admin.css
+	lessc less/styles.less ui/css/styles.css
+	lessc less/patternfly/patternfly.less ui/css/patternfly.css
 
 clean:
 	rm -fr testdir cscope.out
