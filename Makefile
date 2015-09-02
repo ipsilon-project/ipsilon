@@ -54,6 +54,7 @@ ui: less/ipsilon.less less/admin.less
 	# Create CSS
 	lesscpy less/ipsilon.less > ui/css/ipsilon.css
 	lesscpy less/admin.less > ui/css/admin.css
+	lesscpy less/styles.less > ui/css/styles.css
 
 # Requires NodeJS less and clear-css packages
 # Should be removed when lesscpy starts to work properly
