@@ -13,6 +13,7 @@ import ConfigParser
 import os
 import uuid
 import logging
+import time
 
 
 CURRENT_SCHEMA_VERSION = 2
@@ -297,7 +298,13 @@ class FileQuery(Log):
 
 
 class Store(Log):
+    # Static, Store-level variables
     _is_upgrade = False
+    __cleanups = {}
+
+    # Static, class-level variables
+    # Either set this to False, or implement _cleanup, in child classes
+    _should_cleanup = True
 
     def __init__(self, config_name=None, database_url=None):
         if config_name is None and database_url is None:
@@ -318,6 +325,60 @@ class Store(Log):
 
         if not self._is_upgrade:
             self._check_database()
+            if self._should_cleanup:
+                self._schedule_cleanup()
+
+    def _schedule_cleanup(self):
+        store_name = self.__class__.__name__
+        if self.is_readonly:
+            # No use in cleanups on a readonly database
+            self.debug('Not scheduling cleanup for %s due to readonly' %
+                       store_name)
+            return
+        if store_name in Store.__cleanups:
+            # This class was already scheduled, skip
+            return
+        self.debug('Scheduling cleanups for %s' % store_name)
+        # Check once every minute whether we need to clean
+        task = cherrypy.process.plugins.BackgroundTask(
+            60, self._maybe_run_cleanup)
+        task.start()
+        Store.__cleanups[store_name] = task
+
+    def _maybe_run_cleanup(self):
+        # Let's see if we need to do cleanup
+        last_clean = self.load_options('dbinfo').get('%s_last_clean' %
+                                                     self.__class__.__name__,
+                                                     {})
+        time_diff = cherrypy.config.get('cleanup_interval', 30) * 60
+        next_ts = int(time.time()) - time_diff
+        self.debug('Considering cleanup for %s: %s. Next at: %s'
+                   % (self.__class__.__name__, last_clean, next_ts))
+        if ('timestamp' not in last_clean or
+                int(last_clean['timestamp']) <= next_ts):
+            # First store the current time so that other servers don't start
+            self.save_options('dbinfo', '%s_last_clean'
+                              % self.__class__.__name__,
+                              {'timestamp': int(time.time()),
+                               'removed_entries': -1})
+
+            # Cleanup has been long enough ago, let's run
+            self.debug('Cleaning up for %s' % self.__class__.__name__)
+            removed_entries = self._cleanup()
+            self.debug('Cleaned up %i entries for %s' %
+                       (removed_entries, self.__class__.__name__))
+            self.save_options('dbinfo', '%s_last_clean'
+                              % self.__class__.__name__,
+                              {'timestamp': int(time.time()),
+                               'removed_entries': removed_entries})
+
+    def _cleanup(self):
+        # The default cleanup is to do nothing
+        # This function should return the number of rows it cleaned up.
+        # This information may be used to automatically tune the clean period.
+        self.error('Cleanup for %s not implemented' %
+                   self.__class__.__name__)
+        return 0
 
     def _code_schema_version(self):
         # This function makes it possible for separate plugins to have
@@ -580,6 +641,7 @@ class Store(Log):
 
 
 class AdminStore(Store):
+    _should_cleanup = False
 
     def __init__(self):
         super(AdminStore, self).__init__('admin.config.db')
@@ -638,6 +700,7 @@ class AdminStore(Store):
 
 
 class UserStore(Store):
+    _should_cleanup = False
 
     def __init__(self, path=None):
         super(UserStore, self).__init__('user.prefs.db')
@@ -723,7 +786,7 @@ class SAML2SessionStore(Store):
             raise ValueError("Multiple entries returned")
         return data.keys()[0]
 
-    def remove_expired_sessions(self):
+    def _cleanup(self):
         # pylint: disable=protected-access
         table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
         sel = select([table.columns.uuid]). \
@@ -731,7 +794,7 @@ class SAML2SessionStore(Store):
                        table.c.value <= datetime.datetime.now()))
         # pylint: disable=no-value-for-parameter
         d = table.delete().where(table.c.uuid.in_(sel))
-        d.execute()
+        return d.execute().rowcount
 
     def get_data(self, idval=None, name=None, value=None):
         return self.get_unique_data(self.table, idval, name, value)

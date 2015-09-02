@@ -354,12 +354,6 @@ Provides SAML 2.0 authentication infrastructure. """
         self.sessionfactory = SAMLSessionFactory(
             database_url=self.get_config_value('session database url')
         )
-        # Schedule cleanups
-        # pylint: disable=protected-access
-        bt = cherrypy.process.plugins.BackgroundTask(
-            60, self.sessionfactory._ss.remove_expired_sessions
-        )
-        bt.start()
         # Init IDP data
         try:
             idp = IdentityProvider(self,

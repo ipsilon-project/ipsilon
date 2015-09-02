@@ -97,6 +97,7 @@ def install(plugins, args):
                 'publicdatadir': args['public_data_dir'],
                 'wellknowndir': args['wellknown_dir'],
                 'sysuser': args['system_user'],
+                'cleanup_interval': args['cleanup_interval'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
                 'cachedir': CACHEDIR,
@@ -376,7 +377,11 @@ def parse_args(plugins):
     parser.add_argument('--transaction-dburi',
                         help='Transaction database URI (override template)')
     parser.add_argument('--samlsessions-dburi',
-                        help='SAML 2 sessions database URI (override template)')
+                        help='SAML 2 sessions database URI (override ' +
+                             'template)')
+    parser.add_argument('--cleanup-interval', default=30,
+                        help='Interval between cleaning up stale database ' +
+                             'entries (in minutes, default: 30 minutes)')
 
     lms = []
 
