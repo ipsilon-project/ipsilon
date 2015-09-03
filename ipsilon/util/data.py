@@ -342,7 +342,8 @@ class Store(Log):
             fallback_version = self.load_options('dbinfo').get('scheme',
                                                                {})
             if 'version' in fallback_version:
-                return int(fallback_version['version'])
+                # Explanation for this is in def upgrade_database(self)
+                return -1
             else:
                 return None
 
@@ -388,6 +389,14 @@ class Store(Log):
             # Just initialize a new schema
             self._initialize_schema()
             self._store_new_schema_version(self._code_schema_version())
+        elif old_schema_version == -1:
+            # This is a special-case from 1.0: we only created tables at the
+            # first time they were actually used, but the upgrade code assumes
+            # that the tables exist. So let's fix this.
+            self._initialize_schema()
+            # The old version was schema version 1
+            self._store_new_schema_version(1)
+            self.upgrade_database()
         elif old_schema_version != self._code_schema_version():
             # Upgrade from old_schema_version to code_schema_version
             self.debug('Upgrading from schema version %i' % old_schema_version)
