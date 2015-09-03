@@ -56,12 +56,12 @@ def execute_upgrade(cfgfile):
     # pylint: disable=protected-access
     Store._is_upgrade = True
 
-    datastore = AdminStore()
+    adminstore = AdminStore()
     # First try to upgrade the config store before continuing
-    if not _upgrade_database(datastore):
+    if not _upgrade_database(adminstore):
         return upgrade_failed()
 
-    admin_config = datastore.load_config()
+    admin_config = adminstore.load_config()
     for option in admin_config:
         cherrypy.config[option] = admin_config[option]
 
@@ -95,6 +95,8 @@ def execute_upgrade(cfgfile):
         for plugin in root._site[facility].enabled:
             print 'Handling plugin %s' % plugin
             plugin = root._site[facility].available[plugin]
+            print 'Creating plugin AdminStore table'
+            adminstore.create_plugin_data_table(plugin.name)
             for store in plugin.used_datastores():
                 print 'Handling plugin datastore %s' % store.__class__.__name__
                 if not _upgrade_database(store):
