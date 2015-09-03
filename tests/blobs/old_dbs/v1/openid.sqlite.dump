@@ -11,4 +11,9 @@ CREATE TABLE association (
 	name TEXT NOT NULL, 
 	value TEXT
 );
+CREATE TABLE openid_extensions (
+    name TEXT NOT NULL,
+    option TEXT NOT NULL,
+    value TEXT
+);
 COMMIT;

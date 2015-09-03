@@ -1,6 +1,6 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
-from ipsilon.util.data import Store, UNIQUE_DATA_TABLE
+from ipsilon.util.data import Store, UNIQUE_DATA_TABLE, OPTIONS_TABLE
 
 from openid import oidutil
 from openid.association import Association
@@ -82,12 +82,20 @@ class OpenIDStore(Store, OpenIDStoreInterface):
         q = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
+        q = self._query(self._db, 'openid_extensions', OPTIONS_TABLE,
+                        trans=False)
+        q.create()
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
             # In schema version 2, we added indexes and primary keys
             # pylint: disable=protected-access
             table = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
+                                trans=False)._table
+            self._db.add_constraint(table.primary_key)
+            for index in table.indexes:
+                self._db.add_index(index)
+            table = self._query(self._db, 'openid_extensions', OPTIONS_TABLE,
                                 trans=False)._table
             self._db.add_constraint(table.primary_key)
             for index in table.indexes:
