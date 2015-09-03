@@ -627,10 +627,11 @@ class AdminStore(Store):
             raise NotImplementedError()
 
     def create_plugin_data_table(self, plugin_name):
-        table = plugin_name+'_data'
-        q = self._query(self._db, table, UNIQUE_DATA_TABLE,
-                        trans=False)
-        q.create()
+        if not self.is_readonly:
+            table = plugin_name+'_data'
+            q = self._query(self._db, table, UNIQUE_DATA_TABLE,
+                            trans=False)
+            q.create()
 
 
 class UserStore(Store):
