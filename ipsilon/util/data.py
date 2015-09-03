@@ -331,6 +331,7 @@ class Store(Log):
         #  the main codebase, and even in the same database.
         q = self._query(self._db, 'dbinfo', OPTIONS_TABLE, trans=False)
         q.create()
+        q._con.close()  # pylint: disable=protected-access
         cls_name = self.__class__.__name__
         current_version = self.load_options('dbinfo').get('%s_schema'
                                                           % cls_name, {})
@@ -608,6 +609,7 @@ class AdminStore(Store):
                       'provider_config']:
             q = self._query(self._db, table, OPTIONS_TABLE, trans=False)
             q.create()
+            q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
@@ -632,6 +634,7 @@ class AdminStore(Store):
             q = self._query(self._db, table, UNIQUE_DATA_TABLE,
                             trans=False)
             q.create()
+            q._con.close()  # pylint: disable=protected-access
 
 
 class UserStore(Store):
@@ -654,6 +657,7 @@ class UserStore(Store):
     def _initialize_schema(self):
         q = self._query(self._db, 'users', OPTIONS_TABLE, trans=False)
         q.create()
+        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
@@ -678,6 +682,7 @@ class TranStore(Store):
         q = self._query(self._db, 'transactions', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
+        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
@@ -779,6 +784,7 @@ class SAML2SessionStore(Store):
         q = self._query(self._db, self.table, UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
+        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
