@@ -419,6 +419,11 @@ def parse_args():
     if not args['saml_sp'].startswith(args['saml_base']):
         raise ValueError('--saml-sp must be a subpath of --saml-base.')
 
+    # The samle_auth setting must be a subpath of saml_base otherwise
+    # the IdP cannot be identified by mod_auth_mellon.
+    if not args['saml_auth'].startswith(args['saml_base']):
+        raise ValueError('--saml-auth must be a subpath of --saml-base.')
+
     # The saml_sp_logout, saml_sp_post and saml_sp_paos settings must
     # be subpaths of saml_sp (the mellon endpoint).
     path_args = {'saml_sp_logout': 'logout',
