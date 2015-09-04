@@ -740,9 +740,10 @@ class TranStore(Store):
 
     def __init__(self, path=None):
         super(TranStore, self).__init__('transactions.db')
+        self.table = 'transactions'
 
     def _initialize_schema(self):
-        q = self._query(self._db, 'transactions', UNIQUE_DATA_TABLE,
+        q = self._query(self._db, self.table, UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
         q._con.close()  # pylint: disable=protected-access
@@ -751,7 +752,7 @@ class TranStore(Store):
         if old_version == 1:
             # In schema version 2, we added indexes and primary keys
             # pylint: disable=protected-access
-            table = self._query(self._db, 'transactions', UNIQUE_DATA_TABLE,
+            table = self._query(self._db, self.table, UNIQUE_DATA_TABLE,
                                 trans=False)._table
             self._db.add_constraint(table.primary_key)
             for index in table.indexes:
@@ -759,6 +760,17 @@ class TranStore(Store):
             return 2
         else:
             raise NotImplementedError()
+
+    def _cleanup(self):
+        # pylint: disable=protected-access
+        table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
+        in_one_hour = datetime.datetime.now() - datetime.timedelta(hours=1)
+        sel = select([table.columns.uuid]). \
+            where(and_(table.c.name == 'origintime',
+                       table.c.value <= in_one_hour))
+        # pylint: disable=no-value-for-parameter
+        d = table.delete().where(table.c.uuid.in_(sel))
+        return d.execute().rowcount
 
 
 class SAML2SessionStore(Store):
