@@ -4,6 +4,7 @@ import base64
 from cherrypy.lib.sessions import Session
 from ipsilon.util.data import Store, SqlQuery
 import threading
+import datetime
 try:
     import cPickle as pickle
 except ImportError:
@@ -35,6 +36,14 @@ class SessionStore(Store):
             return 2
         else:
             raise NotImplementedError()
+
+    def _cleanup(self):
+        # pylint: disable=protected-access
+        table = SqlQuery(self._db, 'sessions', SESSION_TABLE)._table
+        # pylint: disable=no-value-for-parameter
+        d = table.delete().where(table.c.expiration_time
+                                 <= datetime.datetime.now())
+        return d.execute().rowcount
 
 
 class SqlSession(Session):
