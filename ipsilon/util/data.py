@@ -510,7 +510,8 @@ class Store(Log):
             q = self._query(self._db, table, columns, trans=False)
             rows = q.select(kvfilter)
         except Exception, e:  # pylint: disable=broad-except
-            self.error("Failed to load data for table %s: [%s]" % (table, e))
+            self.error("Failed to load data for table %s for store %s: [%s]"
+                       % (table, self.__class__.__name__, e))
         return self._rows_to_dict_tree(rows)
 
     def load_config(self):
