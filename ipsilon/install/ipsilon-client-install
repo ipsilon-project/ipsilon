@@ -153,12 +153,14 @@ def saml2():
                 logger.error("Failed to read SP Image file!\n" +
                              "Error: [%s]" % e)
 
+        sp_link = 'https://%s%s' % (args['hostname'], args['saml_auth'])
+
         # Register the SP
         try:
             saml2_register_sp(args['saml_idp_url'], args['admin_user'],
                               admin_password, args['saml_sp_name'],
                               sp_metadata, args['saml_sp_description'],
-                              args['saml_sp_visible'], sp_image)
+                              args['saml_sp_visible'], sp_image, sp_link)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Failed to register SP with IDP!\n" +
                          "Error: [%s]" % e)
@@ -225,7 +227,7 @@ def saml2():
 
 
 def saml2_register_sp(url, user, password, sp_name, sp_metadata,
-                      sp_description, sp_visible, sp_image):
+                      sp_description, sp_visible, sp_image, sp_link):
     s = requests.Session()
 
     # Authenticate to the IdP
@@ -253,6 +255,7 @@ def saml2_register_sp(url, user, password, sp_name, sp_metadata,
     if sp_image:
         if sp_image:
             sp_data['imagefile'] = sp_image
+    sp_data['splink'] = sp_link
     sp_data = urlencode(sp_data)
 
     r = s.post(sp_url, headers=sp_headers, data=sp_data)

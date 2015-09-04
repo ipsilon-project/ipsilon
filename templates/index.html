@@ -86,7 +86,7 @@
 
       <div class="row thumbnails providers" id="providers">
       {% for p in providers %}
-        {% if p.visible == '1' %}
+        {% if (p.visible == '1') or (p.visible == 'True') %}
         <div class="col-sm-4 col-md-3 provider">
           <a
              {% if p.splink or 0 %}
