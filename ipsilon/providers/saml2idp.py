@@ -112,7 +112,7 @@ class Continue(AuthenticateRequest):
         self.debug('Continue auth for %s' % user.name)
 
         if 'saml2_request' not in transdata:
-            self.debug("Couldn't find Request dump?!")
+            self.error("Couldn't find Request dump in transaction?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(400)
         dump = transdata['saml2_request']
@@ -120,10 +120,10 @@ class Continue(AuthenticateRequest):
         try:
             login = self.cfg.idp.get_login_handler(dump)
         except Exception, e:  # pylint: disable=broad-except
-            self.debug('Failed to load status from dump: %r' % e)
+            self.error('Failed to load login status from dump: %r' % e)
 
         if not login:
-            self.debug("Empty Request dump?!")
+            self.error("Empty login Request dump?!")
             # TODO: Return to SP with auth failed error
             raise cherrypy.HTTPError(400)
 
@@ -365,7 +365,7 @@ Provides SAML 2.0 authentication infrastructure. """
             idp = IdentityProvider(self,
                                    sessionfactory=self.sessionfactory)
         except Exception, e:  # pylint: disable=broad-except
-            self.debug('Failed to init SAML2 provider: %r' % e)
+            self.error('Failed to init SAML2 provider: %r' % e)
             return None
 
         self._root.logout.add_handler(self.name, self.idp_initiated_logout)
@@ -381,7 +381,7 @@ Provides SAML 2.0 authentication infrastructure. """
             try:
                 idp.add_provider(sp)
             except Exception, e:  # pylint: disable=broad-except
-                self.debug('Failed to add SP %s: %r' % (sp['name'], e))
+                self.error('Failed to add SP %s: %r' % (sp['name'], e))
 
         return idp
 
