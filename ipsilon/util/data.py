@@ -69,7 +69,10 @@ class SqlStore(BaseStore):
             # It's not possible to share connections for SQLite between
             #  threads, so let's use the SingletonThreadPool for them
             pool_args = {'poolclass': SingletonThreadPool}
-        self._dbengine = create_engine(engine_name, **pool_args)
+        self._dbengine = create_engine(engine_name,
+                                       echo=cherrypy.config.get('db.echo',
+                                                                False),
+                                       **pool_args)
         self.is_readonly = False
 
     def add_constraint(self, constraint):
