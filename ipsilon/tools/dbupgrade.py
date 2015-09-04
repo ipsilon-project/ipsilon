@@ -96,6 +96,7 @@ def execute_upgrade(cfgfile):
             return upgrade_failed()
 
     # And now datastores for any of the plugins
+    userstore = UserStore()
     for facility in ['provider_config',
                      'login_config',
                      'info_config']:
@@ -104,6 +105,8 @@ def execute_upgrade(cfgfile):
             plugin = root._site[facility].available[plugin]
             logger.debug('Creating plugin AdminStore table')
             adminstore.create_plugin_data_table(plugin.name)
+            logger.debug('Creating plugin UserStore table')
+            userstore.create_plugin_data_table(plugin.name)
             for store in plugin.used_datastores():
                 logger.debug('Handling plugin datastore %s',
                              store.__class__.__name__)
