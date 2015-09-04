@@ -65,18 +65,29 @@ class OpenIDStore(Store, OpenIDStoreInterface):
 
         return True
 
+    def _cleanup(self):
+        res1 = self.cleanupNonces()
+        res2 = self.cleanupAssociations()
+        return res1 + res2
+
     def cleanupNonces(self):
         nonces = self.get_unique_data('nonce')
+        cleaned = 0
         for iden in nonces:
             if nonces[iden]['timestamp'] < (time() - NonceSKEW):
+                cleaned += 1
                 self.del_unique_data('nonce', iden)
+        return cleaned
 
     def cleanupAssociations(self):
         assocs = self.get_unique_data('association')
+        cleaned = 0
         for iden in assocs:
             if ((int(assocs[iden]['issued']) + int(assocs[iden]['lifetime']))
                     < time()):
+                cleaned += 1
                 self.del_unique_data('association', iden)
+        return cleaned
 
     def _initialize_schema(self):
         q = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
