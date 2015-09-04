@@ -5,10 +5,19 @@
 import sys
 from ipsilon import find_config
 from ipsilon.tools import dbupgrade
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-try:
-    dbupgrade.execute_upgrade(find_config())
-except Exception as ex:
-    print ex
-    sys.exit(1)
+if __name__ == '__main__':
+    def_logger = logging.getLogger()
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.ERROR)
+    def_logger.addHandler(ch)
+
+    try:
+        dbupgrade.execute_upgrade(find_config())
+    except Exception as ex:
+        logger.error(ex)
+        sys.exit(1)

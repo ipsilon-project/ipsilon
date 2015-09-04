@@ -10,9 +10,13 @@ from ipsilon.util.data import AdminStore, Store, UserStore, TranStore
 from ipsilon.util.sessions import SqlSession
 from ipsilon.root import Root
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def _upgrade_database(datastore):
-    print 'Considering datastore %s' % datastore.__class__.__name__
+    logger.debug('Considering datastore %s', datastore.__class__.__name__)
     # pylint: disable=protected-access
     current_version = datastore._get_schema_version()
     # pylint: disable=protected-access
@@ -20,22 +24,24 @@ def _upgrade_database(datastore):
     upgrade_required = False
     if current_version is None:
         # Initialize schema
-        print 'Initializing schema for %s' % datastore.__class__.__name__
+        logger.debug('Initializing schema for %s',
+                     datastore.__class__.__name__)
         upgrade_required = True
     elif current_version != code_schema_version:
-        print 'Upgrading schema for %s' % datastore.__class__.__name__
+        logger.debug('Upgrading schema for %s', datastore.__class__.__name__)
         upgrade_required = True
     else:
-        print 'Schema for %s is up-to-date' % datastore.__class__.__name__
+        logger.debug('Schema for %s is up-to-date',
+                     datastore.__class__.__name__)
     if upgrade_required:
         if datastore.is_readonly:
-            print 'Datastore is readonly. Please fix manually!'
+            logger.warning('Datastore is readonly. Please fix manually!')
             return False
         try:
             datastore.upgrade_database()
         except Exception as ex:  # pylint: disable=broad-except
             # Error upgrading database
-            print 'Error upgrading datastore: %s' % ex
+            logger.error('Error upgrading datastore: %s', ex)
             return False
         else:
             # Upgrade went OK
@@ -45,7 +51,7 @@ def _upgrade_database(datastore):
 
 
 def upgrade_failed():
-    print 'Upgrade failed. Please fix errors above and retry'
+    logger.error('Upgrade failed. Please fix errors above and retry')
     raise Exception('Upgrading failed')
 
 
@@ -72,9 +78,9 @@ def execute_upgrade(cfgfile):
     root = Root('default', template_env)
 
     # Handle the session store if that is Sql
-    print 'Handling sessions datastore'
+    logger.debug('Handling sessions datastore')
     if cherrypy.config['tools.sessions.storage_type'] != 'sql':
-        print 'Not SQL-based, skipping'
+        logger.debug('Not SQL-based, skipping')
     else:
         dburi = cherrypy.config['tools.sessions.storage_dburi']
         SqlSession.setup(storage_dburi=dburi)
@@ -84,7 +90,8 @@ def execute_upgrade(cfgfile):
     # Now handle the rest of the default datastores
     for store in [UserStore, TranStore]:
         store = store()
-        print 'Handling default datastore %s' % store.__class__.__name__
+        logger.debug('Handling default datastore %s',
+                     store.__class__.__name__)
         if not _upgrade_database(store):
             return upgrade_failed()
 
@@ -93,12 +100,13 @@ def execute_upgrade(cfgfile):
                      'login_config',
                      'info_config']:
         for plugin in root._site[facility].enabled:
-            print 'Handling plugin %s' % plugin
+            logger.debug('Handling plugin %s', plugin)
             plugin = root._site[facility].available[plugin]
-            print 'Creating plugin AdminStore table'
+            logger.debug('Creating plugin AdminStore table')
             adminstore.create_plugin_data_table(plugin.name)
             for store in plugin.used_datastores():
-                print 'Handling plugin datastore %s' % store.__class__.__name__
+                logger.debug('Handling plugin datastore %s',
+                             store.__class__.__name__)
                 if not _upgrade_database(store):
                     return upgrade_failed()
 
