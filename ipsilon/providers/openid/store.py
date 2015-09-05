@@ -94,10 +94,6 @@ class OpenIDStore(Store, OpenIDStoreInterface):
                         trans=False)
         q.create()
         q._con.close()  # pylint: disable=protected-access
-        q = self._query(self._db, 'openid_extensions', OPTIONS_TABLE,
-                        trans=False)
-        q.create()
-        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:

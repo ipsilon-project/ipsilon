@@ -49,7 +49,7 @@ class LoadExtensions(Log):
 
     def __init__(self):
         self.plugins = PluginLoader(LoadExtensions,
-                                    FACILITY, 'OpenidExtension')
+                                    FACILITY, 'OpenidExtension', False)
         self.plugins.get_plugin_data()
 
         available = self.plugins.available.keys()

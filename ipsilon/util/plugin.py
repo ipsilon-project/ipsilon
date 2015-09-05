@@ -58,19 +58,23 @@ class Plugins(object):
 
 class PluginLoader(Log):
 
-    def __init__(self, baseobj, facility, plugin_type):
+    def __init__(self, baseobj, facility, plugin_type, uses_store=True):
         self._pathname, _ = os.path.split(inspect.getfile(baseobj))
         self.facility = facility
         self._plugin_type = plugin_type
         self.available = dict()
         self.enabled = list()
-        self.__data = None
+        self.__data = False
+        self.uses_store = uses_store
 
     # Defer initialization or instantiating the store will fail at load
     # time when used with Installer plugins as the cherrypy config context
     # is created after all Installer plugins are loaded.
     @property
     def _data(self):
+        if not self.uses_store:
+            raise Exception('Tried to get plugin data while ' +
+                            'uses_store=False (%s)' % self.facility)
         if not self.__data:
             self.__data = AdminStore()
         return self.__data
@@ -92,7 +96,8 @@ class PluginLoader(Log):
 
     def get_plugin_data(self):
         self.available = self.get_plugins()
-        self.refresh_enabled()
+        if self.uses_store:
+            self.refresh_enabled()
 
     def save_enabled(self, enabled):
         if enabled:
