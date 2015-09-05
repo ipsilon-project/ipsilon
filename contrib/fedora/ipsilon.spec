@@ -1,8 +1,8 @@
 # Bundling request for bootstrap/patternfly: https://fedorahosted.org/fpc/ticket/483
 
 Name:       ipsilon
-Version:    1.0.0
-Release:    2%{?builddate}%{?gittag}%{?dist}
+Version:    1.1.0
+Release:    1%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
 Group:      System Environment/Base
@@ -371,6 +371,9 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Sat Sep 05 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.1.0-1
+- Release 1.1.0
+
 * Mon Jun 22 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.0.0-2
 - Added mod_ssl requirement for ipsilon-client
 
