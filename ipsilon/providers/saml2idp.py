@@ -28,8 +28,8 @@ cherrypy.tools.require_content_type = cherrypy.Tool('before_request_body',
 
 
 def is_lasso_ecp_enabled():
-    # Full ECP support appeared in lasso version 2.4.2
-    return lasso.checkVersion(2, 4, 2, lasso.CHECK_VERSION_NUMERIC)
+    # Look for an exported symbol we know was added with ECP support
+    return 'ECP_ERROR_MISSING_AUTHN_REQUEST' in dir(lasso)
 
 
 class SSO_SOAP(AuthenticateRequest):
