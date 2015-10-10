@@ -18,12 +18,12 @@ class Transaction(Log):
         self._ts = TranStore()
         self.cookie = None
 
-        # Backwards compat,
-        # if arguments are passed find or get new transaction
         if kwargs:
             self.find_tid(kwargs)
-            if not self.transaction_id:
-                self.create_tid()
+
+        # If tid isn't found create a new one
+        if not self.transaction_id:
+            self.create_tid()
 
     def find_tid(self, kwargs):
         tid = kwargs.get(TRANSID)
