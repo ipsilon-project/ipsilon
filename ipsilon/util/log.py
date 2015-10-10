@@ -297,16 +297,62 @@ class Log(object):
 
     @staticmethod
     def call_location():
-        frame = inspect.stack()[2]
-        frame_obj = frame[0]
-        filename = frame[1]
-        line_number = frame[2]
-        func = frame[3]
+        """Return string describing where in the code a logging call was made.
 
-        # Only report the last 3 components of the path
-        filename = os.sep.join(filename.split(os.sep)[-3:])
+        When reading a log file it is very helpful to know where in the
+        code the message was emitted from.
 
-        cls = Log.get_class_from_frame(frame_obj)
+        Returns a string of the form:
+        "filename:line_number class"
+
+        The filename is a path truncated to the last 3 pathname
+        components to give just enough context without being too verbose.
+
+        This function walks up the stack bypassing any functions that
+        appear to be part of the logging operation itself. The first
+        such frame not part of logging is assumed to be the location
+        of the code that emitted the log message.
+
+        :return: string describing code location of logging call
+        """
+
+        # Each frame is a 6-tuple:
+        #
+        # the frame object,
+        # the filename,
+        # the line number of the current line,
+        # the function name,
+        # a list of lines of context from the source code,
+        # the index of the current line within that list
+
+        # Walk up the stack until we find a function name which is not
+        # a logging function, that frame is the logging caller and hence
+        # the location where the call to logging was made.
+        try:
+            frame = None
+            frame_obj = None
+            stack = inspect.stack()
+            for frame in stack:
+                if frame[3] not in ('call_location', 'log', 'debug', 'error'):
+                    break
+
+            if not frame:
+                frame = stack[0]
+
+            frame_obj = frame[0]
+            filename = frame[1]
+            line_number = frame[2]
+            func = frame[3]
+
+            # Only report the last 3 components of the path
+            filename = os.sep.join(filename.split(os.sep)[-3:])
+
+            cls = Log.get_class_from_frame(frame_obj)
+        finally:
+            # Don't keep reference to frame object
+            del frame_obj
+            del stack
+
         if cls:
             location = '%s:%s %s.%s()' %  \
                        (filename, line_number, cls.__name__, func)
