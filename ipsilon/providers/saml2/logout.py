@@ -28,8 +28,8 @@ class LogoutRequest(ProviderPageBase):
         deleted.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(LogoutRequest, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(LogoutRequest, self).__init__(site, provider)
 
     def _handle_logout_request(self, us, logout, saml_sessions, message):
         self.debug('Logout request')

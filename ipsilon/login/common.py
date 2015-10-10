@@ -7,35 +7,93 @@ from ipsilon.util.plugin import PluginObject
 from ipsilon.util.config import ConfigHelper
 from ipsilon.info.common import Info
 from ipsilon.util.cookies import SecureCookie
+from ipsilon.util.log import Log
 import cherrypy
 
 
 USERNAME_COOKIE = 'ipsilon_default_username'
 
 
-class LoginManagerBase(ConfigHelper, PluginObject):
+class LoginHelper(Log):
 
-    def __init__(self, *args):
-        ConfigHelper.__init__(self)
-        PluginObject.__init__(self, *args)
-        self._root = None
-        self._site = None
-        self.path = '/'
-        self.info = None
+    """Common code supporing login operations.
 
-    def redirect_to_path(self, path, trans=None):
-        base = cherrypy.config.get('base.mount', "")
-        url = '%s/login/%s' % (base, path)
-        if trans:
-            url += '?%s' % trans.get_GET_arg()
-        raise cherrypy.HTTPRedirect(url)
+    Ipsilon can authtenticate a user by itself via it's own login
+    handlers (classes derived from `LoginManager`) or it can
+    capitalize on the authentication provided by the container Ipsilon
+    is running in (currently WSGI inside Apache). We refer to the
+    later as "external authentication" because it occurs outside of
+    Ipsilon. However in both cases there is a common need to execute
+    the same code irregardless of where the authntication
+    occurred. This class serves that purpose.
+    """
 
-    def auth_successful(self, trans, username, auth_type=None, userdata=None):
+    def get_external_auth_info(self):
+        """Return the username and auth type for external authentication.
+
+        If the container Ipsilon is running inside of has already
+        authenticated the user prior to reaching one of our endpoints
+        return the username and the name of authenticaion method
+        used. In Apache this will be REMOTE_USER and AUTH_TYPE.
+
+        The returned auth_type will be prefixed with the string
+        "external:" to clearly distinguish between the same method
+        being used internally by Ipsilon from the same method used by
+        the container hosting Ipsilon. The returned auth_type string
+        will be lower case.
+
+        If there was no external authentication both username and
+        auth_type will be None. It is possible for a username to be
+        returned without knowing the auth_type.
+
+        :return: tuple of (username, auth_type)
+        """
+
+        auth_type = None
+        username = cherrypy.request.login
+        if username:
+            auth_type = cherrypy.request.wsgi_environ.get('AUTH_TYPE')
+            if auth_type:
+                auth_type = 'external:%s' % (auth_type.lower())
+
+        self.debug("get_external_auth_info: username=%s auth_type=%s" % (
+            username, auth_type))
+
+        return username, auth_type
+
+    def initialize_login_session(self, username, info=None,
+                                 auth_type=None, userdata=None):
+        """Establish a login session for a user.
+
+        Builds a `UserSession` object and bind attributes associated
+        with the user to the session.
+
+        User attributes derive from two sources, the `Info` object
+        passed as the info parameter and the userdata dict. The `Info`
+        object encapsulates the info plugins run by Ipsilon. The
+        userdata dict is additional information typically derived
+        during authentication.
+
+        The `Info` derived attributes are merged with the userdata
+        attributes to form one set of user attributes. The user
+        attributes are checked for consistenccy. Additional attrbutes
+        may be synthesized and added to the user attributes. The final
+        set of user attributes is then bound to the returned
+        `UserSession` object.
+
+        :param username:  The username bound to the identity principal
+        :param info:      A `Info` object providing user attributes
+        :param auth_type: Authenication method name
+        :param userdata:  Dict of additional user attributes
+
+        :return: `UserSession` object
+        """
+
         session = UserSession()
 
         # merge attributes from login plugin and info plugin
-        if self.info:
-            infoattrs = self.info.get_user_attrs(username)
+        if info:
+            infoattrs = info.get_user_attrs(username)
         else:
             infoattrs = dict()
 
@@ -64,6 +122,29 @@ class LoginManagerBase(ConfigHelper, PluginObject):
 
         # create session login including all the userdata just gathered
         session.login(username, userdata)
+
+        return session
+
+
+class LoginManagerBase(ConfigHelper, PluginObject, LoginHelper):
+
+    def __init__(self, *args):
+        ConfigHelper.__init__(self)
+        PluginObject.__init__(self, *args)
+        self._root = None
+        self._site = None
+        self.path = '/'
+        self.info = None
+
+    def redirect_to_path(self, path, trans=None):
+        base = cherrypy.config.get('base.mount', "")
+        url = '%s/login/%s' % (base, path)
+        if trans:
+            url += '?%s' % trans.get_GET_arg()
+        raise cherrypy.HTTPRedirect(url)
+
+    def auth_successful(self, trans, username, auth_type=None, userdata=None):
+        self.initialize_login_session(username, self.info, auth_type, userdata)
 
         # save username into a cookie if parent was form base auth
         if auth_type == 'password':

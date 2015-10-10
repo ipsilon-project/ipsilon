@@ -1,5 +1,6 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from ipsilon.login.common import LoginHelper
 from ipsilon.providers.common import ProviderBase, ProviderPageBase, \
     ProviderInstaller
 from ipsilon.providers.saml2.auth import AuthenticateRequest
@@ -32,10 +33,12 @@ def is_lasso_ecp_enabled():
     return 'ECP_ERROR_MISSING_AUTHN_REQUEST' in dir(lasso)
 
 
-class SSO_SOAP(AuthenticateRequest):
+class SSO_SOAP(AuthenticateRequest, LoginHelper):
 
-    def __init__(self, *args, **kwargs):
-        super(SSO_SOAP, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(SSO_SOAP, self).__init__(site, provider, *args, **kwargs)
+        # pylint: disable=protected-access
+        self.info = provider._root.login.info
         self.binding = metadata.SAML2_SERVICE_MAP['sso-soap'][1]
 
     @cherrypy.tools.require_content_type(
@@ -49,13 +52,11 @@ class SSO_SOAP(AuthenticateRequest):
         self.debug("SSO_SOAP transaction provider=%s id=%s" %
                    (self.trans.provider, self.trans.transaction_id))
 
-        us = UserSession()
-        us.remote_login()
-        user = us.get_user()
-        self.debug("SSO_SOAP user=%s" % (user.name))
-
-        if not user:
+        username, auth_type = self.get_external_auth_info()
+        if not username:
             raise cherrypy.HTTPError(403, 'No user specified for SSO_SOAP')
+        self.debug("SSO_SOAP user=%s auth_type=%s" % (username, auth_type))
+        self.initialize_login_session(username, self.info, auth_type)
 
         soap_xml_doc = cherrypy.request.rfile.read()
         soap_xml_doc = soap_xml_doc.strip()
@@ -67,8 +68,8 @@ class SSO_SOAP(AuthenticateRequest):
 
 class Redirect(AuthenticateRequest):
 
-    def __init__(self, *args, **kwargs):
-        super(Redirect, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(Redirect, self).__init__(site, provider, *args, **kwargs)
         self.binding = metadata.SAML2_SERVICE_MAP['sso-redirect'][1]
 
     def GET(self, *args, **kwargs):
@@ -81,8 +82,8 @@ class Redirect(AuthenticateRequest):
 
 class POSTAuth(AuthenticateRequest):
 
-    def __init__(self, *args, **kwargs):
-        super(POSTAuth, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(POSTAuth, self).__init__(site, provider, *args, **kwargs)
         self.binding = metadata.SAML2_SERVICE_MAP['sso-post'][1]
 
     def POST(self, *args, **kwargs):
@@ -145,20 +146,20 @@ class Logout(LogoutRequest):
 
 class SSO(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(SSO, self).__init__(*args, **kwargs)
-        self.Redirect = Redirect(*args, **kwargs)
-        self.POST = POSTAuth(*args, **kwargs)
-        self.Continue = Continue(*args, **kwargs)
-        self.SOAP = SSO_SOAP(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(SSO, self).__init__(site, provider)
+        self.Redirect = Redirect(site, provider, *args, **kwargs)
+        self.POST = POSTAuth(site, provider, *args, **kwargs)
+        self.Continue = Continue(site, provider, *args, **kwargs)
+        self.SOAP = SSO_SOAP(site, provider, *args, **kwargs)
 
 
 class SLO(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(SLO, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(SLO, self).__init__(site, provider)
         self.debug('SLO init')
-        self.Redirect = Logout(*args, **kwargs)
+        self.Redirect = Logout(site, provider, *args, **kwargs)
 
 
 # one week
@@ -199,11 +200,11 @@ class Metadata(ProviderPageBase):
 
 class SAML2(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(SAML2, self).__init__(*args, **kwargs)
-        self.metadata = Metadata(*args, **kwargs)
-        self.SSO = SSO(*args, **kwargs)
-        self.SLO = SLO(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(SAML2, self).__init__(site, provider)
+        self.metadata = Metadata(site, provider, *args, **kwargs)
+        self.SSO = SSO(site, provider, *args, **kwargs)
+        self.SLO = SLO(site, provider, *args, **kwargs)
 
 
 class IdpProvider(ProviderBase):

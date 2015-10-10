@@ -13,8 +13,8 @@ import M2Crypto
 
 class AuthenticateRequest(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(AuthenticateRequest, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(AuthenticateRequest, self).__init__(site, provider)
         self.trans = None
 
     def _preop(self, *args, **kwargs):

@@ -7,8 +7,8 @@ import cherrypy
 
 class MetaHandler(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(MetaHandler, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(MetaHandler, self).__init__(site, provider)
         self._template_name = None
         self._take_args = False
 

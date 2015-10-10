@@ -17,8 +17,8 @@ import json
 
 class AuthenticateRequest(ProviderPageBase):
 
-    def __init__(self, *args, **kwargs):
-        super(AuthenticateRequest, self).__init__(*args, **kwargs)
+    def __init__(self, site, provider, *args, **kwargs):
+        super(AuthenticateRequest, self).__init__(site, provider)
         self.stage = 'init'
         self.trans = None
 
