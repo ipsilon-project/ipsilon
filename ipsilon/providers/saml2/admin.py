@@ -307,6 +307,9 @@ class SPAdminPage(AdminPage):
                                   message_type=message_type)
 
     def delete(self):
+        if (not self.user.is_admin and
+                self.user.name != self.sp.owner):
+            raise cherrypy.HTTPError(403)
         self.parent.del_sp(self.sp.name)
         self.sp.permanently_delete()
         return self.parent.root()
