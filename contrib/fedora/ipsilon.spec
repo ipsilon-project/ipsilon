@@ -1,7 +1,7 @@
 # Bundling request for bootstrap/patternfly: https://fedorahosted.org/fpc/ticket/483
 
 Name:       ipsilon
-Version:    1.0.1
+Version:    1.0.2
 Release:    1%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
@@ -364,6 +364,9 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Wed Oct 14 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.0.2-1
+- Release 1.0.2 for CVE-2015-5301
+
 * Tue Sep 08 2015 Patrick Uiterwijk <puiterwijk@redhat.com> - 1.0.1-1
 - Release 1.0.1
 - Backported patch for CVE-2015-5215/CVE-2015-5216
