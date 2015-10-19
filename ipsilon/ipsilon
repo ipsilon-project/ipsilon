@@ -33,6 +33,10 @@ cfgfile = find_config()
 cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
 cherrypy.config.update(cfgfile)
 
+# Force cherrypy logging to work. Note that this ignores the config-file
+# setting.
+cherrypy.log.screen = True
+
 nuke_session_locks()
 
 datastore = AdminStore()

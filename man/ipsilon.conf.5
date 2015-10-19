@@ -33,19 +33,16 @@ Options must appear in the section named [global]. There are no other sections d
 The following options are defined:
 .TP
 .B debug
-Enables additional debugging output. log.screen must also be True for this to be written.
+Enables additional debugging output.
 .TP
 .B tools.log_request_response.on
 Logs the full SAML 2 request and response information.
 .TP
 .B db.conn.log
-Enable verbose database connection tracing logs. debug and log.screen both need to be True for this to be written.
+Enable verbose database connection tracing logs. debug needs to be True for this to be written.
 .TP
 .B template_dir
 Location of the template directory used for buidling the UI. This can be relative to \fIbase.dir\fR.
-.TP
-.B log.screen
-Send logs to the console, which Apache grabs and adds to its own error log.
 .TP
 .B base.mount
 The base mount mount for UI pages. This should match the name of the IdP.
