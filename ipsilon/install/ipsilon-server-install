@@ -243,9 +243,14 @@ def uninstall(plugins, args):
                               'ipsilon-%s.conf' % args['instance'])
     data_dir = os.path.join(DATADIR, args['instance'])
 
-    tconf = ConfigParser.SafeConfigParser()
-    tconf.read(os.path.join(instance_conf, 'ipsilon.conf'))
-    cache_dir = tconf.get('global', 'cache_dir').replace('"', '')
+    try:
+        tconf = ConfigParser.SafeConfigParser()
+        tconf.read(os.path.join(instance_conf, 'ipsilon.conf'))
+        cache_dir = tconf.get('global', 'cache_dir')
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        cache_dir = None
+    else:
+        cache_dir = cache_dir.replace('"', '')
 
     if not os.path.exists(instance_conf):
         raise Exception('Could not find instance %s configuration'
