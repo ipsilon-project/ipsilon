@@ -42,13 +42,18 @@ class LogoutRequest(ProviderPageBase):
                                                  e, message)
             self.error(msg)
             raise UnknownProvider(msg)
+        except lasso.DsInvalidSigalgError as e:
+            msg = 'Invalid SAML Request: missing or invalid signature ' \
+                  'algorithm'
+            self.error(msg)
+            raise InvalidRequest(msg)
         except (lasso.ProfileInvalidProtocolprofileError,
-                lasso.DsError), e:
+                lasso.DsError) as e:
             msg = 'Invalid SAML Request: %r (%r [%r])' % (logout.request,
                                                           e, message)
             self.error(msg)
             raise InvalidRequest(msg)
-        except lasso.Error, e:
+        except lasso.Error as e:
             self.error('SLO unknown error: %s' % message)
             raise cherrypy.HTTPError(400, 'Invalid logout request')
 
@@ -235,14 +240,18 @@ class LogoutRequest(ProviderPageBase):
 
         saml_sessions = self.cfg.idp.sessionfactory
 
-        if lasso.SAML2_FIELD_REQUEST in message:
-            self._handle_logout_request(us, logout, saml_sessions, message)
-        elif samlresponse:
-            self._handle_logout_response(us, logout, saml_sessions, message,
-                                         samlresponse)
-        else:
-            raise cherrypy.HTTPRedirect(400, 'Bad Request. Not a logout ' +
-                                        'request or response.')
+        try:
+            if lasso.SAML2_FIELD_REQUEST in message:
+                self._handle_logout_request(us, logout, saml_sessions,
+                                            message)
+            elif samlresponse:
+                self._handle_logout_response(us, logout, saml_sessions,
+                                             message, samlresponse)
+            else:
+                raise cherrypy.HTTPError(400, 'Bad Request. Not a ' +
+                                         'logout request or response.')
+        except InvalidRequest as e:
+            raise cherrypy.HTTPError(400, 'Bad Request. %s' % e)
 
         # Fall through to handle any remaining sessions.
 
