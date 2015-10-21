@@ -254,10 +254,12 @@ class ServiceProvider(ServiceProviderConfig):
         self.load_config()
 
     def get_valid_nameid(self, nip):
-        self.debug('Requested NameId [%s]' % (nip.format,))
-        if nip.format is None:
+        if nip is None or nip.format is None:
+            self.debug('No NameId requested, returning default [%s]'
+                       % SAML2_NAMEID_MAP[self.default_nameid])
             return SAML2_NAMEID_MAP[self.default_nameid]
         else:
+            self.debug('Requested NameId [%s]' % (nip.format,))
             allowed = self.allowed_nameids
             self.debug('Allowed NameIds %s' % (repr(allowed)))
             for nameid in allowed:
