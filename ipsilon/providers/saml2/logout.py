@@ -198,7 +198,7 @@ class LogoutRequest(ProviderPageBase):
 
         if response.status_code != 200:
             self.error('SOAP error (%s) (on %s)' %
-                       (response.status, logout.msgUrl))
+                       (response.status_code, logout.msgUrl))
             raise InvalidRequest('SOAP HTTP error code %s' %
                                  response.status_code)
 
