@@ -76,7 +76,10 @@ class Redirect(AuthenticateRequest):
 
         query = cherrypy.request.query_string
 
-        login = self.saml2login(query)
+        spidentifier = kwargs.get('SPIdentifier')
+        relaystate = kwargs.get(lasso.SAML2_FIELD_RELAYSTATE)
+
+        login = self.saml2login(query, spidentifier, relaystate)
         return self.auth(login)
 
 

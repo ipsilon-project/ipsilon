@@ -90,7 +90,7 @@
         <div class="col-sm-4 col-md-3 provider">
           <a
              {% if p.splink or 0 %}
-               href="{{ p.splink }}"
+               href="{{ basepath }}/saml2/SSO/Redirect?SPIdentifier={{ p.provider_id }}&RelayState={{ p.splink }}"
              {% else %}
                href="#"
              {% endif %}

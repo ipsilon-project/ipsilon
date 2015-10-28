@@ -99,23 +99,65 @@ class AuthenticateRequest(ProviderPageBase):
 
         return login
 
-    def saml2login(self, request):
+    def _idp_initiated_login(self, spidentifier, relaystate):
+        """
+        Perform an Idp-initiated login
 
-        if not request:
+        Exceptions are handled by the caller
+        """
+        login = self.cfg.idp.get_login_handler()
+
+        login.initIdpInitiatedAuthnRequest(spidentifier)
+
+        # Hardcode for now, handle Artifact later
+        login.request.protocolBinding = lasso.SAML2_METADATA_BINDING_POST
+
+        login.processAuthnRequestMsg()
+
+        if relaystate is not None:
+            login.msgRelayState = relaystate
+        else:
+            provider = ServiceProvider(self.cfg, login.remoteProviderId)
+            if provider.splink is not None:
+                login.msgRelayState = provider.splink
+            else:
+                login.msgRelayState = login.remoteProviderId
+
+        return login
+
+    def saml2login(self, request, spidentifier=None, relaystate=None):
+        """
+        request: the SAML request
+        spidentifier: the provider ID for IdP-initiated login
+        relaystate: optional string to direct user to particular place on
+                    the SP after sending POST. If one is not provided then
+                    the protected site from the SP is used, otherwise it
+                    is set to the remote provider ID.
+        """
+        if not request and not spidentifier:
             raise cherrypy.HTTPError(400,
                                      'SAML request token missing or empty')
 
-        try:
-            login = self._parse_request(request)
-        except InvalidRequest, e:
-            self.debug(str(e))
-            raise cherrypy.HTTPError(400, 'Invalid SAML request token')
-        except UnknownProvider, e:
-            self.debug(str(e))
-            raise cherrypy.HTTPError(400, 'Unknown Service Provider')
-        except Exception, e:  # pylint: disable=broad-except
-            self.debug(str(e))
-            raise cherrypy.HTTPError(500)
+        if spidentifier:
+            try:
+                login = self._idp_initiated_login(spidentifier, relaystate)
+            except lasso.ServerProviderNotFoundError:
+                raise cherrypy.HTTPError(400, 'Unknown Service Provider')
+            except Exception, e:  # pylint: disable=broad-except
+                self.debug(str(e))
+                raise cherrypy.HTTPError(500)
+        else:
+            try:
+                login = self._parse_request(request)
+            except InvalidRequest, e:
+                self.debug(str(e))
+                raise cherrypy.HTTPError(400, 'Invalid SAML request token')
+            except UnknownProvider, e:
+                self.debug(str(e))
+                raise cherrypy.HTTPError(400, 'Unknown Service Provider')
+            except Exception, e:  # pylint: disable=broad-except
+                self.debug(str(e))
+                raise cherrypy.HTTPError(500)
 
         return login
 
