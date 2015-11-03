@@ -69,4 +69,39 @@
         <a href="{{ back }}" class="btn btn-default" title="Back">Back</a>
         </form>
     </div>
+
+<script>
+    function verifyFile(filename, objid, failtext) {
+        var reader = new FileReader();
+        reader.readAsDataURL(filename); // read the local file
+
+        reader.onloadend = function(e){
+            var contents = e.target.result;
+            if (!contents) {
+                window.alert(failtext)
+                document.getElementById(objid).value = null;
+            }
+        }
+    }
+
+    $(function() {
+        $("#file").on("change", function()
+        {
+            var files = !!this.files ? this.files : [];
+            if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
+
+            verifyFile(files[0], 'file', 'Metadata file is unreadable');
+        });
+    });
+
+    $(function() {
+        $("#image").on("change", function()
+        {
+            var files = !!this.files ? this.files : [];
+            if (!files.length || !window.FileReader) return; // no file selected, or no FileReader support
+
+            verifyFile(files[0], 'image', 'Image file is unreadable');
+        });
+    });
+</script>
 {% endblock %}

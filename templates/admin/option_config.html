@@ -38,7 +38,13 @@
                     var reader = new FileReader(); // instance of the FileReader
                     reader.readAsDataURL(files[0]); // read the local file
  
-                    reader.onloadend = function(){ // set image data as background of div
+                    reader.onloadend = function(e){ // set image data as background of div
+                        var contents = e.target.result;
+                        if (!contents) {
+                            window.alert('Image file is unreadable')
+                            document.getElementById('uploadFile').value = null;
+                        }
+
                         $("#imagePreview").css("background-image", "url("+this.result+")");
                     }
                 }
