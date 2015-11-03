@@ -233,7 +233,13 @@ class Installer(LoginManagerInstaller):
                 opts['ldap_bind_dn_template'] % {'username': 'test'}
             except KeyError:
                 logging.error(
-                    'Bind DN template does not container %(username)s'
+                    'Bind DN template does not contain %(username)s'
+                )
+                return False
+            except ValueError as e:
+                logging.error(
+                    'Invalid syntax in Bind DN template: %s ',
+                    e
                 )
                 return False
             config['bind dn template'] = opts['ldap_bind_dn_template']

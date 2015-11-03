@@ -139,25 +139,48 @@ Info plugin that uses LDAP to retrieve user data. """
         reply = dict()
         try:
             ldapattrs = self._get_user_data(conn, dn)
-            self.debug(ldapattrs)
+            self.debug('LDAP attrs for %s: %s' % (dn, ldapattrs))
             userattrs, extras = self.mapper.map_attributes(ldapattrs)
             groups = self._get_user_groups(conn, base, username)
             reply = userattrs
             reply['_groups'] = groups
             reply['_extras'] = {'ldap': extras}
         except Exception, e:  # pylint: disable=broad-except
-            self.error(e)
+            self.error('Error fetching/mapping LDAP user data: %s' % e)
 
         return reply
 
     def get_user_attrs(self, user):
         try:
-            conn = self._ldap_bind()
             dn = self.user_dn_tmpl % {'username': user}
+        except ValueError as e:
+            self.error(
+                'DN generation failed with template %s, user %s: %s'
+                % (self.user_dn_tmpl, user, e)
+            )
+            return {}
+        except Exception as e:  # pylint: disable=broad-except
+            self.error(
+                'Unhandled error generating DN from %s, user %s: %s'
+                % (self.user_dn_tmpl, user, e)
+            )
+            return {}
+
+        try:
+            conn = self._ldap_bind()
             base = self.base_dn
             return self.get_user_data_from_conn(conn, dn, base, user)
-        except Exception, e:  # pylint: disable=broad-except
-            self.error(e)
+        except ldap.LDAPError as e:
+            self.error(
+                'LDAP search failed for DN %s on base %s: %s' %
+                (dn, base, e)
+            )
+            return {}
+        except Exception as e:  # pylint: disable=broad-except
+            self.error(
+                'Unhandled LDAP error for DN %s on base %s: %s' %
+                (dn, base, e)
+            )
             return {}
 
 
