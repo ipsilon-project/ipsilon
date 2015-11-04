@@ -342,7 +342,7 @@ class Login(Page):
         plugins = self._site[FACILITY]
         if plugins.enabled:
             first = plugins.enabled[0]
-            plugin = plugins.available[first]
+            plugin = plugins.available.get(first)
         return plugin
 
     def root(self, *args, **kwargs):
