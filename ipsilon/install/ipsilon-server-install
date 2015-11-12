@@ -410,7 +410,8 @@ def parse_args(plugins):
         return args
 
     if len(args['hostname'].split('.')) < 2:
-        raise ConfigurationError('Hostname: %s is not a FQDN')
+        raise ConfigurationError('Hostname: %s is not a FQDN' %
+                                 args['hostname'])
 
     for plugin_group in plugins:
         for plugin_name in plugins[plugin_group]:
@@ -420,7 +421,8 @@ def parse_args(plugins):
     try:
         pwd.getpwnam(args['system_user'])
     except KeyError:
-        raise ConfigurationError('User: %s not found on the system')
+        raise ConfigurationError('User: %s not found on the system' %
+                                 args['system_user'])
 
     if args['lm_order'] is None:
         args['lm_order'] = []
