@@ -441,11 +441,11 @@ if __name__ == '__main__':
     opts = []
     out = 0
     openlogs()
+    logger.setLevel(logging.DEBUG)
+
     try:
         fplugins = find_plugins()
         opts = parse_args(fplugins)
-
-        logger.setLevel(logging.DEBUG)
 
         logger.debug('Installation arguments:')
         for k in sorted(opts.iterkeys()):
@@ -459,7 +459,8 @@ if __name__ == '__main__':
         else:
             install(fplugins, opts)
     except Exception, e:  # pylint: disable=broad-except
-        logger.debug(e, exc_info=1)
+        logger.info(str(e))         # emit message to console
+        logger.debug(e, exc_info=1) # add backtrace information to logfile
 
         if 'uninstall' in opts and opts['uninstall'] is True:
             logger.info('Uninstallation aborted.')
