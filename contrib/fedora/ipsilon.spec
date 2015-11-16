@@ -14,7 +14,7 @@ BuildArch:  noarch
 
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
-BuildRequires:  lasso-python
+BuildRequires:  lasso-python >= 2.5.0
 BuildRequires:  python-openid, python-openid-cla, python-openid-teams
 BuildRequires:  m2crypto
 
@@ -67,7 +67,7 @@ Group:          System Environment/Base
 License:        GPLv3+
 Requires:       %{name}-filesystem = %{version}-%{release}
 Requires:       %{name}-saml2-base = %{version}-%{release}
-Requires:       mod_auth_mellon
+Requires:       mod_auth_mellon >= 0.11.0
 Requires:       mod_ssl
 BuildArch:      noarch
 
@@ -98,7 +98,7 @@ Convenience client install tools for IPA support in the Ipsilon identity Provide
 Summary:        SAML2 base
 Group:          System Environment/Base
 License:        GPLv3+
-Requires:       lasso-python
+Requires:       lasso-python >= 2.5.0
 Requires:       python-lxml
 BuildArch:      noarch
 
