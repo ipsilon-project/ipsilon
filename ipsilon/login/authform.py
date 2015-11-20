@@ -106,7 +106,7 @@ class Installer(LoginManagerInstaller):
     def install_args(self, group):
         group.add_argument('--form', choices=['yes', 'no'], default='no',
                            help='Configure External Form authentication')
-        group.add_argument('--form-service', action='store', default='remote',
+        group.add_argument('--form-service', action='store', default='ipsilon',
                            help='PAM service name to use for authentication')
 
     def configure(self, opts, changes):

@@ -42,6 +42,7 @@ Requires:       python-jinja2
 Requires:       python-lxml
 Requires:       python-sqlalchemy
 Requires:       open-sans-fonts
+Requires:       pam
 Requires(pre):  shadow-utils
 Requires(post): %_sbindir/semanage, %_sbindir/restorecon
 Requires(postun): %_sbindir/semanage
@@ -245,6 +246,9 @@ mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%
 rm -fr %{buildroot}%{python2_sitelib}/tests
 ln -s %{_datadir}/fonts %{buildroot}%{_datadir}/ipsilon/ui/fonts
 
+mkdir -p  %{buildroot}%{_sysconfdir}/pam.d
+cp %{buildroot}%{_datadir}/ipsilon/templates/install/pam/ipsilon.pamd %{buildroot}%{_sysconfdir}/pam.d/ipsilon
+
 #%check
 # The test suite is not being run because:
 #  1. The last step of %%install removes the entire test suite
@@ -326,6 +330,9 @@ fi
 %dir %attr(0751,root,root) %{_sharedstatedir}/ipsilon
 %dir %attr(0751,root,root) %{_sysconfdir}/ipsilon
 %dir %attr(0750,ipsilon,apache) %{_localstatedir}/cache/ipsilon
+%dir %{_datadir}/ipsilon/templates/install/pam
+%{_sysconfdir}/pam.d/ipsilon
+%{_datadir}/ipsilon/templates/install/pam/*.pamd
 
 %files client
 %{_bindir}/ipsilon-client-install

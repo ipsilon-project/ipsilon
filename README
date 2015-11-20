@@ -31,7 +31,7 @@ Prerequisites:
 Currently there are only two available authentication modules, GSSAPI and
 PAM. The Kerberos module uses mod_auth_gssapi (which it will configure for
 you at install time), the Pam module simply uses the PAM stack with a default service
-name set to 'remote'.
+name set to 'ipsilon'.
 
 NOTE: The PAM module is invoked as an unprivileged user so if you are using the
 pam_unix plugin to authenticate users you'll find out that authentication does

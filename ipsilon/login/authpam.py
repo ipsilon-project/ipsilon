@@ -65,7 +65,7 @@ for authentication. """
             pconfig.String(
                 'service name',
                 'The name of the PAM service used to authenticate.',
-                'remote',
+                'ipsilon',
                 readonly=True,
                 ),
             pconfig.String(
@@ -113,7 +113,7 @@ class Installer(LoginManagerInstaller):
     def install_args(self, group):
         group.add_argument('--pam', choices=['yes', 'no'], default='no',
                            help='Configure PAM authentication')
-        group.add_argument('--pam-service', action='store', default='remote',
+        group.add_argument('--pam-service', action='store', default='ipsilon',
                            help='PAM service name to use for authentication')
 
     def configure(self, opts, changes):

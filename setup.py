@@ -42,6 +42,8 @@ setup(
                   (DATA+'templates/openid', glob('templates/openid/*')),
                   (DATA+'templates/persona', glob('templates/persona/*.html')),
                   (DATA+'templates/install', glob('templates/install/*.conf')),
+                  (DATA+'templates/install/pam',
+                   glob('templates/install/pam/*.pamd')),
                   (DATA+'templates/install/saml2',
                    glob('templates/install/saml2/*.conf')),
                   (DATA+'templates/admin/providers',
