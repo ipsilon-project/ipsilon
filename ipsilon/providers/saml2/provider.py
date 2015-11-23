@@ -15,9 +15,17 @@ VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
 
 class InvalidProviderId(ProviderException):
 
-    def __init__(self, code):
-        message = 'Invalid Provider ID: %s' % code
+    def __init__(self, msg):
+        message = 'Invalid Provider ID: %s' % msg
         super(InvalidProviderId, self).__init__(message)
+        self.debug(message)
+
+
+class InvalidProviderMetadata(ProviderException):
+
+    def __init__(self, msg):
+        message = 'Invalid Provider Metadata: %s' % msg
+        super(InvalidProviderMetadata, self).__init__(message)
         self.debug(message)
 
 
@@ -30,6 +38,30 @@ class NameIdNotAllowed(Exception):
 
     def __str__(self):
         return repr(self.message)
+
+
+def validate_sp_metadata(metadata):
+    '''Validate SP metadata
+
+    Attempt to load the metadata into Lasso and verify it loads.
+    Assure only 1 provider is included in the metadata and return
+    it's id. If not valid raise an exception.
+
+    Note, loading the metadata into Lasso is a weak check, basically
+    all that Lasso does is to parse the XML, it doesn't verify the
+    contents until first use.
+    '''
+    test = lasso.Server()
+    try:
+        test.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP, metadata)
+    except Exception as e:  # pylint: disable=broad-except
+        raise InvalidProviderMetadata(str(e))
+    newsps = test.get_providers()
+    if len(newsps) != 1:
+        raise InvalidProviderMetadata("Metadata must contain one Provider")
+
+    spid = newsps.keys()[0]
+    return spid
 
 
 class ServiceProviderConfig(ConfigHelper):
@@ -68,6 +100,11 @@ class ServiceProvider(ServiceProviderConfig):
                 ' Only alphanumeric characters [A-Z,a-z,0-9] and spaces are'
                 '  accepted.',
                 self.name),
+            pconfig.String(
+                'Metadata',
+                "Service Provider's metadata",
+                self.metadata,
+                multiline=True),
             pconfig.String(
                 'Description',
                 'A description of the SP to show on the Portal.',
@@ -122,6 +159,17 @@ class ServiceProvider(ServiceProviderConfig):
     @name.setter
     def name(self, value):
         self._staging['name'] = value
+
+    @property
+    def metadata(self):
+        if 'metadata' in self._properties:
+            return self._properties['metadata']
+        else:
+            return ''
+
+    @metadata.setter
+    def metadata(self, value):
+        self._staging['metadata'] = value
 
     @property
     def description(self):
@@ -306,13 +354,7 @@ class ServiceProviderCreator(object):
             raise InvalidProviderId("Name must contain only "
                                     "numbers and letters")
 
-        test = lasso.Server()
-        test.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP, metabuf)
-        newsps = test.get_providers()
-        if len(newsps) != 1:
-            raise InvalidProviderId("Metadata must contain one Provider")
-
-        spid = newsps.keys()[0]
+        spid = validate_sp_metadata(metabuf)
         data = self.cfg.get_data(name='id', value=spid)
         if len(data) != 0:
             raise InvalidProviderId("Provider Already Exists")
@@ -349,6 +391,7 @@ class IdentityProvider(Log):
         self.sessionfactory = sessionfactory
 
     def add_provider(self, sp):
+        validate_sp_metadata(sp['metadata'])
         self.server.addProviderFromBuffer(lasso.PROVIDER_ROLE_SP,
                                           sp['metadata'])
         self.debug('Added SP %s' % sp['name'])

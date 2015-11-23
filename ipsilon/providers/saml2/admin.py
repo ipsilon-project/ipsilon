@@ -11,6 +11,8 @@ from ipsilon.admin.common import get_complex_list_value
 from ipsilon.providers.saml2.provider import ServiceProvider
 from ipsilon.providers.saml2.provider import ServiceProviderCreator
 from ipsilon.providers.saml2.provider import InvalidProviderId
+from ipsilon.providers.saml2.provider import validate_sp_metadata
+from ipsilon.providers.saml2.provider import InvalidProviderMetadata
 from copy import deepcopy
 import requests
 import logging
@@ -227,7 +229,8 @@ class SPAdminPage(AdminPage):
                                  'Allowed NameIDs', 'Attribute Mapping',
                                  'Allowed Attributes', 'Description',
                                  'Service Provider link',
-                                 'Visible in Portal', 'Image File']:
+                                 'Visible in Portal', 'Image File',
+                                 'Metadata']:
                         if not self.user.is_admin:
                             raise UnauthorizedUser(
                                 "Unauthorized to set %s" % key
@@ -277,7 +280,14 @@ class SPAdminPage(AdminPage):
                             raise InvalidValueFormat(
                                 'Invalid Image file format'
                             )
+                    elif name == 'Metadata':
+                        validate_sp_metadata(value)
+                        self.sp.metadata = value
 
+            except InvalidProviderMetadata, e:
+                message = str(e)
+                message_type = ADMIN_STATUS_WARN
+                return self.root_with_msg(message, message_type)
             except InvalidValueFormat, e:
                 message = str(e)
                 message_type = ADMIN_STATUS_WARN

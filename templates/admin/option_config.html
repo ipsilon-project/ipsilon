@@ -76,7 +76,9 @@
               <label class="col-sm-2" for="{{ v.name }}">{{ v.name }}:</label>
               <div class="col-sm-10">
               {% set value = v.get_value() -%}
-              {% if v.__class__.__name__ in ['String', 'Template'] -%}
+              {% if v.__class__.__name__ == 'String' and v.multiline -%}
+                <textarea class="form-control" name="{{ v.name }}" rows="10" cols="80"}">{{value}}</textarea>
+              {% elif v.__class__.__name__ in ['String', 'Template'] -%}
                 <input type="text" class="form-control" name="{{ v.name }}"
                   {%- if value %}
                     value="{{ value }}"

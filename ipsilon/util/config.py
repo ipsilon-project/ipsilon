@@ -148,9 +148,11 @@ class Option(Log):
 
 class String(Option):
 
-    def __init__(self, name, description, default_value=None, readonly=False):
+    def __init__(self, name, description, default_value=None, readonly=False,
+                 multiline=False):
         super(String, self).__init__(name, description, readonly=readonly)
         self._default_value = str(default_value)
+        self.multiline = multiline
 
     def set_value(self, value):
         self._assigned_value = str(value)
