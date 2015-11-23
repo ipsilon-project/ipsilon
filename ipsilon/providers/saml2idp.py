@@ -110,8 +110,12 @@ class Continue(AuthenticateRequest):
 
         if user.is_anonymous:
             self.debug("User is marked anonymous?!")
+            message = transdata.get('message')
+            if message is not None:
+                data = {'message': None}
+                self.trans.store(data)
             # TODO: Return to SP with auth failed error
-            raise cherrypy.HTTPError(401)
+            raise cherrypy.HTTPError(401, message)
 
         self.debug('Continue auth for %s' % user.name)
 

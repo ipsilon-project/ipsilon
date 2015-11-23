@@ -169,6 +169,8 @@ class LoginManagerBase(ConfigHelper, PluginObject, LoginHelper):
     def auth_failed(self, trans, message=None):
         # try with next module
         next_login = self.next_login()
+        data = {'message': message}
+        trans.store(data)
         if next_login:
             return self.redirect_to_path(next_login.path, trans)
 
