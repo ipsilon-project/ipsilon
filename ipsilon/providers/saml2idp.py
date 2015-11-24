@@ -416,7 +416,14 @@ Provides SAML 2.0 authentication infrastructure. """
 
         logout = self.idp.get_logout_handler()
         logout.setSessionFromDump(session.login_session)
-        logout.initRequest(session.provider_id)
+        try:
+            logout.initRequest(session.provider_id)
+        except lasso.ServerProviderNotFoundError:
+            self.error(
+                'Service Provider %s not found. Trying next session' %
+                session.provider_id
+            )
+            return self.idp_initiated_logout()
         try:
             logout.buildRequestMsg()
         except lasso.Error, e:

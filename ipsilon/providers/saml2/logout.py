@@ -240,11 +240,14 @@ class LogoutRequest(ProviderPageBase):
 
         saml_sessions = self.cfg.idp.sessionfactory
 
+        logout_type = None
         try:
             if lasso.SAML2_FIELD_REQUEST in message:
+                logout_type = "request"
                 self._handle_logout_request(us, logout, saml_sessions,
                                             message)
             elif samlresponse:
+                logout_type = "response"
                 self._handle_logout_response(us, logout, saml_sessions,
                                              message, samlresponse)
             else:
@@ -252,6 +255,10 @@ class LogoutRequest(ProviderPageBase):
                                          'logout request or response.')
         except InvalidRequest as e:
             raise cherrypy.HTTPError(400, 'Bad Request. %s' % e)
+        except UnknownProvider as e:
+            raise cherrypy.HTTPError(
+                400, 'Invalid logout %s: %s' % (logout_type, e)
+            )
 
         # Fall through to handle any remaining sessions.
 
@@ -271,12 +278,22 @@ class LogoutRequest(ProviderPageBase):
                 self.error('Failed to load session: %s' % e)
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                             % e)
-            if logout_mech == lasso.SAML2_METADATA_BINDING_REDIRECT:
-                logout.initRequest(session.provider_id,
-                                   lasso.HTTP_METHOD_REDIRECT)
-            else:
-                logout.initRequest(session.provider_id,
-                                   lasso.HTTP_METHOD_SOAP)
+            try:
+                if logout_mech == lasso.SAML2_METADATA_BINDING_REDIRECT:
+                    logout.initRequest(session.provider_id,
+                                       lasso.HTTP_METHOD_REDIRECT)
+                else:
+                    logout.initRequest(session.provider_id,
+                                       lasso.HTTP_METHOD_SOAP)
+            except lasso.ServerProviderNotFoundError:
+                self.error(
+                    'Service Provider %s not found. Trying next session' %
+                    session.provider_id
+                )
+                saml_sessions.remove_session(session)
+                (logout_mech, session) = saml_sessions.get_next_logout(
+                    logout_mechs=logout_order)
+                continue
 
             try:
                 logout.buildRequestMsg()
