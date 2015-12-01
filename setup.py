@@ -50,6 +50,7 @@ setup(
                    glob('templates/admin/providers/*.html')),
                  ],
     scripts = ['ipsilon/ipsilon',
+               'ipsilon/install/ipsilon-db2conf',
                'ipsilon/install/ipsilon-upgrade-database',
                'ipsilon/install/ipsilon-server-install',
                'ipsilon/install/ipsilon-client-install']

@@ -1,0 +1,99 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
+
+import argparse
+import cherrypy
+from ConfigParser import RawConfigParser
+import logging
+import os
+import sys
+import unicodedata
+
+from ipsilon.util.data import AdminStore
+import ipsilon.util.sessions
+
+logger = logging.getLogger(__name__)
+
+default_sections = ['info_config',
+                    'login_config',
+                    'provider_config']
+
+
+def sanitize_value(value):
+    # This clears all non-printable characters, like linebreaks and such
+    return "".join(ch
+                   for ch
+                   in value
+                   if unicodedata.category(ch)[0] != "C")
+
+
+def config_to_file(config, output):
+    parser = RawConfigParser()
+    for section in config:
+        parser.add_section(section)
+        for module in config[section]:
+            for option in config[section][module]:
+                name = '%s %s' % (module, option)
+                value = config[section][module][option]
+                value = sanitize_value(value)
+                parser.set(section, name, value)
+
+    parser.write(output)
+
+
+def get_config(cfgfile):
+    cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
+    cherrypy.config.update(cfgfile)
+
+    adminstore = AdminStore()
+    admin_config = adminstore.load_config()
+    for option in admin_config:
+        cherrypy.config[option] = admin_config[option]
+
+    config = {}
+
+    for section in default_sections:
+        print 'Handling section %s' % section
+        config[section] = adminstore.load_options(section)
+        plugins = config[section].get('global',
+                                      {}).get('enabled',
+                                              '').split(',')
+        for plugin in plugins:
+            if plugin:
+                data_name = '%s_data' % plugin
+                plugin_data = adminstore.get_unique_data(data_name)
+                config[data_name] = plugin_data
+
+    return config
+
+if __name__ == '__main__':
+    def_logger = logging.getLogger()
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.ERROR)
+    def_logger.addHandler(ch)
+
+    parser = argparse.ArgumentParser(description='This tool produces a config '
+                                                 + 'file from a configuration '
+                                                 + 'database')
+    parser.add_argument('cfgfile', help='Path to the ipsilon configuration',
+                        default='/etc/ipsilon/idp/ipsilon.conf')
+    parser.add_argument('output', help='Where to store the generated'
+                                       + 'configuration file',
+                        default='configuration.conf')
+    parser.add_argument('--force', help='Overwrite existing config file',
+                        action='store_true')
+
+    args = parser.parse_args()
+
+    if os.path.exists(args.output) and not args.force:
+        print 'Output file %s already exists. Please delete it or use --force' \
+              % args.output
+        sys.exit(1)
+
+    config = get_config(args.cfgfile)
+
+    with open(args.output, 'w') as output:
+        config_to_file(config, output)
+
+    print 'Configuration file %s written' % args.output

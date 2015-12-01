@@ -240,6 +240,7 @@ mkdir -p %{buildroot}%{_localstatedir}/cache/ipsilon
 install -d -m 0700 %{buildroot}%{_sharedstatedir}/ipsilon
 install -d -m 0700 %{buildroot}%{_sysconfdir}/ipsilon
 mv %{buildroot}/%{_bindir}/ipsilon %{buildroot}/%{_libexecdir}
+mv %{buildroot}/%{_bindir}/ipsilon-db2conf %{buildroot}/%{_sbindir}
 mv %{buildroot}/%{_bindir}/ipsilon-server-install %{buildroot}/%{_sbindir}
 mv %{buildroot}/%{_bindir}/ipsilon-upgrade-database %{buildroot}/%{_sbindir}
 mv %{buildroot}%{_defaultdocdir}/%{name} %{buildroot}%{_defaultdocdir}/%{name}-%{version}
@@ -288,6 +289,7 @@ fi
 %{python2_sitelib}/ipsilon/tools/files.py*
 
 %files
+%{_sbindir}/ipsilon-db2conf
 %{_sbindir}/ipsilon-server-install
 %{_sbindir}/ipsilon-upgrade-database
 %{_datadir}/ipsilon/templates/install/*.conf
