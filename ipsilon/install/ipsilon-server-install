@@ -87,7 +87,7 @@ def install(plugins, args):
     args['wellknown_dir'] = os.path.join(args['public_data_dir'],
                                          'well-known')
     if os.path.exists(ipsilon_conf):
-        shutil.move(ipsilon_conf, '%s.bakcup.%s' % (ipsilon_conf, now))
+        shutil.move(ipsilon_conf, '%s.backup.%s' % (ipsilon_conf, now))
     if os.path.exists(idp_conf):
         shutil.move(idp_conf, '%s.backup.%s' % (idp_conf, now))
     if not os.path.exists(instance_conf):
