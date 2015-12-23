@@ -5,6 +5,9 @@ from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import pam
+if 'pam' in dir(pam):
+    # Try to use newer API, but also support older python-pam API
+    pam = pam.pam()  # pylint: disable=no-member
 import subprocess
 
 
