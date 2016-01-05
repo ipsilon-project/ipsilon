@@ -6,8 +6,14 @@ from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import pam
 if 'pam' in dir(pam):
-    # Try to use newer API, but also support older python-pam API
-    pam = pam.pam()  # pylint: disable=no-member
+    # Try to use newer API
+    pam_authenticate = pam.pam().authenticate  # pylint: disable=no-member
+elif 'authenticate' in dir(pam):
+    # This is an older, but supported, version
+    pam_authenticate = pam.authenticate
+else:
+    # We have never seen this version, let's abort early
+    raise ImportError('Python-PAM API unsupported')
 import subprocess
 
 
@@ -15,9 +21,9 @@ class Pam(LoginFormBase):
 
     def _authenticate(self, username, password):
         if self.lm.service_name:
-            ok = pam.authenticate(username, password, self.lm.service_name)
+            ok = pam_authenticate(username, password, self.lm.service_name)
         else:
-            ok = pam.authenticate(username, password)
+            ok = pam_authenticate(username, password)
 
         if ok:
             self.log("User %s successfully authenticated." % username)
