@@ -424,6 +424,13 @@ Provides SAML 2.0 authentication infrastructure. """
                 session.provider_id
             )
             return self.idp_initiated_logout()
+        except lasso.ProfileUnsupportedProfileError:
+            self.error(
+                'Service Provider %s does not support Single Logout. '
+                'Trying next session' %
+                session.provider_id
+            )
+            return self.idp_initiated_logout()
         try:
             logout.buildRequestMsg()
         except lasso.Error, e:
