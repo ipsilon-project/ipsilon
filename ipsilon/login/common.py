@@ -100,6 +100,9 @@ class LoginHelper(Log):
         if userdata is None:
             userdata = dict()
 
+        if '_username' not in userdata:
+            userdata['_username'] = username
+
         if '_groups' in infoattrs:
             userdata['_groups'] = list(set(userdata.get('_groups', []) +
                                            infoattrs['_groups']))
