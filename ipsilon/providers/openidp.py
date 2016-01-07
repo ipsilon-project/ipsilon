@@ -34,8 +34,9 @@ Provides OpenID 2.0 authentication infrastructure. """
                 'openid.sqlite'),
             pconfig.String(
                 'default email domain',
-                'Used for users missing the email property.',
-                'example.com'),
+                'Used for users missing the email property.' +
+                ' (Leave empty to disable)',
+                ''),
             pconfig.String(
                 'endpoint url',
                 'The Absolute URL of the OpenID provider',
