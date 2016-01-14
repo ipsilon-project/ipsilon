@@ -7,6 +7,10 @@ import os
 import shutil
 import subprocess
 from string import Template
+from datetime import timedelta
+
+from ipsilon.tools.certs import Certificate
+from ipsilon.providers.saml2idp import IdpMetadataGenerator
 
 
 logger = None
@@ -27,6 +31,10 @@ CONF_TEMPLATE="templates/install/ipsilon.conf"
 ADMIN_TEMPLATE='''
 CREATE TABLE login_config (name TEXT,option TEXT,value TEXT);
 INSERT INTO login_config VALUES('global', 'enabled', 'testauth');
+CREATE TABLE provider_config (name TEXT,option TEXT,value TEXT);
+INSERT INTO provider_config VALUES('global', 'enabled', 'saml2');
+INSERT INTO provider_config VALUES('saml2', 'idp storage path',
+                                   '${workdir}/saml2');
 '''
 
 USERS_TEMPLATE='''
@@ -37,11 +45,14 @@ INSERT INTO users VALUES('admin', 'is_admin', '1');
 def config(workdir):
     os.makedirs(workdir)
     os.makedirs(os.path.join(workdir, 'sessions'))
+    os.makedirs(os.path.join(workdir, 'saml2'))
 
     admin_db = os.path.join(workdir, 'adminconfig.sqlite')
     sql = os.path.join(workdir, 'admin.sql')
+    t = Template(ADMIN_TEMPLATE)
+    text = t.substitute({'workdir': workdir})
     with open(sql, 'w+') as f:
-        f.write(ADMIN_TEMPLATE)
+        f.write(text)
     subprocess.call(['sqlite3', '-init', sql, admin_db, '.quit'])
 
     users_db = os.path.join(workdir, 'userprefs.sqlite')
@@ -75,6 +86,17 @@ def config(workdir):
         f.write(text)
     return conf
 
+
+def init(workdir):
+    # Initialize SAML2, since this is quite tricky to get right
+    cert = Certificate(os.path.join(workdir, 'saml2'))
+    cert.generate('certificate', 'ipsilon-quickrun')
+    url = 'http://localhost:8080/idp'
+    validity = 365 * 5
+    meta = IdpMetadataGenerator(url, cert,
+                                timedelta(validity))
+    meta.output(os.path.join(workdir, 'saml2', 'metadata.xml'))
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -91,6 +113,7 @@ if __name__ == '__main__':
 
     if not os.path.exists(args['workdir']):
         conf = config(args['workdir'])
+        init(args['workdir'])
     else:
         conf = os.path.join(args['workdir'], 'ipsilon.conf')
 
