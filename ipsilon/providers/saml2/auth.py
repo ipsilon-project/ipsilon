@@ -69,12 +69,28 @@ class AuthenticateRequest(ProviderPageBase):
             self.saml2error(login, e.code, e.message)
         return self.reply(login)
 
-    def _parse_request(self, message):
+    def _parse_request(self, message, hint=None, final=False):
 
         login = self.cfg.idp.get_login_handler()
 
         try:
+            if hint:
+                login.setSignatureVerifyHint(hint)
             login.processAuthnRequestMsg(message)
+        except lasso.DsInvalidSigalgError as e:
+            if login.remoteProviderId and not final:
+                provider = ServiceProvider(self.cfg, login.remoteProviderId)
+                if not provider.has_signing_keys:
+                    self.error('Invalid or missing signature, setting hint.')
+                    return self._parse_request(
+                        message,
+                        hint=provider.get_signature_hint(),
+                        final=True
+                    )
+            msg = 'Invalid or missing signature algorithm %r [%r]' % (
+                e, message
+            )
+            raise InvalidRequest(msg)
         except (lasso.ProfileInvalidMsgError,
                 lasso.ProfileMissingIssuerError), e:
 

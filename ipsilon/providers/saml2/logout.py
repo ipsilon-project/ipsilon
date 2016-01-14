@@ -118,6 +118,11 @@ class LogoutRequest(ProviderPageBase):
 
         try:
             logout.processResponseMsg(message)
+        except lasso.ProfileCannotVerifySignatureError as e:
+            msg = 'Invalid or missing signature algorithm %r [%r]' % (
+                e, message
+            )
+            raise InvalidRequest(msg)
         except getattr(lasso, 'ProfileRequestDeniedError',
                        lasso.LogoutRequestDeniedError):
             self.error('Logout request denied by %s' %
@@ -167,6 +172,11 @@ class LogoutRequest(ProviderPageBase):
 
         try:
             logout.processRequestMsg(message)
+        except lasso.DsInvalidSigalgError as e:
+            msg = 'Invalid or missing signature algorithm %r [%r]' % (
+                e, message
+            )
+            raise InvalidRequest(msg)
         except (lasso.ServerProviderNotFoundError,
                 lasso.ProfileUnknownProviderError) as e:
             msg = 'Invalid SP [%s] (%r [%r])' % (logout.remoteProviderId,

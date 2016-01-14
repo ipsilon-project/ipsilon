@@ -57,6 +57,21 @@ sp2_a = {'hostname': '${ADDRESS}:${PORT}',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
+keyless_metadata = """<?xml version='1.0' encoding='UTF-8'?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#" cacheDuration="P7D"
+    entityID="http://keyless-sp">
+  <md:SPSSODescriptor
+        protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:AssertionConsumerService
+        Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+        Location="http://keyless-sp/postResponse" index="0"/>
+    <md:NameIDFormat>
+urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+  </md:SPSSODescriptor>
+</md:EntityDescriptor>
+"""
+
 
 def fixup_sp_httpd(httpdir):
     location = """
@@ -176,3 +191,16 @@ if __name__ == '__main__':
         sys.exit(1)
     except Exception, e:  # pylint: disable=broad-except
         print " SUCCESS"
+
+    print "test1: Add keyless SP Metadata to IDP ...",
+    try:
+        sess.add_metadata(idpname, 'keyless', keyless_metadata)
+        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/idp1/admin/'
+                                        'providers/saml2/admin')
+        page.expected_value('//div[@id="row_provider_http://keyless-sp"]/'
+                            '@title',
+                            'WARNING: SP does not have signing keys!')
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"

@@ -9,12 +9,17 @@
 </div>
 <hr/>
 {% for p in providers %}
-    <div class="row">
+    <div id="row_provider_{{ p.provider_id }}" class="row"
+            {% if not p.has_signing_keys %}title="WARNING: SP does not have signing keys!"{% endif %}>
         <div class="col-md-3 col-sm-3 col-xs-6">
             <a href="{{ baseurl }}/sp/{{ p.name }}">{{ p.name }}</a>
         </div>
         <div class="col-md-3 col-sm-3 col-xs-6">
-            {{ p.provider_id }}
+             {% if not p.has_signing_keys %}
+                 <font color="#FF0000">{{ p.provider_id }}</font>
+             {% else %}
+                 {{ p.provider_id }}
+             {% endif %}
             <!-- TODO: add javascript popup to ask for confirmation ? -->
             <a class="btn btn-default" href="{{ baseurl }}/sp/{{ p.name }}/delete">Delete</a>
         </div>

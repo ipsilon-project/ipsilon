@@ -333,33 +333,35 @@ class HttpSessions(object):
             raise ValueError("Logout from idp failed: %s" % repr(r))
 
     def get_sp_metadata(self, idp, sp):
-        idpsrv = self.servers[idp]
-        idpuri = idpsrv['baseuri']
-
         spuri = self.servers[sp]['baseuri']
 
-        return (idpuri, requests.get('%s/saml2/metadata' % spuri))
+        return requests.get('%s/saml2/metadata' % spuri)
 
     def add_sp_metadata(self, idp, sp, rest=False):
+        m = self.get_sp_metadata(idp, sp)
+        return self.add_metadata(idp, sp, m.content, rest)
+
+    def add_metadata(self, idp, desc, m, rest=False):
         expected_status = 200
-        (idpuri, m) = self.get_sp_metadata(idp, sp)
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
         url = '%s/%s/admin/providers/saml2/admin/new' % (idpuri, idp)
         headers = {'referer': url}
         if rest:
             expected_status = 201
             payload = {
-                'metadata': m.content,
+                'metadata': m,
                 'visible': True,
-                'description': sp,
+                'description': desc,
                 'image': 'Zm9v',
                 'splink': 'http://test.example.com/secret/',
             }
             headers['content-type'] = 'application/x-www-form-urlencoded'
-            url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, sp)
+            url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, desc)
             r = self.post(url, headers=headers, data=urlencode(payload))
         else:
-            metafile = {'metafile': m.content}
-            payload = {'name': sp}
+            metafile = {'metafile': m}
+            payload = {'name': desc}
             r = self.post(url, headers=headers, data=payload, files=metafile)
         if r.status_code != expected_status:
             raise ValueError('Failed to post SP data [%s]' % repr(r))

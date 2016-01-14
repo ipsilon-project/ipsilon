@@ -90,6 +90,11 @@ class ServiceProvider(ServiceProviderConfig):
                               namespaces=NSMAP)
         for service in logout:
             self.logout_mechs.append(service.values()[0])
+        self.has_signing_keys = len(xmldoc.xpath('//md:EntityDescriptor'
+                                                 '/md:SPSSODescriptor'
+                                                 '/md:KeyDescriptor'
+                                                 '[@use="signing"]',
+                                                 namespaces=NSMAP)) > 0
 
     def load_config(self):
         self.new_config(
@@ -314,6 +319,24 @@ class ServiceProvider(ServiceProviderConfig):
                 if nip.format == SAML2_NAMEID_MAP[nameid]:
                     return nip.format
         raise NameIdNotAllowed(nip.format)
+
+    def get_signature_hint(self):
+        """
+        Call this before any lasso process message methods to get
+        the hint on whether to enforce signatures or not.
+        """
+        if self.has_signing_keys:
+            hint = lasso.PROFILE_SIGNATURE_VERIFY_HINT_FORCE
+        else:
+            hint = lasso.PROFILE_SIGNATURE_VERIFY_HINT_IGNORE
+
+        self.error(
+            'Setting signature hint to "%s"' %
+            (hint == lasso.PROFILE_SIGNATURE_VERIFY_HINT_FORCE and
+             "force" or "ignore")
+        )
+
+        return hint
 
     def permanently_delete(self):
         data = self.cfg.get_data(name='id', value=self.provider_id)
