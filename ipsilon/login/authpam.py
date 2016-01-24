@@ -10,7 +10,7 @@ if 'pam' in dir(pam):
     pam_authenticate = pam.pam().authenticate  # pylint: disable=no-member
 elif 'authenticate' in dir(pam):
     # This is an older, but supported, version
-    pam_authenticate = pam.authenticate
+    pam_authenticate = pam.authenticate  # pylint: disable=no-member
 else:
     # We have never seen this version, let's abort early
     raise ImportError('Python-PAM API unsupported')
