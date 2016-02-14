@@ -83,13 +83,14 @@ def check_info_plugin(s, idp_name, urlbase, expected):
     # are no unexpected MELLON_ vars, and drop the _0 version.
     data = convert_to_dict(page.text)
 
-    data.pop('MELLON_IDP')
-    data.pop('MELLON_NAME_ID')
-
     for key in expected:
         item = data.pop('MELLON_' + key)
         if item != expected[key]:
             raise ValueError('Expected %s, got %s' % (expected[key], item))
+
+    # Ignore these attributes if they weren't tested for
+    data.pop('MELLON_IDP', None)
+    data.pop('MELLON_NAME_ID', None)
 
     if len(data) > 0:
         raise ValueError('Unexpected values %s' % data)
@@ -193,6 +194,7 @@ if __name__ == '__main__':
     try:
         print "testmapping: Test default mapping and attrs ...",
         expect = {
+            'NAME_ID': user,
             'fullname': 'Test User %s' % user,
             'surname': user,
             'givenname': 'Test User',
@@ -268,8 +270,8 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Test SP allowed atributes ...",
     try:
-        print "testmapping: Test SP allowed atributes ...",
         expect = {
             'fullname': 'Test User %s' % user,
             'surname': user,
@@ -298,14 +300,47 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Test SP attribute mapping ...",
     try:
-        print "testmapping: Test SP attribute mapping ...",
         expect = {
             'wholename': 'Test User %s' % user,
             'fullname': 'Test User %s' % user,
             'surname': user,
             'givenname': 'Test User',
             'email': '%s@example.com' % user,
+        }
+        check_info_plugin(sess, idpname, spurl, expect)
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
+    print "testmapping: Set SP username mapping ...",
+    try:
+        sess.set_attributes_and_mapping(idpname,
+                                        [['*', '*'],
+                                         ['fullname', 'wholename'],
+                                         ['email', '_username']],
+                                        ['wholename', 'givenname',
+                                         'surname',
+                                         'email', 'fullname'],
+                                        sp['name'])
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
+    print "testmapping: Test SP username mapping ...",
+    try:
+        expect = {
+            'wholename': 'Test User %s' % user,
+            'fullname': 'Test User %s' % user,
+            'surname': user,
+            'givenname': 'Test User',
+            'email': '%s@example.com' % user,
+            'NAME_ID': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception, e:  # pylint: disable=broad-except
@@ -325,8 +360,8 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Test SP attr mapping with default allowed...",
     try:
-        print "testmapping: Test SP attr mapping with default allowed...",
         expect = {
             'fullname': 'Test User %s' % user,
             'surname': user,
@@ -349,8 +384,8 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Test mapping, should be back to global...",
     try:
-        print "testmapping: Test mapping, should be back to global...",
         expect = {
             'namefull': 'Test User %s' % user,
             'surname': user,

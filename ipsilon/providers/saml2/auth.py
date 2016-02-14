@@ -228,52 +228,7 @@ class AuthenticateRequest(ProviderPageBase):
         authtime_notbefore = authtime - skew
         authtime_notafter = authtime + skew
 
-        # TODO: get authentication type fnd name format from session
-        # need to save which login manager authenticated and map it to a
-        # saml2 authentication context
-        authn_context = lasso.SAML2_AUTHN_CONTEXT_UNSPECIFIED
-
-        timeformat = '%Y-%m-%dT%H:%M:%SZ'
-        login.buildAssertion(authn_context,
-                             authtime.strftime(timeformat),
-                             None,
-                             authtime_notbefore.strftime(timeformat),
-                             authtime_notafter.strftime(timeformat))
-
-        nameid = None
-        if nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
-            idpsalt = self.cfg.idp_nameid_salt
-            if idpsalt is None:
-                raise AuthenticationError(
-                    "idp nameid salt is not set in configuration"
-                )
-            value = hashlib.sha512()
-            value.update(idpsalt)
-            value.update(login.remoteProviderId)
-            value.update(user.name)
-            nameid = '_' + value.hexdigest()
-        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
-            nameid = '_' + uuid.uuid4().hex
-        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
-            userattrs = us.get_user_attrs()
-            nameid = userattrs.get('gssapi_principal_name')
-        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
-            nameid = us.get_user().email
-            if not nameid:
-                nameid = '%s@%s' % (user.name, self.cfg.default_email_domain)
-        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
-            nameid = provider.normalize_username(user.name)
-
-        if nameid:
-            login.assertion.subject.nameId.format = nameidfmt
-            login.assertion.subject.nameId.content = nameid
-        else:
-            self.trans.wipe()
-            self.error('Authentication succeeded but it was not ' +
-                       'provided by NameID %s' % nameidfmt)
-            raise AuthenticationError("Unavailable Name ID type",
-                                      lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
-
+        # Let's first do the attribute mapping, so we could map the username
         # Check attribute policy and perform mapping and filtering.
         # If the SP has its own mapping or filtering policy use that
         # instead of the global policy.
@@ -298,6 +253,51 @@ class AuthenticateRequest(ProviderPageBase):
             attributes['groups'] = attributes['_groups']
 
         self.debug("%s's attributes: %s" % (user.name, attributes))
+
+        # TODO: get authentication type fnd name format from session
+        # need to save which login manager authenticated and map it to a
+        # saml2 authentication context
+        authn_context = lasso.SAML2_AUTHN_CONTEXT_UNSPECIFIED
+
+        timeformat = '%Y-%m-%dT%H:%M:%SZ'
+        login.buildAssertion(authn_context,
+                             authtime.strftime(timeformat),
+                             None,
+                             authtime_notbefore.strftime(timeformat),
+                             authtime_notafter.strftime(timeformat))
+
+        nameid = None
+        if nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_PERSISTENT:
+            idpsalt = self.cfg.idp_nameid_salt
+            if idpsalt is None:
+                raise AuthenticationError(
+                    "idp nameid salt is not set in configuration"
+                )
+            value = hashlib.sha512()
+            value.update(idpsalt)
+            value.update(login.remoteProviderId)
+            value.update(mappedattrs.get('_username'))
+            nameid = '_' + value.hexdigest()
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_TRANSIENT:
+            nameid = '_' + uuid.uuid4().hex
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_KERBEROS:
+            nameid = userattrs.get('gssapi_principal_name')
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_EMAIL:
+            nameid = mappedattrs.get('email')
+            if not nameid:
+                nameid = '%s@%s' % (user.name, self.cfg.default_email_domain)
+        elif nameidfmt == lasso.SAML2_NAME_IDENTIFIER_FORMAT_UNSPECIFIED:
+            nameid = provider.normalize_username(mappedattrs.get('_username'))
+
+        if nameid:
+            login.assertion.subject.nameId.format = nameidfmt
+            login.assertion.subject.nameId.content = nameid
+        else:
+            self.trans.wipe()
+            self.error('Authentication succeeded but it was not ' +
+                       'provided by NameID %s' % nameidfmt)
+            raise AuthenticationError("Unavailable Name ID type",
+                                      lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 
         # The saml-core-2.0-os specification section 2.7.3 requires
         # the AttributeStatement element to be non-empty.
