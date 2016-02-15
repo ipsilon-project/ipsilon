@@ -64,7 +64,13 @@ def fixup_sp_httpd(httpdir):
 Alias /sp ${HTTPDIR}/sp
 
 <Directory ${HTTPDIR}/sp>
-    Require all granted
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Allow from All
+    </IfModule>
     Options +Includes
 </Directory>
 """

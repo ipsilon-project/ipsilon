@@ -39,7 +39,13 @@ def fixup_sp_httpd(httpdir, testdir):
 WSGIScriptAlias / ${TESTDIR}/blobs/openid_app.py
 
 <Directory ${TESTDIR}/blobs>
-    Require all granted
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Allow from All
+    </IfModule>
 </Directory>
 """
     t = Template(client_wsgi)
