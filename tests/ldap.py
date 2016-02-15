@@ -130,7 +130,7 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'tuser')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print "test1: Authenticate to IDP ...",
+    print "ldap: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
     except Exception, e:  # pylint: disable=broad-except
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Add SP Metadata to IDP ...",
+    print "ldap: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, spname)
     except Exception, e:  # pylint: disable=broad-except
@@ -146,7 +146,7 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
-    print "test1: Access SP Protected Area ...",
+    print "ldap: Access SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/sp/index.shtml')
