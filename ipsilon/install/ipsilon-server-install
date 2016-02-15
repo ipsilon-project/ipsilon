@@ -229,7 +229,7 @@ def install(plugins, args):
     files.fix_user_dirs(instance_conf, opts['system_user'])
     files.fix_user_dirs(args['data_dir'], opts['system_user'])
     try:
-        subprocess.call(['/usr/sbin/restorecon', '-R', args['data_dir']])
+        subprocess.call(['/sbin/restorecon', '-R', args['data_dir']])
     except Exception:  # pylint: disable=broad-except
         pass
 

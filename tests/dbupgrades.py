@@ -64,7 +64,7 @@ class IpsilonTest(IpsilonTestBase):
                 db_in = os.path.join(db_indir, '%s.sqlite.dump' % database)
                 db_out = os.path.join(db_outdir, '%s.sqlite' % database)
                 os.unlink(db_out)
-                cmd = ['/bin/sqlite3', db_out, '.read %s' % db_in]
+                cmd = ['/usr/bin/sqlite3', db_out, '.read %s' % db_in]
                 subprocess.check_call(cmd)
 
             # Upgrade that database
@@ -80,7 +80,7 @@ class IpsilonTest(IpsilonTestBase):
             # Check all features in a newly created database
             # Let's verify if at least one index was created
             test_db = os.path.join(db_outdir, 'adminconfig.sqlite')
-            p = subprocess.Popen(['/bin/sqlite3', test_db, '.dump'],
+            p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
                                  stdout=subprocess.PIPE)
             output, _ = p.communicate()
             if p.returncode:
@@ -95,7 +95,7 @@ class IpsilonTest(IpsilonTestBase):
             # In 1 -> 2, we added indexes and primary keys
             # Let's verify if at least one index was created
             test_db = os.path.join(db_outdir, 'adminconfig.sqlite')
-            p = subprocess.Popen(['/bin/sqlite3', test_db, '.dump'],
+            p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
                                  stdout=subprocess.PIPE)
             output, _ = p.communicate()
             if p.returncode:

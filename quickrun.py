@@ -59,13 +59,13 @@ def config(workdir):
     text = t.substitute({'workdir': workdir})
     with open(sql, 'w+') as f:
         f.write(text)
-    subprocess.call(['sqlite3', '-init', sql, admin_db, '.quit'])
+    subprocess.call(['/usr/bin/sqlite3', '-init', sql, admin_db, '.quit'])
 
     users_db = os.path.join(workdir, 'userprefs.sqlite')
     sql = os.path.join(workdir, 'users.sql')
     with open(sql, 'w+') as f:
         f.write(USERS_TEMPLATE)
-    subprocess.call(['sqlite3', '-init', sql, users_db, '.quit'])
+    subprocess.call(['/usr/bin/sqlite3', '-init', sql, users_db, '.quit'])
 
     trans_db = os.path.join(workdir, 'transactions.sqlite')
     cachedir = os.path.join(workdir, 'cache')
