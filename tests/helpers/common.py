@@ -250,7 +250,7 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
 
     def start_pgdb_server(self, datadir, rundir, log, addr, port, env):
         p = subprocess.Popen(['/usr/bin/pg_ctl', 'start', '-D', datadir, '-o',
-                              '-c unix_socket_directories=%s -c port=%s -c \
+                              '-k %s -c port=%s -c \
                                listen_addresses=%s' % (rundir, port, addr),
                               '-l', log, '-w'],
                              env=env, preexec_fn=os.setsid)
