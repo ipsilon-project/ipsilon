@@ -2,6 +2,9 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+__requires__ = ['sqlalchemy >= 0.8']
+import pkg_resources  # pylint: disable=unused-import
+
 import argparse
 import inspect
 from ipsilon.util import plugin

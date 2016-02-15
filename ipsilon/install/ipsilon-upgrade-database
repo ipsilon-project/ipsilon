@@ -2,6 +2,9 @@
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+__requires__ = ['sqlalchemy >= 0.8']
+import pkg_resources  # pylint: disable=unused-import
+
 import sys
 from ipsilon import find_config
 from ipsilon.tools import dbupgrade

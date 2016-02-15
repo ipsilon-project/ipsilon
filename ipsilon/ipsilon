@@ -2,6 +2,12 @@
 #
 # Copyright (C) 2013 Ipsilon project Contributors, for license see COPYING
 
+# These lines make sure that we have at least a minimum version of some
+# packages, since we depend on features provided by them.
+import __main__
+__main__.__requires__ = ['sqlalchemy >= 0.8', 'jinja2 >= 2.4']
+import pkg_resources  # pylint: disable=unused-import
+
 import sys
 sys.stdout = sys.stderr
 import glob

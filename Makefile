@@ -22,7 +22,7 @@ testdeps:
 	python -c 'import cherrypy'
 	python -c 'import M2Crypto'
 	python -c 'import lasso'
-	python -c 'import sqlalchemy'
+	python -c '__requires__ = ["sqlalchemy >= 0.8"]; import pkg_resources; import sqlalchemy'
 	python -c 'import ldap'
 	python -c 'import pam'
 	python -c 'import fedora'
@@ -85,7 +85,7 @@ lp-test:
 		   --ignored-classes=cherrypy \
 		   --disable=star-args \
 		   ./tests
-	pep8 tests
+	pep8 --ignore=E121,E123,E126,E226,E24,E704,E402 tests
 
 wrappers:
 	#rm -fr wrapdir
