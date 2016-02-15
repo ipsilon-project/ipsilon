@@ -25,7 +25,7 @@ class GSSAPIAuth(LoginPageBase):
         # If we can get here, we must be authenticated and remote_user
         # was set. Check the session has a user set already or error.
         us = UserSession()
-        us.remote_login()
+        us.remote_login(is_krb=True)
         self.user = us.get_user()
         if not self.user.is_anonymous:
             principal = cherrypy.request.wsgi_environ.get('GSS_NAME', None)
@@ -87,11 +87,19 @@ apache plugin for actual authentication. """
 CONF_TEMPLATE = """
 
 <Location /${instance}/login/gssapi/negotiate>
-  AuthType GSSAPI
   AuthName "GSSAPI Single Sign On Login"
-  $keytab
-  GssapiSSLonly $gssapisslonly
-  GssapiLocalName on
+  <IfModule mod_auth_gssapi.c>
+    GssapiCredStore keytab:$keytab
+    AuthType GSSAPI
+    GssapiSSLonly $gssapisslonly
+    GssapiLocalName on
+  </IfModule>
+  <IfModule mod_auth_kerb.c>
+    Krb5KeyTab $keytab
+    AuthType Kerberos
+    KrbMethodNegotiate On
+    KrbMethodK5Passwd Off
+  </IfModule>
   Require valid-user
 
   ErrorDocument 401 /${instance}/login/gssapi/unauthorized
@@ -121,8 +129,7 @@ class Installer(LoginManagerInstaller):
         confopts = {'instance': opts['instance']}
 
         if os.path.exists(opts['gssapi_httpd_keytab']):
-            confopts['keytab'] = 'GssapiCredStore keytab:%s' % (
-                opts['gssapi_httpd_keytab'])
+            confopts['keytab'] = opts['gssapi_httpd_keytab']
         else:
             raise Exception('Keytab not found')
 

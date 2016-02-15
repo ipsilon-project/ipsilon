@@ -99,9 +99,13 @@ class UserSession(Log):
     def get_user(self):
         return User(self.user)
 
-    def remote_login(self):
+    def remote_login(self, is_krb=False):
         if cherrypy.request.login:
-            self.login(cherrypy.request.login)
+            username = cherrypy.request.login
+            if is_krb and '@' in username:
+                cherrypy.request.wsgi_environ['GSS_NAME'] = username
+                username = username[:username.find('@')]
+            self.login(username)
         else:
             self.nuke_data('user')
 

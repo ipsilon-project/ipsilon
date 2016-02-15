@@ -56,6 +56,11 @@ class LoginHelper(Log):
             auth_type = cherrypy.request.wsgi_environ.get('AUTH_TYPE')
             if auth_type:
                 auth_type = 'external:%s' % (auth_type.lower())
+                if auth_type == 'external:negotiate' and '@' in username:
+                    # This was likely mod_auth_kerb. Let's be compatible with
+                    # gssapi
+                    cherrypy.request.wsgi_environ['GSS_NAME'] = username
+                    username = username[:username.find('@')]
 
         self.debug("get_external_auth_info: username=%s auth_type=%s" % (
             username, auth_type))
