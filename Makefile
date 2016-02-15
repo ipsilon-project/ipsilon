@@ -14,6 +14,8 @@ testdeps:
 	which openssl
 	which slapd
 	# Now, python libraries
+	python -c 'import argparse'
+	python -c 'import requests_kerberos'
 	python -c 'import openid'
 	python -c 'import openid_teams'
 	python -c 'import openid_cla'
@@ -28,9 +30,9 @@ testdeps:
 	python -c 'import jinja2'
 	python -c 'import psycopg2'
 	# And now everything else
-	ls /usr/share/doc/sssd
-	ls /usr/lib64/libsss_simpleifp.so.0
-	ls /usr/lib64/httpd/modules/mod_wsgi.so
+	ls /usr/lib*/security/pam_sss.so
+	ls /usr/lib*/libsss_simpleifp.so.0
+	ls /usr/lib*/httpd/modules/mod_wsgi.so
 	ls /usr/libexec/mod_auth_mellon
 
 lint:
