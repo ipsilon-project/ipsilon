@@ -94,23 +94,25 @@ wrappers:
 	#SOCKET_WRAPPER_DIR=wrapdir
 	#SOCKET_WRAPPER_DEFAULT_IFACE=9
 
+TESTDIR := $(shell mktemp --directory /tmp/ipsilon-testdir.XXXXXXXX)
+
 tests: wrappers
-	rm -rf testdir
-	PYTHONPATH=./ ./tests/tests.py --test=test1
-	PYTHONPATH=./ ./tests/tests.py --test=testlogout
-	PYTHONPATH=./ ./tests/tests.py --test=testnameid
-	PYTHONPATH=./ ./tests/tests.py --test=testrest
-	PYTHONPATH=./ ./tests/tests.py --test=testmapping
-	PYTHONPATH=./ ./tests/tests.py --test=testgssapi
-	PYTHONPATH=./ ./tests/tests.py --test=attrs
-	PYTHONPATH=./ ./tests/tests.py --test=trans
-	PYTHONPATH=./ ./tests/tests.py --test=pgdb
-	PYTHONPATH=./ ./tests/tests.py --test=fconf
-	PYTHONPATH=./ ./tests/tests.py --test=ldap
-	PYTHONPATH=./ ./tests/tests.py --test=ldapdown
-	PYTHONPATH=./ ./tests/tests.py --test=openid
-	PYTHONPATH=./ ./tests/tests.py --test=openidc
-	PYTHONPATH=./ ./tests/tests.py --test=dbupgrades
+	echo "Testdir: $(TESTDIR)"
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=test1
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testlogout
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testnameid
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testrest
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testmapping
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testgssapi
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=attrs
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=trans
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=pgdb
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=fconf
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldap
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldapdown
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openid
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openidc
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=dbupgrades
 
 test: lp-test unittests tests
 
