@@ -2,26 +2,27 @@
 Ipsilon - Identity Provider
 ===========================
 
-The Ipsilon project implements an Identity Provider[1] that is easy to use and
-configure. And it aims at providing installation scripts for applications
-that can use an Apache fronted to perform user authentication.
+The Ipsilon project implements an [Identity Provider](http://en.wikipedia.org/wiki/Identity_provider)
+that is easy to use and configure. And it aims at providing installation scripts
+for applications that can use an Apache fronted to perform user authentication.
 
 An IdP server allows users to authenticate against any identity provider
 whether that is a corporate LDAP server or even just local files or custom
 pluggable modules and allows applications to authenticate users while being
 completely agnostic of what authentication infrastructure is being used.
 
-Applications can currently use the SAML2[2] protocol to talk to the Ipsilon
-identity provider, an application that uses SAML is called a Service Provider.
+Applications can currently use the [SAML2](http://en.wikipedia.org/wiki/Security_Assertion_Markup_Language)
+protocol to talk to the Ipsilon identity provider, an application that uses
+SAML is called a Service Provider.
 
-Ipsilon uses the LASSO[3] libraries and Python bindings to implement SAML
-support.
+Ipsilon uses the [LASSO](http://lasso.entrouvert.org) libraries and Python
+bindings to implement SAML support.
 
 Ipsilon Server Installation
 ===========================
 
 The Ipsilon server can be easily installed by simply running the
-'ipsilon-server-install' command.
+`ipsilon-server-install` command.
 
 Prerequisites:
 - An Apache server with SSL configured
@@ -29,34 +30,34 @@ Prerequisites:
 - An unprivileged user to run the Ipsilon code (defaults to 'ipsilon')
 
 Currently there are only two available authentication modules, GSSAPI and
-PAM. The Kerberos module uses mod_auth_gssapi (which it will configure for
+PAM. The Kerberos module uses `mod_auth_gssapi` (which it will configure for
 you at install time), the Pam module simply uses the PAM stack with a default service
-name set to 'ipsilon'.
+name set to `ipsilon`.
 
-NOTE: The PAM module is invoked as an unprivileged user so if you are using the
+**NOTE** The PAM module is invoked as an unprivileged user so if you are using the
 pam_unix plugin to authenticate users you'll find out that authentication does
-not work properly. Please use a different PAM module, like pam_sss, pam_ldap,
+not work properly. Please use a different PAM module, like `pam_sss`, `pam_ldap`,
 etc..
 
 Before you run the install script make sure to create an administrative user
 that can be authenticated either via PAM or GSSAPI. The default name the
-installation script expects is 'admin' but that can be changed with the command
-line option named --admin-user
+installation script expects is `admin` but that can be changed with the command
+line option named `--admin-user`
 
 The hostname used is the system host name, if you can't set the system hostname
-to a fully qualified name, used the --hostname option to pass the desired fully
+to a fully qualified name, used the `--hostname` option to pass the desired fully
 qualified name for the IdP. It is important to use the correct name as this
 name is referenced and resolved by remote clients.
 
-Other options are available by running ipsilon-server-install --help
+Other options are available by running `ipsilon-server-install --help`
 
 To install a server that allow both GSSAPI (Kerberos) and PAM authentication
 use:
 
- $ ipsilon-server-install --gssapi=yes --pam=yes
+    $ ipsilon-server-install --gssapi=yes --pam=yes
 
-This command will generate a default instance called 'idp' (you can change the
-default name using the --instance switch). Multiple instance can be installed
+This command will generate a default instance called `idp` (you can change the
+default name using the `--instance` switch). Multiple instance can be installed
 in parallel, each wit a different name.
 
 Instances are configured to be available at https://hostname/instance
@@ -66,20 +67,20 @@ options the IdP will be available at https://ipsilon.example.com/idp/
 
 The install script expects to find the keytab in /etc/httpd/conf/http.keytab
 
-NOTE: If you are installing Ipsilon in a FreeIPA[4] environment you can use the
---ipa switch to simplify the deployment. Using the --ipa switch will allow the
-use of your IPA Kerberos administrative credentials to automatically provision
-a keytab for the HTTP service if one is not available yet.  You will likely
-want to use the --admin-user option to specify the full principal of the user
-who will administer Ipsilon.  For example to use the FreeIPA admin user for
-the EXAMPLE.COM realm, you would use:
+**NOTE:** If you are installing Ipsilon in a [FreeIPA](http://www.freeipa.org )
+environment you can use the --ipa switch to simplify the deployment.
+Using the `--ipa` switch will allow the use of your IPA Kerberos administrative
+credentials to automatically provision a keytab for the HTTP service if one is
+not available yet.  You will likely want to use the `--admin-user` option to
+specify the full principal of the user who will administer Ipsilon.
+For example to use the FreeIPA admin user for the EXAMPLE.COM realm, you would use:
 
- $ ipsilon-server-install --ipa --admin-user admin@EXAMPLE.COM
+    $ ipsilon-server-install --ipa --admin-user admin@EXAMPLE.COM
 
 Once the script has successfully completed the installation, restart the Apache
 HTTPD server to activate it.
 
-Use your 'admin' user to connect to the Web UI and perform additional
+Use your `admin` user to connect to the Web UI and perform additional
 administration tasks.
 
 
@@ -87,11 +88,11 @@ Ipsilon Clients configuration
 =============================
 
 Ipsilon clients can be quickly configured running the provided
-'ipsilon-client-install' command.
+`ipsilon-client-install` command.
 
 Prerequisites:
 - An Apache server with SSL configured
-- The mod_mellon[5] authentication module for Apache
+- The [mod_mellon](https://code.google.com/p/modmellon/) authentication module for Apache
 - A previously installed SAML IdP server (like Ipsilon itself)
 
 The default configuration for the client will install a configuration in Apache
@@ -112,7 +113,7 @@ media.exmple.com with a wiki application located under /wiki
 
 The following command will configure the server and generate the metadata file:
 
- $ ipsilon-client-install \
+     $ ipsilon-client-install \
      --saml-idp-metadata http://ipsilon.example.com/idp/saml2/metadata \
      --saml-auth /wiki
 
@@ -145,12 +146,3 @@ ALSO NOTE: If your application is already SAML aware you can simply run the
 install script with the --saml-no-httpd option. This will generate the
 certificates and the metadata.xml file you need to provide to the application
 and the IdP in the current directory.
-
-Links
-=====
-
-[1] http://en.wikipedia.org/wiki/Identity_provider
-[2] http://en.wikipedia.org/wiki/Security_Assertion_Markup_Language
-[3] http://lasso.entrouvert.org
-[4] http://www.freeipa.org
-[5] https://code.google.com/p/modmellon/
