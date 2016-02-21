@@ -76,7 +76,7 @@
                 {%- endif -%}
                 {%- if not loop.last -%},{%- endif -%}
               {%- endfor -%}
-              ">{{ move }}</button>
+              ">{{ move | safe }}</button>
             {%- endfor %}
           </form>
           {%- endif %}
