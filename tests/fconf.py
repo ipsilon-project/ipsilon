@@ -158,7 +158,16 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'http://127.0.0.11:45081')
 
-    print "test1: Access SP Protected Area ...",
+    print "fconf: Access IdP Homepage ... ",
+    try:
+        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/idp1/')
+        page.expected_value('//title/text()', 'Ipsilon')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "fconf: Access SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
