@@ -151,11 +151,11 @@ class PluginObject(Log):
             return
 
         self.refresh_plugin_config()
+        self.on_enable()
+        self._data.create_plugin_data_table(self.name)
         is_upgrade = Store._is_upgrade  # pylint: disable=protected-access
         try:
             Store._is_upgrade = True  # pylint: disable=protected-access
-            self.on_enable()
-            self._data.create_plugin_data_table(self.name)
             for store in self.used_datastores():
                 store.upgrade_database()
         finally:
