@@ -249,16 +249,10 @@ class AdminPlugins(AdminPage):
 
     def _get_plugin_obj(self, plugin):
         plugins = self._site[self.facility]
-        if plugins.is_readonly:
-            msg = "Configuration is marked Read-Only"
-            raise AdminError(msg)
         if plugin not in plugins.available:
             msg = "Unknown plugin %s" % plugin
             raise AdminError(msg)
         obj = plugins.available[plugin]
-        if obj.is_readonly:
-            msg = "Plugin Configuration is marked Read-Only"
-            raise AdminError(msg)
         return obj
 
     @admin_protect
