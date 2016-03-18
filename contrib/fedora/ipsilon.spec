@@ -277,7 +277,7 @@ fi
 
 
 %files filesystem
-%doc COPYING README
+%doc COPYING README.md
 %dir %{_datadir}/ipsilon
 %dir %{_datadir}/ipsilon/templates
 %dir %{_datadir}/ipsilon/templates/install

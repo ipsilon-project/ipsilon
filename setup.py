@@ -26,7 +26,7 @@ setup(
                   ('share/man/man5', ['man/ipsilon.conf.5']),
                   ('share/man/man1', ['man/ipsilon-client-install.1',
                                       'man/ipsilon-server-install.1']),
-                  ('share/doc/ipsilon', ['COPYING', 'README']),
+                  ('share/doc/ipsilon', ['COPYING', 'README.md']),
                   ('share/doc/ipsilon/examples', ['examples/ipsilon.conf',
                                                   'examples/apache.conf']),
                   (DATA+'ui/css', glob('ui/css/*.css')),
