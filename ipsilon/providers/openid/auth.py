@@ -56,10 +56,10 @@ class AuthenticateRequest(ProviderPageBase):
             request = self._parse_request(**kwargs)
             return self._openid_checks(request, form, **kwargs)
         except InvalidRequest, e:
-            raise cherrypy.HTTPError(e.code, e.msg)
+            raise cherrypy.HTTPError(e.code, e.message)
         except AuthenticationError, e:
             if request is None:
-                raise cherrypy.HTTPError(e.code, e.msg)
+                raise cherrypy.HTTPError(e.code, e.message)
             return self._respond(request.answer(False))
 
     # get attributes, and apply policy mapping and filtering
@@ -81,7 +81,7 @@ class AuthenticateRequest(ProviderPageBase):
             request = self.cfg.server.decodeRequest(kwargs)
         except ProtocolError, openid_error:
             self.debug('ProtocolError: %s' % openid_error)
-            raise InvalidRequest('Invalid OpenID request', 400)
+            raise InvalidRequest('Invalid OpenID request')
 
         if request is None:
             self.debug('No request')
@@ -161,7 +161,8 @@ class AuthenticateRequest(ProviderPageBase):
             try:
                 days = int(form.get('remember_for_days', '0'))
                 if days < 0 or days > 7:
-                    raise
+                    raise InvalidRequestError('Invalid number of days to ' +
+                                              'remember specified')
                 userdata = {allowroot: str(int(time.time()) + (days*86400))}
                 user.save_plugin_data(self.cfg.name, userdata)
             except Exception, e:  # pylint: disable=broad-except
