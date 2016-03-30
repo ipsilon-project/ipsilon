@@ -97,7 +97,7 @@ class Metadata(object):
             self.root.set('cacheDuration', "P%dD" % (MIN_EXP_DEFAULT))
             return
         elif isinstance(exp, datetime.date):
-            d = datetime.datetime.combine(exp, datetime.date.min.time())
+            d = datetime.datetime.combine(exp, datetime.datetime.min.time())
         elif isinstance(exp, datetime.datetime):
             d = exp
         elif isinstance(exp, datetime.timedelta):
