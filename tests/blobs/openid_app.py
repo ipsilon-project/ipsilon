@@ -1,7 +1,6 @@
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
 import sys
-sys.stdout = sys.stderr
 
 import cherrypy
 import os
@@ -10,6 +9,8 @@ import pwd
 from openid.consumer import consumer
 from openid.extensions import sreg, ax
 from openid_teams import teams
+
+sys.stdout = sys.stderr
 
 
 class OpenIDApp(object):
@@ -97,7 +98,8 @@ class OpenIDApp(object):
                         sreg_email)
 
                 if username not in teams_resp.teams:
-                    return 'ERROR: User not in self-named group (%s not in %s)' %\
+                    return 'ERROR: User not in self-named group (%s not ' + \
+                        'in %s)' %\
                         (username, teams_resp.teams)
 
             if self.extensions:
