@@ -83,8 +83,8 @@ class OpenIDStore(Store, OpenIDStoreInterface):
         assocs = self.get_unique_data('association')
         cleaned = 0
         for iden in assocs:
-            if ((int(assocs[iden]['issued']) + int(assocs[iden]['lifetime']))
-                    < time()):
+            if ((int(assocs[iden]['issued']) + int(assocs[iden]['lifetime'])) <
+                    time()):
                 cleaned += 1
                 self.del_unique_data('association', iden)
         return cleaned
