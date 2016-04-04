@@ -5,6 +5,7 @@ from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 import pam
+import subprocess
 if 'pam' in dir(pam):
     # Try to use newer API
     pam_authenticate = pam.pam().authenticate  # pylint: disable=no-member
@@ -14,7 +15,6 @@ elif 'authenticate' in dir(pam):
 else:
     # We have never seen this version, let's abort early
     raise ImportError('Python-PAM API unsupported')
-import subprocess
 
 
 class Pam(LoginFormBase):
