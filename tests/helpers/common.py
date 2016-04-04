@@ -207,6 +207,11 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
 
     def setup_idp_server(self, profile, name, addr, port, env):
         http_conf_file = self.setup_http(name, addr, port)
+        logfile = os.path.join(self.testdir, name, 'logs', 'install.log')
+        if env:
+            env['LOGFILE'] = logfile
+        else:
+            env = {'LOGFILE': logfile}
         cmd = [os.path.join(self.rootdir,
                             'ipsilon/install/ipsilon-server-install'),
                '--config-profile=%s' % profile]
