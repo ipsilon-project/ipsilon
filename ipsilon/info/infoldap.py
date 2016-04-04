@@ -105,8 +105,8 @@ Info plugin that uses LDAP to retrieve user data. """
             if not self.server_url.startswith("ldaps"):
                 conn.start_tls_s()
 
-        if (self.bind_dn is None and self.bind_password is None) or
-               (self.bind_dn == '' and self.bind_password == ''):
+        if ((self.bind_dn is None and self.bind_password is None) or
+                (self.bind_dn == '' and self.bind_password == '')):
             conn.simple_bind_s()
         else:
             conn.simple_bind_s(self.bind_dn, self.bind_password)
@@ -171,8 +171,8 @@ Info plugin that uses LDAP to retrieve user data. """
             return {}
 
         try:
-            conn = self._ldap_bind()
             base = self.base_dn
+            conn = self._ldap_bind()
             return self.get_user_data_from_conn(conn, dn, base, user)
         except ldap.LDAPError as e:
             self.error(
