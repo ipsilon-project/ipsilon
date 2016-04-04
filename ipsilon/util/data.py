@@ -134,7 +134,7 @@ class SqlQuery(Log):
         where = None
         if kvfilter is not None:
             for k in kvfilter:
-                w = self._table.columns[k] == kvfilter[k]
+                w = self._table.c[k] == kvfilter[k]
                 if where is None:
                     where = w
                 else:
@@ -146,7 +146,7 @@ class SqlQuery(Log):
         if columns is not None:
             cols = []
             for c in columns:
-                cols.append(self._table.columns[c])
+                cols.append(self._table.c[c])
         else:
             cols = self._table.columns
         return cols
@@ -777,7 +777,7 @@ class TranStore(Store):
         # pylint: disable=protected-access
         table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
         in_one_hour = datetime.datetime.now() - datetime.timedelta(hours=1)
-        sel = select([table.columns.uuid]). \
+        sel = select([table.c.uuid]). \
             where(and_(table.c.name == 'origintime',
                        table.c.value <= in_one_hour))
         # pylint: disable=no-value-for-parameter
@@ -813,7 +813,7 @@ class SAML2SessionStore(Store):
     def _cleanup(self):
         # pylint: disable=protected-access
         table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
-        sel = select([table.columns.uuid]). \
+        sel = select([table.c.uuid]). \
             where(and_(table.c.name == 'expiration_time',
                        table.c.value <= datetime.datetime.now()))
         # pylint: disable=no-value-for-parameter
