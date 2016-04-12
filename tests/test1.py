@@ -52,7 +52,7 @@ sp2_a = {'hostname': '${ADDRESS}:${PORT}',
          'saml_idp_url': 'http://127.0.0.10:45080/idp1',
          'admin_user': '${TEST_USER}',
          'admin_password': '${TESTDIR}/pw.txt',
-         'saml_sp_name': 'sp2-example.com',
+         'saml_sp_name': 'sp2-test.example.com',
          'saml_secure_setup': 'False',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
@@ -122,7 +122,7 @@ class IpsilonTest(IpsilonTestBase):
         self.start_http_server(conf, env)
 
         print "Installing second SP server"
-        name = 'sp2-example.com'
+        name = 'sp2-test.example.com'
         addr = '127.0.0.11'
         port = '45082'
         sp = self.generate_profile(sp2_g, sp2_a, name, addr, port)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     idpname = 'idp1'
     sp1name = 'sp1'
-    sp2name = 'sp2-example.com'
+    sp2name = 'sp2-test.example.com'
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()

@@ -119,7 +119,7 @@ class IpsilonTest(IpsilonTestBase):
         self.start_http_server(conf, env)
 
         print "Installing second SP server"
-        name = 'sp2-example.com'
+        name = 'sp2-test.example.com'
         addr = '127.0.0.10'
         port = '45082'
         sp2 = self.generate_profile(sp2_g, sp2_a, name, addr, port)
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     idpname = 'idp1'
     spname = 'sp1'
-    sp2name = 'sp2-example.com'
+    sp2name = 'sp2-test.example.com'
     sp3name = 'sp3_invalid'
     user = pwd.getpwuid(os.getuid())[0]
 
