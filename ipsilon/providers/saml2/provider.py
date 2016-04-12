@@ -10,7 +10,7 @@ import lasso
 import re
 
 
-VALID_IN_NAME = r'[^\ a-zA-Z0-9]'
+VALID_IN_NAME = r'[^\ a-zA-Z0-9\-\.]'
 
 
 class InvalidProviderId(ProviderException):

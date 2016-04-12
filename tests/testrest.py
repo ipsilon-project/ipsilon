@@ -119,7 +119,7 @@ class IpsilonTest(IpsilonTestBase):
         self.start_http_server(conf, env)
 
         print "Installing second SP server"
-        name = 'sp2'
+        name = 'sp2-example.com'
         addr = '127.0.0.10'
         port = '45082'
         sp2 = self.generate_profile(sp2_g, sp2_a, name, addr, port)
@@ -130,7 +130,7 @@ class IpsilonTest(IpsilonTestBase):
         self.start_http_server(conf, env)
 
         print "Installing third SP server"
-        name = 'sp3.invalid'
+        name = 'sp3_invalid'
         addr = '127.0.0.10'
         port = '45083'
         sp3 = self.generate_profile(sp3_g, sp3_a, name, addr, port)
@@ -145,8 +145,8 @@ if __name__ == '__main__':
 
     idpname = 'idp1'
     spname = 'sp1'
-    sp2name = 'sp2'
-    sp3name = 'sp3.invalid'
+    sp2name = 'sp2-example.com'
+    sp3name = 'sp3_invalid'
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
@@ -228,6 +228,18 @@ if __name__ == '__main__':
                 'Expected 1 SPs and got %d' % len(result['result'])
             )
         if result['result'][0].get('provider') != spname:
+            raise ValueError(
+                'Expected %s and got %s' %
+                (spname, result['result'][0].get('provider'))
+            )
+
+        # Now sp2, which has a name with extended characters
+        result = sess.get_rest_sp(idpname, sp2name)
+        if len(result['result']) != 1:
+            raise ValueError(
+                'Expected 1 SPs and got %d' % len(result['result'])
+            )
+        if result['result'][0].get('provider') != sp2name:
             raise ValueError(
                 'Expected %s and got %s' %
                 (spname, result['result'][0].get('provider'))
