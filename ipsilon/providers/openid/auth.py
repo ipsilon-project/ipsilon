@@ -161,8 +161,8 @@ class AuthenticateRequest(ProviderPageBase):
             try:
                 days = int(form.get('remember_for_days', '0'))
                 if days < 0 or days > 7:
-                    raise InvalidRequestError('Invalid number of days to ' +
-                                              'remember specified')
+                    raise InvalidRequest('Invalid number of days to ' +
+                                         'remember specified')
                 userdata = {allowroot: str(int(time.time()) + (days*86400))}
                 user.save_plugin_data(self.cfg.name, userdata)
             except Exception, e:  # pylint: disable=broad-except
