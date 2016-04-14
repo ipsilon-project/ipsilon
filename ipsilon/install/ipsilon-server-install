@@ -126,10 +126,10 @@ def install(plugins, args):
     # Whether to disable security (for testing)
     if args['secure'] == 'no':
         confopts['secure'] = "False"
-        confopts['sslrequiressl'] = ""
+        confopts['ssl_require'] = "# "
     else:
         confopts['secure'] = "True"
-        confopts['sslrequiressl'] = "   SSLRequireSSL"
+        confopts['ssl_require'] = ""
     if WSGI_SOCKET_PREFIX:
         confopts['wsgi_socket'] = 'WSGISocketPrefix %s' % WSGI_SOCKET_PREFIX
     else:
