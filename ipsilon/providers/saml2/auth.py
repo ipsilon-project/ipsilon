@@ -323,7 +323,6 @@ class AuthenticateRequest(ProviderPageBase):
                 attr = lasso.Saml2Attribute()
                 attr.name = key
                 attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
-                value = str(value).encode('utf-8')
                 self.debug('value %s' % value)
                 node = lasso.MiscTextNode.newWithString(value)
                 node.textChild = True
