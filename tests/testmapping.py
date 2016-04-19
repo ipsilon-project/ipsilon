@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
@@ -195,7 +196,7 @@ if __name__ == '__main__':
             'NAME_ID': user,
             'fullname': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
             'groups': user,
         }
@@ -222,7 +223,7 @@ if __name__ == '__main__':
             'fullname': 'Test User %s' % user,
             'namefull': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
             'groups': user
         }
@@ -248,7 +249,7 @@ if __name__ == '__main__':
         expect = {
             'namefull': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception, e:  # pylint: disable=broad-except
@@ -273,7 +274,7 @@ if __name__ == '__main__':
         expect = {
             'fullname': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
@@ -304,7 +305,7 @@ if __name__ == '__main__':
             'wholename': 'Test User %s' % user,
             'fullname': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
@@ -336,7 +337,7 @@ if __name__ == '__main__':
             'wholename': 'Test User %s' % user,
             'fullname': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
             'NAME_ID': '%s@example.com' % user,
         }
@@ -363,7 +364,7 @@ if __name__ == '__main__':
         expect = {
             'fullname': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
@@ -387,7 +388,7 @@ if __name__ == '__main__':
         expect = {
             'namefull': 'Test User %s' % user,
             'surname': user,
-            'givenname': 'Test User',
+            'givenname': u'Test User 一',
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception, e:  # pylint: disable=broad-except

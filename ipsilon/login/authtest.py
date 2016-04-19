@@ -1,4 +1,5 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
+# -*- coding: utf-8 -*-
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
     LoginManagerInstaller
@@ -19,7 +20,7 @@ class TestAuth(LoginFormBase):
             if password == 'ipsilon':
                 cherrypy.log("User %s successfully authenticated." % username)
                 testdata = {
-                    'givenname': 'Test User',
+                    'givenname': 'Test User 一',
                     'surname': username,
                     'fullname': 'Test User %s' % username,
                     'email': '%s@example.com' % username,
