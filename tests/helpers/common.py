@@ -231,7 +231,7 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         return http_conf_file
 
     def setup_pgdb(self, datadir, env):
-        cmd = ['/usr/bin/pg_ctl', 'initdb', '-D', datadir]
+        cmd = ['/usr/bin/pg_ctl', 'initdb', '-D', datadir, '-o', '-E UNICODE']
         subprocess.check_call(cmd, env=env)
         auth = 'host all all 127.0.0.1/24 trust\n'
         filename = os.path.join(datadir, 'pg_hba.conf')
