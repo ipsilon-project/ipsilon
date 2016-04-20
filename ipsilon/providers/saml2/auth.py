@@ -320,17 +320,21 @@ class AuthenticateRequest(ProviderPageBase):
                 continue
             if not isinstance(values, list):
                 values = [values]
+            attr = lasso.Saml2Attribute()
+            attr.name = key
+            attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
+            attr.attributeValue = []
+            vals = []
             for value in values:
-                attr = lasso.Saml2Attribute()
-                attr.name = key
-                attr.nameFormat = lasso.SAML2_ATTRIBUTE_NAME_FORMAT_BASIC
                 self.debug('value %s' % value)
                 node = lasso.MiscTextNode.newWithString(value)
                 node.textChild = True
                 attrvalue = lasso.Saml2AttributeValue()
                 attrvalue.any = [node]
-                attr.attributeValue = [attrvalue]
-                attrstat.attribute = attrstat.attribute + (attr,)
+                vals.append(attrvalue)
+
+            attr.attributeValue = vals
+            attrstat.attribute = attrstat.attribute + (attr,)
 
         self.debug('Assertion: %s' % login.assertion.dump())
 
