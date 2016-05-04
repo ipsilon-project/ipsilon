@@ -29,7 +29,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
          'openid': 'False',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -43,9 +42,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -127,8 +125,8 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(spname, 'http://127.0.0.11:45081')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(spname, 'https://127.0.0.11:45081')
 
     print "pgdb: Authenticate to IDP ...",
     sys.stdout.flush()
@@ -154,7 +152,7 @@ if __name__ == '__main__':
 
     print "pgdb: Access SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -164,8 +162,8 @@ if __name__ == '__main__':
     print "pgdb: Logout from SP ...",
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
-            'http://127.0.0.11:45081', 'saml2/logout',
-            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+            'https://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)

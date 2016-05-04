@@ -24,7 +24,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -38,9 +37,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -51,9 +49,8 @@ sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp2_a = {'hostname': '${ADDRESS}:${PORT}',
-         'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-         'saml_secure_setup': 'False',
+sp2_a = {'hostname': '${ADDRESS}',
+         'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
@@ -63,9 +60,8 @@ sp3_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp3_a = {'hostname': '${ADDRESS}:${PORT}',
-         'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-         'saml_secure_setup': 'False',
+sp3_a = {'hostname': '${ADDRESS}',
+         'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
@@ -150,10 +146,10 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(spname, 'http://127.0.0.11:45081')
-    sess.add_server(sp2name, 'http://127.0.0.10:45082')
-    sess.add_server(sp3name, 'http://127.0.0.10:45083')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(spname, 'https://127.0.0.11:45081')
+    sess.add_server(sp2name, 'https://127.0.0.10:45082')
+    sess.add_server(sp3name, 'https://127.0.0.10:45083')
 
     print "testrest: Authenticate to IDP ...",
     try:

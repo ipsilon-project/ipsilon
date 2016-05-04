@@ -34,7 +34,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -54,7 +53,7 @@ saml2 idp metadata file = metadata.xml
 saml2 idp certificate file = ${TESTDIR}/lib/${NAME}/saml2/idp.pem
 saml2 idp nameid salt = ${IDPSALT}
 [saml2_data]
-811d0231-9362-46c9-a105-a01a64818904 id = http://${SPADDR}:${SPPORT}/saml2
+811d0231-9362-46c9-a105-a01a64818904 id = https://${SPADDR}:${SPPORT}/saml2
 811d0231-9362-46c9-a105-a01a64818904 type = SP
 811d0231-9362-46c9-a105-a01a64818904 name = ${SPNAME}
 811d0231-9362-46c9-a105-a01a64818904 metadata = ${SPMETA}
@@ -66,9 +65,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
+sp_a = {'hostname': '${ADDRESS}',
         'saml_idp_metadata': '${TESTDIR}/lib/idp1/saml2/metadata.xml',
-        'saml_secure_setup': 'False',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -97,11 +95,11 @@ Alias /sp ${HTTPDIR}/sp
 def fixup_idp_conf(testdir):
 
     with open(os.path.join(testdir, spname, 'saml2',
-                           '%s:%s' % (spaddr, spport), 'metadata.xml')) as f:
+                           '%s' % spaddr, 'metadata.xml')) as f:
         spmeta = f.read()
     spmeta = spmeta.replace("\n", "")
 
-    idpuri = "http://%s:%s/%s" % (idpaddr, idpport, idpname)
+    idpuri = "https://%s:%s/%s" % (idpaddr, idpport, idpname)
 
     idpsalt = uuid.uuid4().hex
     t = Template(idp_file_conf)
@@ -155,12 +153,12 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(spname, 'http://127.0.0.11:45081')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(spname, 'https://127.0.0.11:45081')
 
     print "fconf: Access IdP Homepage ... ",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/idp1/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//title/text()', 'Ipsilon')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -169,7 +167,7 @@ if __name__ == '__main__':
 
     print "fconf: Access SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)

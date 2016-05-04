@@ -25,7 +25,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -138,7 +137,7 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://%s' % url, user,
+    sess.add_server(idpname, 'https://%s' % url, user,
                     'ipsilon')
 
     print "dbupgrades: From v%s: Authenticate to IDP ..." % from_version,

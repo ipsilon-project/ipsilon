@@ -24,7 +24,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -38,16 +37,14 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
 
-sp_b = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_b = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'no_saml_soap_logout': 'True',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
@@ -178,10 +175,10 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     for sp in splist:
         spname = sp['nameid']
-        spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
+        spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
         sess.add_server(spname, spurl)
 
     print "testlogout: Authenticate to IDP ...",
@@ -205,8 +202,8 @@ if __name__ == '__main__':
     print "testlogout: Logout without logging into SP ...",
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
-            'http://127.0.0.11:45081', 'saml2/logout',
-            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+            'https://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -215,7 +212,7 @@ if __name__ == '__main__':
 
     print "testlogout: Access SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -225,8 +222,8 @@ if __name__ == '__main__':
     print "testlogout: Logout from SP ...",
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
-            'http://127.0.0.11:45081', 'saml2/logout',
-            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+            'https://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -236,8 +233,8 @@ if __name__ == '__main__':
     print "testlogout: Try logout again ...",
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
-            'http://127.0.0.11:45081', 'saml2/logout',
-            'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+            'https://127.0.0.11:45081', 'saml2/logout',
+            'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -246,7 +243,7 @@ if __name__ == '__main__':
 
     print "testlogout: Ensure logout ...",
     try:
-        ensure_logout(sess, idpname, 'http://127.0.0.11:45081/sp/')
+        ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -258,7 +255,7 @@ if __name__ == '__main__':
         print "testlogout: Access SP Protected Area of each SP ...",
         for sp in splist:
             spname = sp['nameid']
-            spurl = 'http://%s:%s/sp/' % (sp['addr'], sp['port'])
+            spurl = 'https://%s:%s/sp/' % (sp['addr'], sp['port'])
             try:
                 page = sess.fetch_page(idpname, spurl)
                 page.expected_value('text()', 'WORKS!')
@@ -269,10 +266,10 @@ if __name__ == '__main__':
 
         print "testlogout: Initiate logout from %s ..." % sporder['nameid'],
         try:
-            logouturl = 'http://%s:%s' % (sp['addr'], sp['port'])
+            logouturl = 'https://%s:%s' % (sp['addr'], sp['port'])
             page = sess.fetch_page(idpname, '%s/%s?%s' % (
                 logouturl, 'saml2/logout',
-                'ReturnTo=http://127.0.0.11:45081/open/logged_out.html'))
+                'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
             page.expected_value('text()', 'Logged out')
         except ValueError, e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -282,7 +279,7 @@ if __name__ == '__main__':
         print "testlogout: Ensure logout of each SP ...",
         for sp in splist:
             spname = sp['nameid']
-            spurl = 'http://%s:%s/sp/' % (sp['addr'], sp['port'])
+            spurl = 'https://%s:%s/sp/' % (sp['addr'], sp['port'])
             try:
                 ensure_logout(sess, idpname, spurl)
             except ValueError, e:
@@ -293,7 +290,7 @@ if __name__ == '__main__':
     # Test IdP-initiated logout
     print "testlogout: Access SP Protected Area of SP1...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -302,7 +299,7 @@ if __name__ == '__main__':
 
     print "testlogout: Access SP Protected Area of SP2...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45082/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -311,7 +308,8 @@ if __name__ == '__main__':
 
     print "testlogout: Access the IdP...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/%s' % idpname)
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.10:45080/%s' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
     except ValueError, e:
@@ -322,7 +320,7 @@ if __name__ == '__main__':
     print "testlogout: IdP-initiated logout ...",
     try:
         page = sess.fetch_page(idpname,
-                               'http://127.0.0.10:45080/%s/logout' % idpname)
+                               'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -331,7 +329,7 @@ if __name__ == '__main__':
 
     print "testlogout: Ensure logout of SP1 ...",
     try:
-        ensure_logout(sess, idpname, 'http://127.0.0.11:45081/sp/')
+        ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -339,7 +337,7 @@ if __name__ == '__main__':
 
     print "testlogout: Ensure logout of SP2 ...",
     try:
-        ensure_logout(sess, idpname, 'http://127.0.0.11:45082/sp/')
+        ensure_logout(sess, idpname, 'https://127.0.0.11:45082/sp/')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -348,7 +346,7 @@ if __name__ == '__main__':
     print "testlogout: Access the IdP...",
     try:
         page = sess.fetch_page(idpname,
-                               'http://127.0.0.10:45080/%s/login' % idpname)
+                               'https://127.0.0.10:45080/%s/login' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
     except ValueError, e:
@@ -359,7 +357,7 @@ if __name__ == '__main__':
     print "testlogout: IdP-initiated logout with no SP sessions...",
     try:
         page = sess.fetch_page(idpname,
-                               'http://127.0.0.10:45080/%s/logout' % idpname)
+                               'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="logout"]/p//text()',
                             'Successfully logged out.')
     except ValueError, e:

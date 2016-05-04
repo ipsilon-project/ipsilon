@@ -24,7 +24,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -38,9 +37,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -103,8 +101,8 @@ if __name__ == '__main__':
     print "trans: Add SP Metadata to IDP ...",
     try:
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-        sess.add_server(spname, 'http://127.0.0.11:45081')
+        sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+        sess.add_server(spname, 'https://127.0.0.11:45081')
         sess.auth_to_idp(idpname)
         sess.add_sp_metadata(idpname, spname)
     except Exception, e:  # pylint: disable=broad-except
@@ -115,9 +113,9 @@ if __name__ == '__main__':
     print "trans: Access SP Protected Area ...",
     try:
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-        sess.add_server(spname, 'http://127.0.0.11:45081')
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+        sess.add_server(spname, 'https://127.0.0.11:45081')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)

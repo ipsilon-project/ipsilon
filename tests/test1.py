@@ -23,7 +23,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -37,9 +36,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -48,12 +46,11 @@ sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
          'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
-sp2_a = {'hostname': '${ADDRESS}:${PORT}',
-         'saml_idp_url': 'http://127.0.0.10:45080/idp1',
+sp2_a = {'hostname': '${ADDRESS}',
+         'saml_idp_url': 'https://127.0.0.10:45080/idp1',
          'admin_user': '${TEST_USER}',
          'admin_password': '${TESTDIR}/pw.txt',
          'saml_sp_name': 'sp2-test.example.com',
-         'saml_secure_setup': 'False',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
@@ -144,9 +141,9 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(sp1name, 'http://127.0.0.11:45081')
-    sess.add_server(sp2name, 'http://127.0.0.11:45082')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(sp1name, 'https://127.0.0.11:45081')
+    sess.add_server(sp2name, 'https://127.0.0.11:45082')
 
     print "test1: Authenticate to IDP ...",
     try:
@@ -166,7 +163,7 @@ if __name__ == '__main__':
 
     print "test1: Access first SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -175,7 +172,7 @@ if __name__ == '__main__':
 
     print "test1: Access second SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45082/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -184,7 +181,7 @@ if __name__ == '__main__':
 
     print "test1: Try authentication failure ...",
     newsess = HttpSessions()
-    newsess.add_server(idpname, 'http://127.0.0.10:45080', user, 'wrong')
+    newsess.add_server(idpname, 'https://127.0.0.10:45080', user, 'wrong')
     try:
         newsess.auth_to_idp(idpname)
         print >> sys.stderr, " ERROR: Authentication should have failed"
@@ -195,7 +192,7 @@ if __name__ == '__main__':
     print "test1: Add keyless SP Metadata to IDP ...",
     try:
         sess.add_metadata(idpname, 'keyless', keyless_metadata)
-        page = sess.fetch_page(idpname, 'http://127.0.0.10:45080/idp1/admin/'
+        page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/admin/'
                                         'providers/saml2/admin')
         page.expected_value('//div[@id="row_provider_http://keyless-sp"]/'
                             '@title',

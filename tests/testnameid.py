@@ -28,7 +28,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'yes',
@@ -43,10 +42,9 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://%s:45080/idp1/saml2/metadata' %
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://%s:45080/idp1/saml2/metadata' %
         WRAP_HOSTNAME,
-        'saml_secure_setup': 'False',
         'saml_auth': '/sp',
         'saml_nameid': '${NAMEID}',
         'httpd_user': '${TEST_USER}'}
@@ -192,9 +190,9 @@ if __name__ == '__main__':
     for sp in sp_list:
         krb = False
         spname = sp['nameid']
-        spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
+        spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME, user,
+        sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME, user,
                         'ipsilon')
         sess.add_server(spname, spurl)
 
@@ -246,7 +244,7 @@ if __name__ == '__main__':
 
         print "testnameid: Try authentication failure ...",
         newsess = HttpSessions()
-        newsess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+        newsess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                            user, 'wrong')
         try:
             newsess.auth_to_idp(idpname)
@@ -258,7 +256,7 @@ if __name__ == '__main__':
     # Ensure that transient names change with each authentication
     sp = get_sp_by_nameid(sp_list, 'transient')
     spname = sp['nameid']
-    spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
+    spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
 
     print ""
     print "testnameid: Testing NameID format %s ..." % spname
@@ -266,7 +264,7 @@ if __name__ == '__main__':
     ids = []
     for i in xrange(4):
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+        sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                         user, 'ipsilon')
         sess.add_server(spname, spurl)
         print "testnameid: Authenticate to IDP ...",
@@ -316,7 +314,7 @@ if __name__ == '__main__':
     # Ensure that persistent names remain the same with each authentication
     sp = get_sp_by_nameid(sp_list, 'persistent')
     spname = sp['nameid']
-    spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
+    spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
 
     print ""
     print "testnameid: Testing NameID format %s ..." % spname
@@ -324,7 +322,7 @@ if __name__ == '__main__':
     ids = []
     for i in xrange(4):
         sess = HttpSessions()
-        sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME,
+        sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                         user, 'ipsilon')
         sess.add_server(spname, spurl)
         print "testnameid: Authenticate to IDP ...",

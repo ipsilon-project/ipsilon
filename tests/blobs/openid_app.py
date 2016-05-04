@@ -5,12 +5,23 @@ import sys
 import cherrypy
 import os
 import pwd
+import ssl
 
+from openid.fetchers import setDefaultFetcher, Urllib2Fetcher
 from openid.consumer import consumer
 from openid.extensions import sreg, ax
 from openid_teams import teams
 
 sys.stdout = sys.stderr
+
+# This is an ugly hack to make python-openid not check the certs
+setDefaultFetcher(Urllib2Fetcher())
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 class OpenIDApp(object):
@@ -18,7 +29,7 @@ class OpenIDApp(object):
         self.extensions = extensions == 'YES'
         oidconsumer = consumer.Consumer(dict(), None)
         try:
-            request = oidconsumer.begin('http://127.0.0.10:45080/idp1/')
+            request = oidconsumer.begin('https://127.0.0.10:45080/idp1/')
         except Exception as ex:
             return 'ERROR: %s' % ex
 
@@ -60,8 +71,8 @@ class OpenIDApp(object):
             return 'ERROR: Cancelled'
         elif info.status == consumer.SUCCESS:
             username = pwd.getpwuid(os.getuid())[0]
-            expected_identifier = 'http://127.0.0.10:45080/idp1/openid/id/%s/'\
-                % username
+            expected_identifier = 'https://127.0.0.10:45080/idp1/openid/' + \
+                'id/%s/' % username
             if expected_identifier != display_identifier:
                 return 'ERROR: Wrong id returned: %s != %s' % (
                     expected_identifier,

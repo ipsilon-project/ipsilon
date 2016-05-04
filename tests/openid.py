@@ -24,7 +24,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'openid': 'yes',
          'openid_extensions': 'Attribute Exchange,Simple Registration,Teams',
@@ -85,8 +84,8 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
-    sess.add_server(sp1name, 'http://127.0.0.11:45081')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(sp1name, 'https://127.0.0.11:45081')
 
     print "openid: Authenticate to IDP ...",
     try:
@@ -99,7 +98,7 @@ if __name__ == '__main__':
     print "openid: Run OpenID Protocol ...",
     try:
         page = sess.fetch_page(idpname,
-                               'http://127.0.0.11:45081/?extensions=NO')
+                               'https://127.0.0.11:45081/?extensions=NO')
         page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
     except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -109,7 +108,7 @@ if __name__ == '__main__':
     print "openid: Run OpenID Protocol with extensions ...",
     try:
         page = sess.fetch_page(idpname,
-                               'http://127.0.0.11:45081/?extensions=YES')
+                               'https://127.0.0.11:45081/?extensions=YES')
         page.expected_value('text()', 'SUCCESS, WITH EXTENSIONS')
     except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)

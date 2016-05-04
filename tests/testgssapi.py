@@ -24,7 +24,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'yes',
@@ -39,10 +38,9 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
+sp_a = {'hostname': '${ADDRESS}',
         'saml_idp_metadata':
-            'http://%s:45080/idp1/saml2/metadata' % WRAP_HOSTNAME,
-        'saml_secure_setup': 'False',
+            'https://%s:45080/idp1/saml2/metadata' % WRAP_HOSTNAME,
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}
 
@@ -51,12 +49,11 @@ sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
          'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
-sp2_a = {'hostname': '${ADDRESS}:${PORT}',
-         'saml_idp_url': 'http://idp.ipsilon.dev:45080/idp1',
+sp2_a = {'hostname': '${ADDRESS}',
+         'saml_idp_url': 'https://idp.ipsilon.dev:45080/idp1',
          'admin_user': '${TEST_USER}',
          'admin_password': '${TESTDIR}/pw.txt',
          'saml_sp_name': 'sp2',
-         'saml_secure_setup': 'False',
          'saml_auth': '/sp',
          'httpd_user': '${TEST_USER}'}
 
@@ -153,10 +150,10 @@ if __name__ == '__main__':
         os.environ[key] = kenv[key]
 
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://%s:45080' % WRAP_HOSTNAME, user,
+    sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME, user,
                     'ipsilon')
-    sess.add_server(sp1name, 'http://127.0.0.11:45081')
-    sess.add_server(sp2name, 'http://127.0.0.11:45082')
+    sess.add_server(sp1name, 'https://127.0.0.11:45081')
+    sess.add_server(sp2name, 'https://127.0.0.11:45082')
 
     print "testgssapi: Authenticate to IDP ...",
     try:
@@ -176,7 +173,7 @@ if __name__ == '__main__':
 
     print "testgssapi: Access first SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -185,7 +182,7 @@ if __name__ == '__main__':
 
     print "testgssapi: Access second SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'http://127.0.0.11:45082/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)

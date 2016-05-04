@@ -97,9 +97,45 @@ class IpsilonTestBase(object):
         os.mkdir(os.path.join(self.testdir, 'lib', test.name))
         os.mkdir(os.path.join(self.testdir, 'log'))
         os.mkdir(os.path.join(self.testdir, 'cache'))
+        self.setup_ca()
+
+    def setup_ca(self):
+        # Prepare the cert stuff for this run
+        os.mkdir(os.path.join(self.testdir, 'certs'))
+        cmd = ['openssl', 'req', '-newkey', 'rsa:1024', '-days', '10',
+               '-x509', '-nodes', '-subj', '/CN=Ipsilon Test CA',
+               '-keyout', os.path.join(self.testdir, 'certs', 'root.key.pem'),
+               '-out', os.path.join(self.testdir, 'certs', 'root.cert.pem')]
+        subprocess.check_call(cmd)
+        open(os.path.join(self.testdir, 'certs', 'db'), 'w').close()
+
+        with open(os.path.join(self.testdir, 'certs', 'serial'), 'w') as ser:
+            ser.write('000b')
+
+        with open(os.path.join(self.testdir, 'certs',
+                               'openssl.conf'), 'w') as conf:
+            conf.write("""[ ca ]
+default_ca = myca
+[ myca ]
+database = %(certdir)s/db
+serial = %(certdir)s/serial
+x509_extensions = myca_extensions
+policy = myca_policy
+[ myca_policy ]
+commonName = supplied
+[ alt_names ]
+[ alt_names ]
+DNS.1 = ${ENV::ADDR}
+[ myca_extensions ]
+subjectKeyIdentifier = hash
+subjectAltName = @alt_names
+basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
+                                                          'certs')})
 
     def generate_profile(self, global_opts, args_opts, name, addr, port,
                          nameid='unspecified'):
+        args_opts['port'] = port
+
         newconf = ConfigParser.ConfigParser()
         newconf.add_section('globals')
         for k in global_opts:
@@ -137,12 +173,37 @@ class IpsilonTestBase(object):
             t = Template(f.read())
             text = t.substitute({'HTTPROOT': httpdir,
                                  'HTTPADDR': addr,
-                                 'HTTPPORT': port})
+                                 'HTTPPORT': port,
+                                 'NAME': name,
+                                 'CERTROOT': os.path.join(self.testdir,
+                                                          'certs')})
         filename = os.path.join(httpdir, 'httpd.conf')
         with open(filename, 'w+') as f:
             f.write(text)
 
+        certpath = os.path.join(self.testdir, 'certs', '%s.pem' % name)
+        keypath = os.path.join(self.testdir, 'certs', '%s.key' % name)
+        self.generate_cert(name, addr, certpath, keypath)
+
         return filename
+
+    def generate_cert(self, name, addr, certpath, keypath):
+        # Generate certs for this setup
+        cmd = ['openssl', 'req', '-newkey', 'rsa:1024', '-nodes',
+               '-out', '%s.csr' % certpath,
+               '-keyout', keypath,
+               '-subj', '/CN=Ipsilon Test %s' % name]
+        subprocess.check_call(cmd)
+        cmd = ['openssl', 'ca', '-batch', '-notext', '-days', '2',
+               '-md', 'sha1',
+               '-subj', '/CN=Ipsilon Test %s' % name,
+               '-outdir', os.path.join(self.testdir, 'certs'),
+               '-keyfile', os.path.join(self.testdir, 'certs', 'root.key.pem'),
+               '-cert', os.path.join(self.testdir, 'certs', 'root.cert.pem'),
+               '-config', os.path.join(self.testdir, 'certs', 'openssl.conf'),
+               '-in', '%s.csr' % certpath,
+               '-out', certpath]
+        subprocess.check_call(cmd, env={'ADDR': addr})
 
     def setup_idp_server(self, profile, name, addr, port, env):
         http_conf_file = self.setup_http(name, addr, port)
@@ -175,6 +236,8 @@ class IpsilonTestBase(object):
     def start_http_server(self, conf, env):
         env['MALLOC_CHECK_'] = '3'
         env['MALLOC_PERTURB_'] = str(random.randint(0, 32767) % 255 + 1)
+        env['REQUESTS_CA_BUNDLE'] = os.path.join(self.testdir, 'certs',
+                                                 'root.cert.pem')
         p = subprocess.Popen(['/usr/sbin/httpd', '-DFOREGROUND', '-f', conf],
                              env=env, preexec_fn=os.setsid)
         self.processes.append(p)

@@ -354,7 +354,7 @@ class HttpSessions(object):
                 'visible': True,
                 'description': desc,
                 'image': 'Zm9v',
-                'splink': 'http://test.example.com/secret/',
+                'splink': 'https://test.example.com/secret/',
             }
             headers['content-type'] = 'application/x-www-form-urlencoded'
             url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, desc)

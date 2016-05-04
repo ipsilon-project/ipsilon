@@ -27,7 +27,6 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
          'admin_user': '${TEST_USER}',
          'system_user': '${TEST_USER}',
          'instance': '${NAME}',
-         'secure': 'no',
          'testauth': 'yes',
          'pam': 'no',
          'gssapi': 'no',
@@ -41,9 +40,8 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
 
 
-sp_a = {'hostname': '${ADDRESS}:${PORT}',
-        'saml_idp_metadata': 'http://127.0.0.10:45080/idp1/saml2/metadata',
-        'saml_secure_setup': 'False',
+sp_a = {'hostname': '${ADDRESS}',
+        'saml_idp_metadata': 'https://127.0.0.10:45080/idp1/saml2/metadata',
         'saml_auth': '/sp',
         'saml_nameid': '${NAMEID}',
         'httpd_user': '${TEST_USER}'}
@@ -167,12 +165,12 @@ if __name__ == '__main__':
     idpname = 'idp1'
     user = pwd.getpwuid(os.getuid())[0]
     sp = sp_list[0]
-    spurl = 'http://%s:%s' % (sp['addr'], sp['port'])
+    spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
 
     # Set global mapping and allowed attributes, then test fetch from
     # SP.
     sess = HttpSessions()
-    sess.add_server(idpname, 'http://127.0.0.10:45080', user, 'ipsilon')
+    sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(sp['name'], spurl)
 
     print "testmapping: Authenticate to IDP ...",
