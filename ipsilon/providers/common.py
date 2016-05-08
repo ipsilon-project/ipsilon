@@ -10,15 +10,14 @@ from ipsilon.rest.common import RestPage
 import cherrypy
 
 
-class ProviderException(Exception, Log):
+class ProviderException(cherrypy.HTTPError, Log):
     code = 500
     message = None
 
     def __init__(self, message, code=None):
-        super(ProviderException, self).__init__(message)
+        super(ProviderException, self).__init__(code or self.code,
+                                                self.message)
         self.message = message
-        if code:
-            self.code = code
         self.debug('%s [%s]' % (self.message, self.code))
 
     def __str__(self):
