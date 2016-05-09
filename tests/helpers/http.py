@@ -235,6 +235,27 @@ class HttpSessions(object):
         return [method, self.new_url(referer, action_url),
                 {'headers': headers, 'data': payload}]
 
+    def handle_openidc_form(self, page):
+        if not isinstance(page, PageTree):
+            raise TypeError("Expected PageTree object")
+
+        if not page.first_value('//title/text()') == \
+                'Submitting...':
+            raise WrongPage('Not OpenIDC autosubmit form')
+
+        url = page.make_referer()
+        if '#' not in url:
+            raise WrongPage('Not OpenIDC fragment submit page')
+        url, arguments = url.split('#', 1)
+
+        arguments = arguments.split('&')
+        params = {'response_mode': 'fragment'}
+        for argument in arguments:
+            key, value = argument.split('=')
+            params[key] = value
+
+        return ['post', url, {'data': params}]
+
     def fetch_page(self, idp, target_url, follow_redirect=True, krb=False):
         """
         Fetch a page and parse the response code to determine what to do
@@ -290,6 +311,12 @@ class HttpSessions(object):
 
                 try:
                     (action, url, args) = self.handle_openid_form(page)
+                    continue
+                except WrongPage:
+                    pass
+
+                try:
+                    (action, url, args) = self.handle_openidc_form(page)
                     continue
                 except WrongPage:
                     pass

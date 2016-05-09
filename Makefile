@@ -107,6 +107,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --test=ldap
 	PYTHONPATH=./ ./tests/tests.py --test=ldapdown
 	PYTHONPATH=./ ./tests/tests.py --test=openid
+	PYTHONPATH=./ ./tests/tests.py --test=openidc
 	PYTHONPATH=./ ./tests/tests.py --test=dbupgrades
 
 test: lp-test unittests tests
