@@ -828,6 +828,9 @@ class SAML2SessionStore(Store):
             datum['supported_logout_mechs'] = ','.join(
                 datum['supported_logout_mechs']
             )
+        for attr in datum:
+            if isinstance(datum[attr], str):
+                datum[attr] = unicode(datum[attr], 'utf-8')
         return self.new_unique_data(self.table, datum)
 
     def get_session(self, session_id=None, request_id=None):
@@ -859,6 +862,9 @@ class SAML2SessionStore(Store):
         return logged_in
 
     def update_session(self, datum):
+        for attr in datum:
+            if isinstance(datum[attr], str):
+                datum[attr] = unicode(datum[attr], 'utf-8')
         self.save_unique_data(self.table, datum)
 
     def remove_session(self, uuidval):
