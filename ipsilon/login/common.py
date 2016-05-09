@@ -9,6 +9,7 @@ from ipsilon.info.common import Info
 from ipsilon.util.cookies import SecureCookie
 from ipsilon.util.log import Log
 import cherrypy
+import time
 
 
 USERNAME_COOKIE = 'ipsilon_default_username'
@@ -118,10 +119,9 @@ class LoginHelper(Log):
         self.debug("User %s attributes: %s" % (username, repr(userdata)))
 
         if auth_type:
-            if userdata:
-                userdata.update({'_auth_type': auth_type})
-            else:
-                userdata = {'_auth_type': auth_type}
+            userdata.update({'_auth_type': auth_type})
+
+        userdata.update({'_auth_time': int(time.time())})
 
         # create session login including all the userdata just gathered
         session.login(username, userdata)

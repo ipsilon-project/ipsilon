@@ -1,0 +1,23 @@
+{% extends "master.html" %}
+{% block main %}
+<div class="col-sm-12">
+  <p>If you are not redirected automatically, please click Continue.</p>
+</div>
+
+<div class="col-sm-7 col-md-6 col-lg-5 login">
+
+  <div class="form-group">
+    <form id="openidc_response_form" method="POST" action="{{ redirect_url }}">
+{%- for item in response_info|dictsort %}
+      <input type="hidden" name="{{ item[0] }}" value="{{ item[1] }}">
+{%- endfor %}
+      <button type="submit" value="Continue" class="btn btn-primary btn-lg" tabindex="1">Continue</button>
+    </form>
+  </div>
+</div>
+
+<script type="text/javascript">
+  // TODO: Uncomment this, this is used for testing
+  //document.getElementById('openidc_response_form').submit();
+</script>
+{% endblock %}

@@ -12,6 +12,8 @@ from datetime import timedelta
 from ipsilon.tools.certs import Certificate
 from ipsilon.providers.saml2idp import IdpMetadataGenerator
 
+from jwcrypto.jwk import JWK, JWKSet
+
 
 logger = None
 
@@ -32,9 +34,13 @@ ADMIN_TEMPLATE='''
 CREATE TABLE login_config (name TEXT,option TEXT,value TEXT);
 INSERT INTO login_config VALUES('global', 'enabled', 'testauth');
 CREATE TABLE provider_config (name TEXT,option TEXT,value TEXT);
-INSERT INTO provider_config VALUES('global', 'enabled', 'saml2');
+INSERT INTO provider_config VALUES('global', 'enabled', 'saml2,openidc');
 INSERT INTO provider_config VALUES('saml2', 'idp storage path',
                                    '${workdir}/saml2');
+INSERT INTO provider_config VALUES('openidc', 'idp key file',
+                                   '${workdir}/openidc.key');
+INSERT INTO provider_config VALUES('openidc', 'idp sig key id',
+                                   'quickstart');
 '''
 
 USERS_TEMPLATE='''
@@ -96,6 +102,16 @@ def init(workdir):
     meta = IdpMetadataGenerator(url, cert,
                                 timedelta(validity))
     meta.output(os.path.join(workdir, 'saml2', 'metadata.xml'))
+
+    # Also initalize OpenID Connect
+    keyfile = os.path.join(workdir, 'openidc.key')
+    keyset = JWKSet()
+    # We generate one RSA2048 signing key
+    rsasig = JWK(generate='RSA', size=2048, use='sig', kid='quickstart')
+    keyset.add(rsasig)
+    with open(keyfile, 'w') as m:
+	m.write(keyset.export())
+
 
 if __name__ == '__main__':
 
