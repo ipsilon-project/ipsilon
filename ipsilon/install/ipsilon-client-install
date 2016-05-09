@@ -24,9 +24,10 @@ import base64
 
 HTTPDCONFD = '/etc/httpd/conf.d'
 SAML2_TEMPLATE = '/usr/share/ipsilon/templates/install/saml2/sp.conf'
-SAML2_CONFFILE = '/etc/httpd/conf.d/ipsilon-saml.conf'
-SAML2_HTTPDIR = '/etc/httpd/saml2'
-SAML2_PROTECTED = '/saml2protected'
+OPENIDC_TEMPLATE = '/usr/share/ipsilon/templates/install/openidc/rp.conf'
+CONFFILE = '/etc/httpd/conf.d/ipsilon-%s.conf'
+HTTPDIR = '/etc/httpd/%s'
+PROTECTED = '/protected'
 
 #Installation arguments
 args = dict()
@@ -73,7 +74,7 @@ def saml2():
 
     path = None
     if not args['saml_no_httpd']:
-        path = os.path.join(SAML2_HTTPDIR, args['hostname'])
+        path = os.path.join(HTTPDIR % 'saml2', args['hostname'])
         if os.path.exists(path):
             raise Exception('Service Provider is already configured')
         os.makedirs(path, 0750)
@@ -153,7 +154,7 @@ def saml2():
                 logger.error("Failed to read SP Image file!\n" +
                              "Error: [%s]" % e)
 
-        sp_link = 'https://%s%s' % (args['hostname'], args['saml_auth'])
+        sp_link = 'https://%s%s' % (args['hostname'], args['auth_location'])
 
         # Register the SP
         try:
@@ -173,15 +174,15 @@ def saml2():
 
         saml_protect = 'auth'
         saml_auth=''
-        if args['saml_base'] != args['saml_auth']:
+        if args['saml_base'] != args['auth_location']:
             saml_protect = 'info'
             saml_auth = '<Location %s>\n' \
                         '    MellonEnable "auth"\n' \
                         '    Header append Cache-Control "no-cache"\n' \
-                        '</Location>\n' % args['saml_auth']
+                        '</Location>\n' % args['auth_location']
 
         psp = '# '
-        if args['saml_auth'] == SAML2_PROTECTED:
+        if args['auth_location'] == PROTECTED:
             # default location, enable the default page
             psp = ''
 
@@ -213,13 +214,13 @@ def saml2():
                     'sp_hostname': args['hostname'],
                     'sp_port': port_str,
                     'sp': psp}
-        files.write_from_template(SAML2_CONFFILE, SAML2_TEMPLATE, samlopts)
+        files.write_from_template(CONFFILE % 'saml', SAML2_TEMPLATE, samlopts)
 
-        files.fix_user_dirs(SAML2_HTTPDIR, args['httpd_user'])
+        files.fix_user_dirs(HTTPDIR % 'saml2', args['httpd_user'])
 
         logger.info('SAML Service Provider configured.')
         logger.info('You should be able to restart the HTTPD server and' +
-                    ' then access it at %s%s' % (url, args['saml_auth']))
+                    ' then access it at %s%s' % (url, args['auth_location']))
     else:
         logger.info('SAML Service Provider configuration ready.')
         logger.info('Use the certificate, key and metadata.xml files to' +
@@ -264,33 +265,200 @@ def saml2_register_sp(url, user, password, sp_name, sp_metadata,
         raise Exception('%s' % message)
 
 
-def install():
-    if args['saml']:
-        saml2()
-
-
 def saml2_uninstall():
-    path = os.path.join(SAML2_HTTPDIR, args['hostname'])
+    path = os.path.join(HTTPDIR % 'saml2', args['hostname'])
     if os.path.exists(path):
         try:
             shutil.rmtree(path)
         except Exception, e:  # pylint: disable=broad-except
             log_exception(e)
 
-    if os.path.exists(SAML2_CONFFILE):
+    if os.path.exists(CONFFILE % 'saml'):
         try:
-            os.remove(SAML2_CONFFILE)
+            os.remove(CONFFILE % 'saml')
         except Exception, e:  # pylint: disable=broad-except
             log_exception(e)
 
 
-def uninstall():
-    logger.info('Uninstalling Service Provider')
-    #FXIME: ask confirmation
-    saml2_uninstall()
-    logger.info('Uninstalled SAML2 data')
+def saml2_add_arguments(parser):
+    parser.add_argument('--saml', action='store_true',
+                        help="Whether to install a saml2 SP")
+    parser.add_argument('--saml-idp-url', default=None,
+                        help="A URL of the IDP to register the SP with")
+    parser.add_argument('--saml-idp-metadata', default=None,
+                        help="A URL pointing at the IDP Metadata (FILE or HTTP)")
+    parser.add_argument('--saml-no-httpd', action='store_true', default=False,
+                        help="Do not configure httpd")
+    parser.add_argument('--saml-base', default='/',
+                        help="Where saml2 authdata is available")
+    parser.add_argument('--saml-sp', default='/saml2',
+                        help="Where saml communication happens")
+    parser.add_argument('--saml-sp-logout', default=None,
+                        help="Single Logout URL")
+    parser.add_argument('--saml-sp-post', default=None,
+                        help="Post response URL")
+    parser.add_argument('--saml-sp-paos', default=None,
+                        help="PAOS response URL, used for ECP")
+    parser.add_argument('--no-saml-soap-logout', action='store_true',
+                        default=False,
+                        help="Disable Single Logout over SOAP")
+    parser.add_argument('--saml-secure-setup', action='store_true',
+                        default=True, help="Turn on all security checks")
+    parser.add_argument('--saml-nameid', default='unspecified',
+                        choices=SAML2_NAMEID_MAP.keys(),
+                        help="SAML NameID format to use")
+    parser.add_argument('--saml-sp-name', default=None,
+                        help="The SP name to register with the IdP")
+    parser.add_argument('--saml-sp-description', default=None,
+                        help="The description of the SP to display on the " +
+                        "portal")
+    parser.add_argument('--saml-sp-visible', action='store_false',
+                        default=True,
+                        help="The SP is visible in the portal")
+    parser.add_argument('--saml-sp-image', default=None,
+                        help="Image to display for this SP on the portal")
+    parser.add_argument('--debug', action='store_true', default=False,
+                        help="Turn on script debugging")
+    parser.add_argument('--config-profile', default=None,
+                        help=argparse.SUPPRESS)
+    parser.add_argument('--saml-auth', default=None,
+                        help="Backwards compatibility. Use --auth-location.")
 
 
+def saml2_verify_arguments(args):
+    if args['saml_auth']:
+        logger.warn('--saml-auth is deprecated. Please use --auth-location')
+        args['auth_location'] = args['saml_auth']
+
+    # Validate that all path options begin with '/'
+    path_args = ['saml_base', 'auth_location', 'saml_sp', 'saml_sp_logout',
+                 'saml_sp_post', 'saml_sp_paos']
+    for path_arg in path_args:
+        if args[path_arg] is not None and not args[path_arg].startswith('/'):
+            raise ValueError('--%s must begin with a / character.' %
+                             path_arg.replace('_', '-'))
+
+    # The saml_sp setting must be a subpath of saml_base since it is
+    # used as the MellonEndpointPath.
+    if not args['saml_sp'].startswith(args['saml_base']):
+        raise ValueError('--saml-sp must be a subpath of --saml-base.')
+
+    # The samle_auth setting must be a subpath of saml_base otherwise
+    # the IdP cannot be identified by mod_auth_mellon.
+    if not args['auth_location'].startswith(args['saml_base']):
+        raise ValueError('--auth-location must be a subpath of --saml-base.')
+
+    # The saml_sp_logout, saml_sp_post and saml_sp_paos settings must
+    # be subpaths of saml_sp (the mellon endpoint).
+    path_args = {'saml_sp_logout': 'logout',
+                 'saml_sp_post': 'postResponse',
+                 'saml_sp_paos': 'paosResponse'}
+    for path_arg, default_path in path_args.items():
+        if args[path_arg] is None:
+            args[path_arg] = '%s/%s' % (args['saml_sp'].rstrip('/'),
+                                        default_path)
+
+        elif not args[path_arg].startswith(args['saml_sp']):
+            raise ValueError('--%s must be a subpath of --saml-sp' %
+                             path_arg.replace('_', '-'))
+
+    # If saml_idp_url if being used, we require saml_sp_name to
+    # use when registering the SP.
+    if args['saml_idp_url'] and not args['saml_sp_name']:
+        raise ValueError('--saml-sp-name must be specified when using' +
+                         '--saml-idp-url')
+
+
+# OpenID Connect
+def openidc():
+    logger.info('Installing OpenID Connect Relying Party')
+
+    discovery_url = '%s/openidc/wellknown_openid_configuration' % \
+                    args['openidc_idp_url']
+    try:
+        r = requests.get(discovery_url)
+        r.raise_for_status()
+        discovered_info = r.json()
+    except Exception, e:  # pylint: disable=broad-except
+        logger.error("Failed to retrieve IdP configuration!\n" +
+                     "Error: [%s]" % repr(e))
+        raise
+
+    if not 'registration_endpoint' in discovered_info:
+        raise ValueError('This IdP does not provide automatic registration')
+
+    proto = 'https'
+    port_str = ''
+    if args['port']:
+        port_str = ':%s' % args['port']
+
+    url = '%s://%s%s%s' % (proto, args['hostname'], port_str,
+                           args['auth_location'])
+    redirect_uri = '%s/redirect_uri' % url
+
+    # Generate client metadata
+    client_info = {}
+    client_info['redirect_uris'] = [redirect_uri]
+    client_info['response_types'] = ['code']
+    client_info['grant_types'] = ['authorization_code']
+    client_info['application_type'] = 'web'
+    client_info['client_name'] = 'Ipsilon Client %s' % url
+    client_info['client_uri'] = url
+    client_info['subject_type'] = args['openidc_subject_type']
+
+    # Submit client info
+    logger.info('Registering RP with the IdP')
+    try:
+        r = requests.post(discovered_info['registration_endpoint'],
+                          json=client_info)
+        r.raise_for_status()
+        registration_response = r.json()
+    except Exception, e:  # pylint: disable=broad-except
+        logger.error("Failed to register with the IdP!\n" +
+                     "Error: [%s]" % repr(e))
+        raise
+
+    validate_server = 'On'
+    if args['openidc_skip_ssl_validation']:
+        validate_server = 'Off'
+
+    # Generate config
+    openidcopts = {'redirect_uri': redirect_uri,
+                   'crypto_passphrase': base64.b64encode(os.urandom(32))[:32],
+                   'idp_metadata_url': discovery_url,
+                   'client_id': registration_response['client_id'],
+                   'client_secret': registration_response['client_secret'],
+                   'validate_server': validate_server,
+                   'response_type': args['openidc_response_type'],
+                   'auth_location': args['auth_location']}
+    files.write_from_template(CONFFILE % 'openidc', OPENIDC_TEMPLATE,
+                              openidcopts)
+
+    logger.info('OpenID Connect Relying Party configured')
+    logger.info('You should be able to restart the HTTPD server and' +
+                ' then access it at %s%s' % (url, args['auth_location']))
+
+
+def openidc_verify_arguments(args):
+    if not args['openidc_idp_url']:
+        raise ValueError('OpenIDC IdP URL needs to be provided')
+
+
+def openidc_add_arguments(parser):
+    parser.add_argument('--openidc', action='store_true', default=False,
+                        help='Whether to install an OpenID Connect RP')
+    parser.add_argument('--openidc-idp-url', default=None,
+                        help='A URL of the IdP to register the RP with')
+    parser.add_argument('--openidc-response-type', default='code',
+                        help='Which response type to use, determines the flow')
+    parser.add_argument('--openidc-subject-type', default='pairwise',
+                        help='Which subject type to request: pairwise or ' +
+                             'public')
+    parser.add_argument('--openidc-skip-ssl-validation', action='store_true',
+                        help='Whether to skip validating the IdP SSL cert')
+
+
+# Global
 def log_exception(e):
     if 'debug' in args and args['debug']:
         logger.exception(e)
@@ -353,50 +521,13 @@ def parse_args():
                              "used to create a SP (- to read from stdin)")
     parser.add_argument('--httpd-user', default='apache',
                         help="Web server account used to read certs")
-    parser.add_argument('--saml', action='store_true', default=True,
-                        help="Whether to install a saml2 SP")
-    parser.add_argument('--saml-idp-url', default=None,
-                        help="A URL of the IDP to register the SP with")
-    parser.add_argument('--saml-idp-metadata', default=None,
-                        help="A URL pointing at the IDP Metadata (FILE or HTTP)")
-    parser.add_argument('--saml-no-httpd', action='store_true', default=False,
-                        help="Do not configure httpd")
-    parser.add_argument('--saml-base', default='/',
-                        help="Where saml2 authdata is available")
-    parser.add_argument('--saml-auth', default=SAML2_PROTECTED,
-                        help="Where saml2 authentication is enforced")
-    parser.add_argument('--saml-sp', default='/saml2',
-                        help="Where saml communication happens")
-    parser.add_argument('--saml-sp-logout', default=None,
-                        help="Single Logout URL")
-    parser.add_argument('--saml-sp-post', default=None,
-                        help="Post response URL")
-    parser.add_argument('--saml-sp-paos', default=None,
-                        help="PAOS response URL, used for ECP")
-    parser.add_argument('--no-saml-soap-logout', action='store_true',
-                        default=False,
-                        help="Disable Single Logout over SOAP")
-    parser.add_argument('--saml-secure-setup', action='store_true',
-                        default=True, help="Turn on all security checks")
-    parser.add_argument('--saml-nameid', default='unspecified',
-                        choices=SAML2_NAMEID_MAP.keys(),
-                        help="SAML NameID format to use")
-    parser.add_argument('--saml-sp-name', default=None,
-                        help="The SP name to register with the IdP")
-    parser.add_argument('--saml-sp-description', default=None,
-                        help="The description of the SP to display on the " +
-                        "portal")
-    parser.add_argument('--saml-sp-visible', action='store_false',
-                        default=True,
-                        help="The SP is visible in the portal")
-    parser.add_argument('--saml-sp-image', default=None,
-                        help="Image to display for this SP on the portal")
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help="Turn on script debugging")
-    parser.add_argument('--config-profile', default=None,
-                        help=argparse.SUPPRESS)
-    parser.add_argument('--uninstall', action='store_true',
+    parser.add_argument('--auth-location', default=PROTECTED,
+                        help="Where authentication is enforced")
+    parser.add_argument('--uninstall', action='store_true', default=False,
                         help="Uninstall the server and all data")
+
+    openidc_add_arguments(parser)
+    saml2_add_arguments(parser)
 
     args = vars(parser.parse_args())
 
@@ -409,64 +540,51 @@ def parse_args():
     if args['port'] and not args['port'].isdigit():
         raise ValueError('Port number: %s is not an integer.' % args['port'])
 
-    # Validate that all path options begin with '/'
-    path_args = ['saml_base', 'saml_auth', 'saml_sp', 'saml_sp_logout',
-                 'saml_sp_post', 'saml_sp_paos']
-    for path_arg in path_args:
-        if args[path_arg] is not None and not args[path_arg].startswith('/'):
-            raise ValueError('--%s must begin with a / character.' %
-                             path_arg.replace('_', '-'))
-
-    # The saml_sp setting must be a subpath of saml_base since it is
-    # used as the MellonEndpointPath.
-    if not args['saml_sp'].startswith(args['saml_base']):
-        raise ValueError('--saml-sp must be a subpath of --saml-base.')
-
-    # The samle_auth setting must be a subpath of saml_base otherwise
-    # the IdP cannot be identified by mod_auth_mellon.
-    if not args['saml_auth'].startswith(args['saml_base']):
-        raise ValueError('--saml-auth must be a subpath of --saml-base.')
-
-    # The saml_sp_logout, saml_sp_post and saml_sp_paos settings must
-    # be subpaths of saml_sp (the mellon endpoint).
-    path_args = {'saml_sp_logout': 'logout',
-                 'saml_sp_post': 'postResponse',
-                 'saml_sp_paos': 'paosResponse'}
-    for path_arg, default_path in path_args.items():
-        if args[path_arg] is None:
-            args[path_arg] = '%s/%s' % (args['saml_sp'].rstrip('/'),
-                                        default_path)
-
-        elif not args[path_arg].startswith(args['saml_sp']):
-            raise ValueError('--%s must be a subpath of --saml-sp' %
-                             path_arg.replace('_', '-'))
-
-    # If saml_idp_url if being used, we require saml_sp_name to
-    # use when registering the SP.
-    if args['saml_idp_url'] and not args['saml_sp_name']:
-        raise ValueError('--saml-sp-name must be specified when using' +
-                         '--saml-idp-url')
-
-    # At least one on this list needs to be specified or we do nothing
-    sp_list = ['saml']
-    present = False
+    # Exactly one on this list needs to be specified or we do nothing
+    sp_list = ['saml', 'openidc']
+    service_type = None
     for sp in sp_list:
         if args[sp]:
-            present = True
-    if not present and not args['uninstall']:
-        raise ValueError('Nothing to install, please select a Service type.')
+            if service_type:
+                raise ValueError('Multiple service types selected')
+            service_type = sp
+
+    if not service_type:
+        # Since this was our default previously, let's be backwards compatible
+        # and default to SAML2
+        args['saml'] = True
+        service_type = 'saml'
+
+    if service_type == 'saml':
+        saml2_verify_arguments(args)
+
+    elif service_type == 'openidc':
+        openidc_verify_arguments(args)
+
+    return service_type
 
 
 if __name__ == '__main__':
     out = 0
     openlogs()
     try:
-        parse_args()
+        service_type = parse_args()
 
         if 'uninstall' in args and args['uninstall'] is True:
-            uninstall()
+            logger.info('Uninstalling Service Provider')
+            #FXIME: ask confirmation
+
+            if service_type == 'saml':
+                saml2_uninstall()
+            elif service_type == 'openidc':
+                openidc_uninstall()
+
+            logger.info('Uninstalled Service Provider')
         else:
-            install()
+            if service_type == 'saml':
+                saml2()
+            elif service_type == 'openidc':
+                openidc()
     except Exception, e:  # pylint: disable=broad-except
         log_exception(e)
         if 'uninstall' in args and args['uninstall'] is True:

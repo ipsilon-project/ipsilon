@@ -97,7 +97,7 @@ Prerequisites:
 
 The default configuration for the client will install a configuration in Apache
 that will authenticate via the IdP any attempt to connect to the location named
-'/saml2protected', a test file is returned at that location.
+'/protected', a test file is returned at that location.
 
 In order to successfully install a client 2 steps are necessary:
 

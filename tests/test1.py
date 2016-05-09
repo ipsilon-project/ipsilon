@@ -32,8 +32,8 @@ idp_a = {'hostname': '${ADDRESS}:${PORT}',
 
 sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
-        'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
-        'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+        'CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-%s.conf',
+        'HTTPDIR': '${TESTDIR}/${NAME}/%s'}
 
 
 sp_a = {'hostname': '${ADDRESS}',
@@ -43,8 +43,8 @@ sp_a = {'hostname': '${ADDRESS}',
 
 sp2_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
          'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
-         'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
-         'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+         'CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-%s.conf',
+         'HTTPDIR': '${TESTDIR}/${NAME}/%s'}
 
 sp2_a = {'hostname': '${ADDRESS}',
          'saml_idp_url': 'https://127.0.0.10:45080/idp1',

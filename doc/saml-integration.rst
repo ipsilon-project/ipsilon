@@ -212,7 +212,7 @@ auth
   beneath the base URI.  Accessing this URI will trigger the authentication
   flow described above.  The browser will then return to this URI upon
   successful authentication.  This should typically be set to the "Log In" URI
-  of your web application.  It defaults to ``/saml2protected``, but it can be
+  of your web application.  It defaults to ``/protected``, but it can be
   set with the ``--saml-auth`` option.
 
 endpoint

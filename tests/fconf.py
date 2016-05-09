@@ -61,8 +61,8 @@ saml2 idp nameid salt = ${IDPSALT}
 
 sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
         'SAML2_TEMPLATE': '${TESTDIR}/templates/install/saml2/sp.conf',
-        'SAML2_CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-saml.conf',
-        'SAML2_HTTPDIR': '${TESTDIR}/${NAME}/saml2'}
+        'CONFFILE': '${TESTDIR}/${NAME}/conf.d/ipsilon-%s.conf',
+        'HTTPDIR': '${TESTDIR}/${NAME}/%s'}
 
 
 sp_a = {'hostname': '${ADDRESS}',
