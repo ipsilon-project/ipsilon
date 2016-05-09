@@ -1,6 +1,7 @@
-# Copyright (C) 2013 Ipsilon project Contributors, for license see COPYING
+# Copyright (C) 2013,2016 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.util.page import Page
+from ipsilon.util.webfinger import WebFinger
 from ipsilon.util import errors
 from ipsilon.login.common import Login
 from ipsilon.login.common import Logout
@@ -32,6 +33,9 @@ class Root(Page):
         cherrypy.config['error_page.401'] = errors.Error_401(self._site)
         cherrypy.config['error_page.404'] = errors.Error_404(self._site)
         cherrypy.config['error_page.500'] = errors.Errors(self._site)
+
+        # set up WebFinger endpoint
+        self.webfinger = WebFinger(self._site)
 
         # now set up the default login plugins
         self.login = Login(self._site)
