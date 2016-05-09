@@ -69,6 +69,7 @@ License:        GPLv3+
 Requires:       %{name}-filesystem = %{version}-%{release}
 Requires:       %{name}-saml2-base = %{version}-%{release}
 Requires:       mod_auth_mellon >= 0.11.0
+Requires:       mod_auth_openidc
 Requires:       mod_ssl
 BuildArch:      noarch
 
@@ -133,6 +134,20 @@ BuildArch:      noarch
 
 %description openid
 Provides an OpenId provider plugin for the Ipsilon identity Provider
+
+
+%package openidc
+Summary:        OpenID Connect provider plugin
+Group:          System Environment/Base
+License:        GPLv3+
+Provides:       ipsilon-provider = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
+Requires:       python-jwcrypto
+BuildArch:      noarch
+
+%description openidc
+Provides an OpenID Connect and OAuth2 provider plugin for the Ipsilon
+identity Provider
 
 
 %package persona
@@ -352,8 +367,14 @@ fi
 %{_datadir}/ipsilon/templates/saml2
 
 %files openid
-%{python2_sitelib}/ipsilon/providers/openid*
-%{_datadir}/ipsilon/templates/openid
+%{python2_sitelib}/ipsilon/providers/openidp.py*
+%{python2_sitelib}/ipsilon/providers/openid/
+%{_datadir}/ipsilon/templates/openid/
+
+%files openidc
+%{python2_sitelib}/ipsilon/providers/openidcp.py*
+%{python2_sitelib}/ipsilon/providers/openidc/
+%{_datadir}/ipsilon/templates/openidc/
 
 %files persona
 %{python2_sitelib}/ipsilon/providers/persona*
