@@ -42,6 +42,7 @@ Requires:       python-jinja2
 Requires:       python-lxml
 Requires:       python-sqlalchemy
 Requires:       open-sans-fonts
+Requires:       fontawesome-fonts
 Requires:       pam
 Requires(pre):  shadow-utils
 Requires(post): %_sbindir/semanage, %_sbindir/restorecon
