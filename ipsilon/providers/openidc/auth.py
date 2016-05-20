@@ -19,6 +19,7 @@ import hashlib
 import requests
 import time
 import json
+import urllib
 from urlparse import urlparse
 
 URLROOT = 'openidc'
@@ -98,7 +99,6 @@ class AuthenticateRequest(ProviderPageBase):
         # Build a response-string, which is sent with either query, form
         # or fragment responses
         if response_mode in ['query', 'fragment']:
-            data = ['%s=%s' % (key, contents[key]) for key in contents.keys()]
 
             separator = '?'
             if response_mode == 'fragment':
@@ -108,7 +108,7 @@ class AuthenticateRequest(ProviderPageBase):
             else:
                 url += '&'
 
-            url += '&'.join(data)
+            url += urllib.urlencode(contents)
 
         if response_mode in ['query', 'fragment', 'none']:
             raise cherrypy.HTTPRedirect(url)
