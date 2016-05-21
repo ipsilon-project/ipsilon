@@ -14,6 +14,7 @@ VALID_IN_NAME = r'[^\ a-zA-Z0-9\-\.]'
 
 
 class InvalidProviderId(ProviderException):
+    statuscode = 400
 
     def __init__(self, msg):
         message = 'Invalid Provider ID: %s' % msg
@@ -22,6 +23,7 @@ class InvalidProviderId(ProviderException):
 
 
 class InvalidProviderMetadata(ProviderException):
+    statuscode = 400
 
     def __init__(self, msg):
         message = 'Invalid Provider Metadata: %s' % msg

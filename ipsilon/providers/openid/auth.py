@@ -1,7 +1,7 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.providers.common import ProviderPageBase
-from ipsilon.providers.common import AuthenticationError, InvalidRequest
+from ipsilon.providers.common import InvalidRequest, UnauthorizedRequest
 from ipsilon.providers.openid.meta import XRDSHandler, UserXRDSHandler
 from ipsilon.providers.openid.meta import IDHandler
 from ipsilon.util.policy import Policy
@@ -57,7 +57,7 @@ class AuthenticateRequest(ProviderPageBase):
             return self._openid_checks(request, form, **kwargs)
         except InvalidRequest, e:
             raise cherrypy.HTTPError(e.code, e.message)
-        except AuthenticationError, e:
+        except UnauthorizedRequest, e:
             if request is None:
                 raise cherrypy.HTTPError(e.code, e.message)
             return self._respond(request.answer(False))
@@ -111,7 +111,7 @@ class AuthenticateRequest(ProviderPageBase):
                     self.debug('Redirecting: %s' % redirect)
                     raise cherrypy.HTTPRedirect(redirect)
                 else:
-                    raise AuthenticationError("unknown user", 401)
+                    raise UnauthorizedRequest("unknown user")
 
         elif kwargs.get('openid.mode', None) == 'checkid_immediate':
             # This is immediate, so we need to assert or fail
@@ -127,11 +127,11 @@ class AuthenticateRequest(ProviderPageBase):
         if not request.idSelect():
             idurl = self.cfg.identity_url_template % {'username': user.name}
             if request.identity != idurl:
-                raise AuthenticationError("User ID mismatch!", 401)
+                raise UnauthorizedRequest("User ID mismatch!")
 
         # check if the relying party is trusted
         if request.trust_root in self.cfg.untrusted_roots:
-            raise AuthenticationError("Untrusted Relying party", 401)
+            raise UnauthorizedRequest("Untrusted Relying party")
 
         # if the party is explicitly whitelisted just respond
         if request.trust_root in self.cfg.trusted_roots:
@@ -150,14 +150,14 @@ class AuthenticateRequest(ProviderPageBase):
             return self._respond(self._response(request, us))
 
         if immediate:
-            raise AuthenticationError("No consent for immediate", 401)
+            raise UnauthorizedRequest("No consent for immediate")
 
         if self.stage == 'consent':
             if form is None:
-                raise AuthenticationError("Unintelligible consent", 401)
+                raise UnauthorizedRequest("Unintelligible consent")
             allow = form.get('decided_allow', False)
             if not allow:
-                raise AuthenticationError("User declined", 401)
+                raise UnauthorizedRequest("User declined")
             try:
                 days = int(form.get('remember_for_days', '0'))
                 if days < 0 or days > 7:
@@ -236,7 +236,7 @@ class Continue(AuthenticateRequest):
         self.stage = transdata.get('openid_stage', None)
         openid_request = transdata.get('openid_request', None)
         if self.stage is None or openid_request is None:
-            raise AuthenticationError("unknown state", 400)
+            raise InvalidRequest("unknown state")
 
         kwargs = json.loads(openid_request)
         return self.auth(**kwargs)
@@ -249,7 +249,7 @@ class Consent(AuthenticateRequest):
         self.stage = transdata.get('openid_stage', None)
         openid_request = transdata.get('openid_request', None)
         if self.stage is None or openid_request is None:
-            raise AuthenticationError("unknown state", 400)
+            raise InvalidRequest("unknown state")
 
         args = ({'form': kwargs},)
         kwargs = json.loads(openid_request)

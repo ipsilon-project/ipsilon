@@ -11,13 +11,14 @@ import cherrypy
 
 
 class ProviderException(cherrypy.HTTPError, Log):
-    code = 500
+    statuscode = 500
     message = None
 
     def __init__(self, message, code=None):
-        super(ProviderException, self).__init__(code or self.code,
-                                                self.message)
+        super(ProviderException, self).__init__(self.statuscode,
+                                                message or self.message)
         self.message = message
+        self.code = code
         self.debug('%s [%s]' % (self.message, self.code))
 
     def __str__(self):
@@ -25,17 +26,24 @@ class ProviderException(cherrypy.HTTPError, Log):
 
 
 class AuthenticationError(ProviderException):
-    code = 403
+    statuscode = 403
 
     def __init__(self, message, code=None):
         super(AuthenticationError, self).__init__(message, code)
 
 
 class InvalidRequest(ProviderException):
-    code = 400
+    statuscode = 400
 
     def __init__(self, message, code=None):
         super(InvalidRequest, self).__init__(message, code)
+
+
+class UnauthorizedRequest(ProviderException):
+    statuscode = 401
+
+    def __init__(self, message, code=None):
+        super(UnauthorizedRequest, self).__init__(message, code)
 
 
 class ProviderBase(ConfigHelper, PluginObject):

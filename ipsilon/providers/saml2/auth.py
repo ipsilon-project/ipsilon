@@ -17,6 +17,7 @@ import hashlib
 
 
 class UnknownProvider(ProviderException):
+    statuscode = 400
 
     def __init__(self, message):
         super(UnknownProvider, self).__init__(message)
