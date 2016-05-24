@@ -133,7 +133,7 @@ class Option(Log):
         raise NotImplementedError
 
     def _str_export_value(self):
-        if self._assigned_value:
+        if self._assigned_value is not None:
             return str(self._assigned_value)
         return None
 
