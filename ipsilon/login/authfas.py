@@ -169,7 +169,7 @@ Form based login Manager that uses the Fedora Authentication Server
     def get_tree(self, site):
         self.fpc = FasProxyClient(base_url=self.fas_url,
                                   useragent=self.user_agent,
-                                  insecure=(self.insecure == 'YES'))
+                                  insecure=self.insecure)
         self.page = FAS(site, self, 'login/fas')
         return self.page
 

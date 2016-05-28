@@ -431,8 +431,8 @@ class Condition(Pick):
 
     def __init__(self, name, description, default_value=False,
                  readonly=False):
-        # The db stores 1/0. Convert the passed-in value if
-        # necessary
+        # We're not too picky about what data we get, but we make sure it's a
+        # boolean by the time we're done with it
         if default_value in [u'1', 'True', True]:
             default_value = True
         else:
@@ -442,7 +442,11 @@ class Condition(Pick):
                                         readonly=readonly)
 
     def import_value(self, value):
-        self._assigned_value = value
+        # Convert the text string stored in the database back to a boolean
+        if value == 'True':
+            self._assigned_value = True
+        elif value == 'False':
+            self._assigned_value = False
 
 
 class ConfigHelper(Log):
