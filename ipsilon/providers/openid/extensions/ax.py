@@ -38,12 +38,24 @@ class OpenidExtension(OpenidExtensionBase):
             return None
         resp = ax.FetchResponse(req)
         for name in req.requested_attributes:
+            attr = req.requested_attributes[name]
             try:
                 self.debug(name)
+                value = None
                 if name in AP_MAP:
-                    resp.addValue(name, userdata[AP_MAP[name]])
+                    value = userdata[AP_MAP[name]]
                 else:
-                    resp.addValue(name, userdata[name])
+                    value = userdata[name]
+
+                added_vals = 0
+                if not isinstance(value, list):
+                    value = [value]
+                for val in value:
+                    val = val.strip()
+                    if attr.wantsUnlimitedValues() or added_vals < attr.count:
+                        if val != '':
+                            added_vals += 1
+                            resp.addValue(name, val)
             except Exception:  # pylint: disable=broad-except
                 pass
         return resp
