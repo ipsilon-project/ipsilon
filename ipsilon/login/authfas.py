@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
+# Copyright (C) 2014,2016 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
     LoginManagerInstaller
@@ -35,6 +35,8 @@ fas_mapping = [
     ['human_name', 'fullname'],
     ['email', 'email'],
     ['timezone', 'timezone'],
+    ['ssh_key', 'ssh_key'],
+    ['gpg_keyid', 'gpg_keyid'],
 ]
 
 
@@ -83,6 +85,9 @@ class FAS(LoginFormBase):
 
     def make_userdata(self, fas_data):
         userdata, fas_extra = self.mapper.map_attributes(fas_data)
+
+        # We need to split ssh keys by newline, since we can't send newlines
+        userdata['ssh_key'] = userdata['ssh_key'].split('\n')
 
         # compute and store groups and cla groups
         userdata['_groups'] = []
