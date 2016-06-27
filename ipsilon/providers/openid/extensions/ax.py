@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+from ipsilon.providers.common import AuthenticationError
 from ipsilon.providers.openid.extensions.common import OpenidExtensionBase
 from openid.extensions import ax
 
@@ -46,6 +47,9 @@ class OpenidExtension(OpenidExtensionBase):
                     value = userdata[AP_MAP[name]]
                 else:
                     value = userdata[name]
+
+                if '\n' in value:
+                    raise AuthenticationError('Newline in attribute %s' % name)
 
                 added_vals = 0
                 if not isinstance(value, list):
