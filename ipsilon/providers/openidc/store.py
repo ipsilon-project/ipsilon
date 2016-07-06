@@ -105,6 +105,8 @@ class OpenIDCStore(Store):
 
         self.save_unique_data('token', {token_id: token})
 
+        token['token_id'] = token_id
+
     def refreshToken(self, refresh_token, client_id):
         token = self.lookupToken(refresh_token, 'Refresh', True)
 
@@ -139,11 +141,11 @@ class OpenIDCStore(Store):
 
         self.update_token(token)
 
-        token = '%s_%s' % (token['token_id'], token_security_check)
+        new_token = '%s_%s' % (token['token_id'], token_security_check)
         refresh_token = 'R_%s_%s' % (token['token_id'], refresh_security_check)
 
         return {
-            'access_token': token,
+            'access_token': new_token,
             'refresh_token': refresh_token,
             'expires_in': expires_in
         }
