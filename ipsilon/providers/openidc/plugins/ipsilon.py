@@ -6,15 +6,10 @@ from ipsilon.providers.openidc.plugins.common import OpenidCExtensionBase
 
 
 class OpenidCExtension(OpenidCExtensionBase):
-
-    def __init__(self, provider, *pargs):
-        name = 'ipsilon'
-        display_name = 'Ipsilon Token API'
-        scopes = {
-            'ipsilon_token': 'Ipsilon token verification'
+    name = 'ipsilon'
+    display_name = 'Ipsilon Token API'
+    scopes = {
+        'ipsilon_token': {
+            'display_name': 'Ipsilon token verification'
         }
-
-        super(OpenidCExtension, self).__init__(provider,
-                                               name,
-                                               display_name,
-                                               scopes)
+    }

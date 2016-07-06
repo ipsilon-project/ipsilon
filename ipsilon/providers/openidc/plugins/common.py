@@ -7,12 +7,14 @@ from ipsilon.util.log import Log
 
 
 class OpenidCExtensionBase(Log):
+    name = None
+    display_name = None
+    # A mapping of scope to dict with scope info
+    scopes = {}
 
-    def __init__(self, provider, name, display_name, scopes):
-        self.name = name
-        self.display_name = display_name
-        # A mapping of scope to display string for supported scopes
-        self.scopes = scopes
+    def __init__(self, provider):
+        if self.name is None:
+            raise NotImplementedError('Name missing for OpenIDC extensions')
         self.enabled = False
         self.provider = None
 
@@ -23,7 +25,10 @@ class OpenidCExtensionBase(Log):
         return self.scopes.keys()
 
     def get_display_name(self):
-        return self.display_name
+        if self.display_name:
+            return self.display_name
+        else:
+            return self.name
 
     def get_display_data(self, scopes):
         if not self.enabled:
