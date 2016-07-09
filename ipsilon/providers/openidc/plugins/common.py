@@ -37,7 +37,10 @@ class OpenidCExtensionBase(Log):
         display_data = {}
         for scope in scopes:
             if scope in self.scopes:
-                display_data[scope] = self.scopes[scope]
+                if 'display_name' in self.scopes[scope]:
+                    display_data[scope] = self.scopes[scope]['display_name']
+                else:
+                    display_data[scope] = scope
         return display_data
 
     def enable(self, provider):
