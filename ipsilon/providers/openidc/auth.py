@@ -536,6 +536,14 @@ class Authorization(AuthenticateRequest):
                         # pylint: disable=invalid-sequence-index
                         request_data['claims']['userinfo'][claim] = None
 
+        # Add claims from extensions
+        for n, e in self.cfg.extensions.available().items():
+            data = e.get_claims(request_data['scope'])
+            self.debug('%s returned %s' % (n, repr(data)))
+            if len(data) > 0:
+                # pylint: disable=invalid-sequence-index
+                request_data['claims']['userinfo'].extend(data)
+
         # Store data so we can continue with the request
         us = UserSession()
         user = us.get_user()

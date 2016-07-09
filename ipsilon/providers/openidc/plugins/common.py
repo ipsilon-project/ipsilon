@@ -43,6 +43,19 @@ class OpenidCExtensionBase(Log):
                     display_data[scope] = scope
         return display_data
 
+    def get_claims(self, scopes):
+        if not self.enabled:
+            return {}
+
+        claims = []
+        for scope in scopes:
+            if scope in self.scopes and 'claims' in self.scopes[scope]:
+                data = self.scopes[scope]['claims']
+                if not isinstance(data, list):
+                    data = [data]
+                claims.extend(data)
+        return claims
+
     def enable(self, provider):
         self.enabled = True
         self.provider = provider
