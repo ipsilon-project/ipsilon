@@ -32,7 +32,7 @@ KRB5_CONF_TEMPLATE = '''
 
 [realms]
   ${TESTREALM} = {
-    kdc =${WRAP_HOSTNAME}
+    kdc =${WRAP_HOSTNAME}:8888
   }
 
 [domain_realm]
@@ -47,8 +47,8 @@ KRB5_CONF_TEMPLATE = '''
 
 KDC_CONF_TEMPLATE = '''
 [kdcdefaults]
- kdc_ports = 88
- kdc_tcp_ports = 88
+ kdc_ports = 8888
+ kdc_tcp_ports = 8888
  restrict_anonymous_to_tgt = true
 
 [realms]
