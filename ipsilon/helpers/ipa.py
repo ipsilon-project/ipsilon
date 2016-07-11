@@ -144,20 +144,22 @@ class Installer(EnvHelpersInstaller):
             if api.Backend.rpcclient.isconnected():
                 api.Backend.rpcclient.disconnect()
 
-        try:
-            msg = "Trying to fetch keytab[%s] for %s" % (
-                  opts['gssapi_httpd_keytab'], princ)
-            logger.info(msg)
-            subprocess.check_output([IPA_GETKEYTAB,
-                                     '-s', server, '-p', princ,
-                                     '-k', opts['gssapi_httpd_keytab']],
-                                    stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError, e:
+        msg = "Trying to fetch keytab[%s] for %s" % (
+              opts['gssapi_httpd_keytab'], princ)
+        logger.info(msg)
+        gktcmd = [IPA_GETKEYTAB, '-s', server, '-p', princ, '-k',
+                  opts['gssapi_httpd_keytab']]
+        proc = subprocess.Popen(gktcmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        output, dummy_err = proc.communicate()
+        retcode = proc.poll()
+        if retcode:
             # unfortunately this one is fatal
             logger.error(FAILED_TO_GET_KEYTAB)
             logger.info('Error trying to get HTTP keytab:')
-            logger.info('Cmd> %s\n%s', e.cmd, e.output)
-            raise Exception('Missing keytab: [%s]' % e)
+            logger.info('Cmd> %s\n%s', gktcmd, output)
+            raise Exception('Missing keytab: [Command \'%s\' returned non-zero'
+                            ' exit status %d]' % (gktcmd, retcode))
 
         # Fixup permissions so only the ipsilon user can read these files
         pw = pwd.getpwnam(HTTPD_USER)
