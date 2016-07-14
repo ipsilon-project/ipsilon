@@ -103,6 +103,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldapdown
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openid
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openidc
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=authz
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=dbupgrades
 
 test: lp-test unittests tests

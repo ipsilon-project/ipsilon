@@ -51,6 +51,12 @@ class PageTree(object):
         if value != expected:
             raise ValueError("Expected [%s], got [%s]" % (expected, value))
 
+    def expected_status(self, expected):
+        status = self.result.status_code
+        if status != expected:
+            raise ValueError("Expected HTTP status [%d], got [%d]" %
+                             (expected, status))
+
 
 class HttpSessions(object):
 
@@ -456,6 +462,64 @@ class HttpSessions(object):
             count += 1
         r = idpsrv['session'].post(url, headers=headers,
                                    data=payload)
+        if r.status_code != 200:
+            raise ValueError('Failed to post IDP data [%s]' % repr(r))
+
+    def enable_plugin(self, idp, plugtype, plugin):
+        """
+        Enable a login stack plugin.
+
+        plugtype must be one of 'login', 'info', or 'authz'
+
+        plugin must be the name of the plugin to enable
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s/%s/admin/loginstack/%s/enable/%s' % (
+            idpuri, idp, plugtype, plugin)
+        rurl = '%s/%s/admin/loginstack' % (idpuri, idp)
+        headers = {'referer': rurl}
+        r = idpsrv['session'].get(url, headers=headers)
+        if r.status_code != 200:
+            raise ValueError('Failed to enable plugin [%s]' % repr(r))
+
+    def disable_plugin(self, idp, plugtype, plugin):
+        """
+        Disable a login stack plugin.
+
+        plugtype must be one of 'login', 'info', or 'authz'
+
+        plugin must be the name of the plugin to enable
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s/%s/admin/loginstack/%s/disable/%s' % (
+            idpuri, idp, plugtype, plugin)
+        rurl = '%s/%s/admin/loginstack' % (idpuri, idp)
+        headers = {'referer': rurl}
+        r = idpsrv['session'].get(url, headers=headers)
+        if r.status_code != 200:
+            raise ValueError('Failed to disable plugin [%s]' % repr(r))
+
+    def set_plugin_order(self, idp, plugtype, order=[]):
+        """
+        Set the order of the specified login stack plugin type.
+
+        plugtype must be one of 'login', 'info', or 'authz'
+
+        order must be a list of zero or more plugin names in order
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s/%s/admin/loginstack/%s/order' % (
+            idpuri, idp, plugtype)
+        headers = {'referer': url}
+        headers['content-type'] = 'application/x-www-form-urlencoded'
+        payload = {'order': ','.join(order)}
+        r = idpsrv['session'].post(url, headers=headers, data=payload)
         if r.status_code != 200:
             raise ValueError('Failed to post IDP data [%s]' % repr(r))
 

@@ -26,6 +26,10 @@ class TestAuth(LoginFormBase):
                     'email': '%s@example.com' % username,
                     '_groups': [username]
                 }
+                groups = self.lm.groups
+                if groups is not None:
+                    self.debug('groups is %s' % repr(groups))
+                    testdata['_groups'].extend(groups)
                 return self.lm.auth_successful(self.trans,
                                                username, 'password', testdata)
             else:
@@ -71,7 +75,10 @@ Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
                 'DISABLE IN PRODUCTION, USE ONLY FOR TEST ' +
                 'Use any username they are all valid, "admin" gives ' +
                 'administrative powers. ' +
-                'Use the fixed password "ipsilon" for any user')
+                'Use the fixed password "ipsilon" for any user'),
+            pconfig.List(
+                'groups',
+                'Extra groups')
         )
 
     @property
@@ -85,6 +92,10 @@ Form based TEST login Manager, DO NOT EVER ACTIVATE IN PRODUCTION """
     @property
     def password_text(self):
         return self.get_config_value('password text')
+
+    @property
+    def groups(self):
+        return self.get_config_value('groups')
 
     def get_tree(self, site):
         self.page = TestAuth(site, self, 'login/testauth')
@@ -101,6 +112,8 @@ class Installer(LoginManagerInstaller):
     def install_args(self, group):
         group.add_argument('--testauth', choices=['yes', 'no'], default='no',
                            help='Configure PAM authentication')
+        group.add_argument('--testauth-groups', action='store',
+                           help='Extra groups for the testauth user')
 
     def configure(self, opts, changes):
         if opts['testauth'] != 'yes':
@@ -111,6 +124,14 @@ class Installer(LoginManagerInstaller):
         po = PluginObject(*self.pargs)
         po.name = 'testauth'
         po.wipe_data()
+        po.wipe_config_values()
+
+        config = dict()
+        if opts['testauth_groups'] is not None:
+            cherrypy.log('testauth_groups is %s (%s)' % (
+                opts['testauth_groups'], type(opts['testauth_groups'])))
+            config['groups'] = opts['testauth_groups']
+        po.save_plugin_config(config)
 
         # Update global config to add login plugin
         po.is_enabled = True
