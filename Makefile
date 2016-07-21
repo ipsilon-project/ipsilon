@@ -6,7 +6,6 @@ all: testdeps lint pep8 test
 testdeps:
 	# Determine if test deps are installed
 	# First, some binaries
-	which lessc
 	which pylint
 	which pep8
 	which httpd
