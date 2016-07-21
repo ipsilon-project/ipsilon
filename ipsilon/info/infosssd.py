@@ -48,6 +48,8 @@ class InfoProvider(InfoProviderBase):
         super(InfoProvider, self).__init__(*pargs)
         self.mapper = Policy(sssd_mapping)
         self.name = 'sssd'
+        self.description = """
+Info plugin that uses mod_lookup_identity and SSSD to retrieve user data."""
         self.new_config(
             self.name,
             pconfig.Condition(

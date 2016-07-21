@@ -20,6 +20,8 @@ class InfoProvider(InfoProviderBase):
         super(InfoProvider, self).__init__(*pargs)
         self.mapper = Policy(posix_map)
         self.name = 'nss'
+        self.description = """
+Info plugin that uses the system NSS functions to retrieve user data."""
         self.new_config(self.name)
 
     def _get_posix_user(self, user):
