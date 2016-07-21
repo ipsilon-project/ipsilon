@@ -31,16 +31,16 @@
         <div class="col-md-3 col-sm-3 col-xs-5">
           <p><strong>{{ p }}</strong></p>
         </div>
-        <div class="col-md-7 col-sm-7 col-xs-5">
+        <div class="col-md-6 col-sm-6 col-xs-5">
           <div class="row">
-          <div class="col-md-6 col-sm-6 col-xs-12">
-              <p class="text-info"><a href="{{ s["baseurl"] }}/disable/{{ p }}">Disable</a></p>
-          </div>
-          <div class="col-md-6 col-sm-6 col-xs-12">
-            {%- if s["available"][p].get_config_obj() %}
-              <p class="text-primary"><a href="{{ s["baseurl"] }}/{{ p }}">Configure</a></p>
-            {% endif %}
-          </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <p class="text-info"><a href="{{ s["baseurl"] }}/disable/{{ p }}">Disable</a></p>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              {%- if s["available"][p].get_config_obj() %}
+                <p class="text-primary"><a href="{{ s["baseurl"] }}/{{ p }}">Configure</a></p>
+              {% endif %}
+            </div>
           </div>
         </div>
         <div class="col-md-2 col-sm-2 col-xs-1">
@@ -81,6 +81,9 @@
           </form>
           {%- endif %}
         </div>
+        <div class="col-md-1 col-sm-1 col-xs-1">
+          <a href="#" data-toggle="popover" data-html="true" title="" data-content="{{ s["available"][p].description }}" data-placement="left"><span class="pficon pficon-help"></span></a>
+        </div>
       </div>
     {% endfor %}
 
@@ -95,19 +98,22 @@
         <div class="col-md-3 col-sm-3 col-xs-5">
             <strong>{{ p }}</strong>
         </div>
-        <div class="col-md-7 col-sm-7 col-xs-6">
+        <div class="col-md-6 col-sm-6 col-xs-5">
           <div class="row">
-          <div class="col-md-6 col-sm-6 col-xs-12">
-              <a class="text-info" href="{{ s["baseurl"] }}/enable/{{ p }}">Enable</a>
-          </div>
-          <div class="col-md-6 col-sm-6 col-xs-12">
-            {%- if s["available"][p].get_config_obj() %}
-              <span class="text-muted">Configure</span>
-            {% endif %}
-          </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <a class="text-info" href="{{ s["baseurl"] }}/enable/{{ p }}">Enable</a>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+              {%- if s["available"][p].get_config_obj() %}
+                <span class="text-muted">Configure</span>
+              {% endif %}
+            </div>
           </div>
         </div>
         <div class="col-md-2 col-sm-2 col-xs-1">
+        </div>
+        <div class="col-md-1 col-sm-1 col-xs-1">
+          <a href="#" data-toggle="popover" data-html="true" title="" data-content="{{ s["available"][p].description }}" data-placement="left"><span class="pficon pficon-help text-muted"></span></a>
         </div>
       </div>
     {% endfor %}

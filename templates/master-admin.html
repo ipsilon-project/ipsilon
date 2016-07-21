@@ -16,6 +16,9 @@
             function() {
                 history.replaceState({} , document.title, "{{ newurl }}");
                 $('[data-toggle="tooltip"]').tooltip();
+                $('[data-toggle="popover"]').popover({
+                  container: 'body'
+                });
             }
         );
     </script>
