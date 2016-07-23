@@ -68,7 +68,8 @@ template_env = Environment(loader=ChoiceLoader(template_loaders),
                            extensions=['jinja2.ext.autoescape'])
 
 if __name__ == "__main__":
-    conf = {'/': {'tools.staticdir.root': os.getcwd()},
+    conf = {'global': {'server.socket_host': '0.0.0.0'},
+            '/': {'tools.staticdir.root': os.getcwd()},
             '/ui': {'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'ui'},
             '/cache': {'tools.staticdir.on': True,
