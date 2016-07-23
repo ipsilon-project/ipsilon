@@ -255,6 +255,21 @@ class AuthenticateRequest(ProviderPageBase):
 
         self.debug("%s's attributes: %s" % (user.name, attributes))
 
+        # Perform authorization check.
+        # We use the raw userattrs here so that we can make decisions based
+        # on attributes we don't want to send to the SP
+        provinfo = {
+            'name': provider.name,
+            'url': provider.splink,
+            'owner': provider.owner
+        }
+        if not self._site['authz'].authorize_user('saml2', provinfo, user.name,
+                                                  userattrs):
+            self.trans.wipe()
+            self.error('Authorization denied by authorization provider')
+            raise AuthenticationError("Authorization denied",
+                                      lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
+
         # TODO: get authentication type fnd name format from session
         # need to save which login manager authenticated and map it to a
         # saml2 authentication context
