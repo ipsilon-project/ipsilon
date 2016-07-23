@@ -120,3 +120,41 @@ if __name__ == '__main__':
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
+
+    print "openid: Set IDP authz stack to deny ...",
+    try:
+        sess.disable_plugin(idpname, 'authz', 'allow')
+        sess.enable_plugin(idpname, 'authz', 'deny')
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    sess2 = HttpSessions()
+    sess2.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess2.add_server(sp1name, 'https://127.0.0.11:45081')
+
+    print "openid: Run OpenID Protocol with IDP deny, with pre-auth ...",
+    try:
+        sess2.auth_to_idp(idpname)
+        page = sess2.fetch_page(idpname,
+                                'https://127.0.0.11:45081/?extensions=NO')
+        page.expected_value('text()', 'ERROR: Cancelled')
+    except ValueError as e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    sess3 = HttpSessions()
+    sess3.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
+    sess3.add_server(sp1name, 'https://127.0.0.11:45081')
+
+    print "openid: Run OpenID Protocol with IDP deny, without pre-auth ...",
+    try:
+        page = sess3.fetch_page(idpname,
+                                'https://127.0.0.11:45081/?extensions=NO')
+        page.expected_value('text()', 'ERROR: Cancelled')
+    except ValueError as e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"

@@ -133,6 +133,16 @@ class AuthenticateRequest(ProviderPageBase):
         if request.trust_root in self.cfg.untrusted_roots:
             raise UnauthorizedRequest("Untrusted Relying party")
 
+        # Perform authorization check.
+        provinfo = {
+            'url': kwargs.get('openid.realm', None)
+        }
+        if not self._site['authz'].authorize_user('openid', provinfo,
+                                                  user.name,
+                                                  us.get_user_attrs()):
+            self.error('Authorization denied by authorization provider')
+            raise UnauthorizedRequest('Authorization denied')
+
         # if the party is explicitly whitelisted just respond
         if request.trust_root in self.cfg.trusted_roots:
             return self._respond(self._response(request, us))
