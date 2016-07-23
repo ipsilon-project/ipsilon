@@ -1,0 +1,69 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "dbinfo" VALUES('AdminStore_schema','version','2');
+CREATE TABLE config (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE info_config (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE login_config (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "login_config" VALUES('global','enabled','testauth');
+CREATE TABLE provider_config (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "provider_config" VALUES('openid','endpoint url','http://127.0.0.11:45081/idp_v1/openid/');
+INSERT INTO "provider_config" VALUES('openid','database url','openid.sqlite');
+INSERT INTO "provider_config" VALUES('openid','identity url template','http://127.0.0.11:45081/idp_v1/openid/id/%(username)s');
+INSERT INTO "provider_config" VALUES('openid','enabled extensions','');
+INSERT INTO "provider_config" VALUES('global','enabled','openid,persona,saml2');
+INSERT INTO "provider_config" VALUES('persona','allowed domains','127.0.0.11:45081');
+INSERT INTO "provider_config" VALUES('persona','issuer domain','127.0.0.11:45081');
+INSERT INTO "provider_config" VALUES('persona','idp key file','persona/persona.key');
+INSERT INTO "provider_config" VALUES('saml2','idp nameid salt','6c78ae3b33db4fe4886edb1679490821');
+INSERT INTO "provider_config" VALUES('saml2','idp metadata validity','1825');
+INSERT INTO "provider_config" VALUES('saml2','idp certificate file','saml2/idp.pem');
+INSERT INTO "provider_config" VALUES('saml2','idp key file','saml2/idp.key');
+INSERT INTO "provider_config" VALUES('saml2','session database url','saml2.sessions.db.sqlite');
+INSERT INTO "provider_config" VALUES('saml2','idp metadata file','metadata.xml');
+INSERT INTO "provider_config" VALUES('saml2','idp storage path','saml2');
+CREATE TABLE testauth_data (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE openid_data (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE persona_data (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE saml2_data (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE INDEX idx_config_name ON config (name);
+CREATE INDEX idx_info_config_name ON info_config (name);
+CREATE INDEX idx_login_config_name ON login_config (name);
+CREATE INDEX idx_provider_config_name ON provider_config (name);
+COMMIT;

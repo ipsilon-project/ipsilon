@@ -1,0 +1,15 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE saml2_sessions (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "dbinfo" VALUES('SAML2SessionStore_schema','version','2');
+CREATE INDEX idx_saml2_sessions_uuid ON saml2_sessions (uuid);
+COMMIT;

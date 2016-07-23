@@ -1,0 +1,32 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (name, option)
+);
+INSERT INTO "dbinfo" VALUES('OpenIDCStore_schema','version','2');
+CREATE TABLE client (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (uuid, name)
+);
+CREATE TABLE token (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (uuid, name)
+);
+CREATE TABLE userinfo (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (uuid, name)
+);
+CREATE INDEX idx_dbinfo_name ON dbinfo (name);
+CREATE INDEX idx_client_uuid ON client (uuid);
+CREATE INDEX idx_token_uuid ON token (uuid);
+CREATE INDEX idx_userinfo_uuid ON userinfo (uuid);
+COMMIT;

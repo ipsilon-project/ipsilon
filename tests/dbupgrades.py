@@ -40,6 +40,16 @@ class IpsilonTest(IpsilonTestBase):
     def setup_servers(self, env=None):
         pass
 
+    def dump_admin_config_db(self, db_outdir):
+        test_db = os.path.join(db_outdir, 'adminconfig.sqlite')
+        p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
+                             stdout=subprocess.PIPE)
+        output, _ = p.communicate()
+        if p.returncode:
+            print 'Sqlite dump failed'
+            sys.exit(1)
+        return output
+
     def test_upgrade_from(self, env, old_version):
         # Setup IDP Server
         print "Installing IDP server to test upgrade from %i" % old_version
@@ -79,13 +89,7 @@ class IpsilonTest(IpsilonTestBase):
         if old_version == 0:
             # Check all features in a newly created database
             # Let's verify if at least one index was created
-            test_db = os.path.join(db_outdir, 'adminconfig.sqlite')
-            p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
-                                 stdout=subprocess.PIPE)
-            output, _ = p.communicate()
-            if p.returncode:
-                print 'Sqlite dump failed'
-                sys.exit(1)
+            output = self.dump_admin_config_db(db_outdir)
             if 'CREATE INDEX' not in output:
                 raise Exception('Database upgrade did not introduce index')
             if 'PRIMARY KEY' not in output:
@@ -94,16 +98,18 @@ class IpsilonTest(IpsilonTestBase):
         elif old_version == 1:
             # In 1 -> 2, we added indexes and primary keys
             # Let's verify if at least one index was created
-            test_db = os.path.join(db_outdir, 'adminconfig.sqlite')
-            p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
-                                 stdout=subprocess.PIPE)
-            output, _ = p.communicate()
-            if p.returncode:
-                print 'Sqlite dump failed'
-                sys.exit(1)
+            output = self.dump_admin_config_db(db_outdir)
             if 'CREATE INDEX' not in output:
                 raise Exception('Database upgrade did not introduce index')
             # SQLite did not support creating primary keys, so we can't test
+
+        elif old_version == 2:
+            # Version 3 added the authz_config table
+            # Make sure it exists
+            output = self.dump_admin_config_db(db_outdir)
+            if 'TABLE authz_config' not in output:
+                raise Exception('Database upgrade did not introduce ' +
+                                'authz_config table')
 
         # Start the httpd server
         http_server = self.start_http_server(conf, env)

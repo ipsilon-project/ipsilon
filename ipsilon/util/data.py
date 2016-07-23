@@ -16,7 +16,7 @@ import logging
 import time
 
 
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 OPTIONS_TABLE = {'columns': ['name', 'option', 'value'],
                  'primary_key': ('name', 'option'),
                  'indexes': [('name',)]
@@ -672,7 +672,8 @@ class AdminStore(Store):
         for table in ['config',
                       'info_config',
                       'login_config',
-                      'provider_config']:
+                      'provider_config',
+                      'authz_config']:
             q = self._query(self._db, table, OPTIONS_TABLE, trans=False)
             q.create()
             q._con.close()  # pylint: disable=protected-access
@@ -691,6 +692,13 @@ class AdminStore(Store):
                 for index in table.indexes:
                     self._db.add_index(index)
             return 2
+        elif old_version == 2:
+            # Version 3 adds the authz config table
+            q = self._query(self._db, 'authz_config', OPTIONS_TABLE,
+                            trans=False)
+            q.create()
+            q._con.close()  # pylint: disable=protected-access
+            return 3
         else:
             raise NotImplementedError()
 
@@ -736,6 +744,8 @@ class UserStore(Store):
             for index in table.indexes:
                 self._db.add_index(index)
             return 2
+        elif old_version == 2:
+            return 3
         else:
             raise NotImplementedError()
 
@@ -770,6 +780,8 @@ class TranStore(Store):
             for index in table.indexes:
                 self._db.add_index(index)
             return 2
+        elif old_version == 2:
+            return 3
         else:
             raise NotImplementedError()
 
@@ -889,5 +901,7 @@ class SAML2SessionStore(Store):
             for index in table.indexes:
                 self._db.add_index(index)
             return 2
+        elif old_version == 2:
+            return 3
         else:
             raise NotImplementedError()

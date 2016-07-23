@@ -41,6 +41,8 @@ INSERT INTO provider_config VALUES('openidc', 'idp key file',
                                    '${workdir}/openidc.key');
 INSERT INTO provider_config VALUES('openidc', 'idp sig key id',
                                    'quickstart');
+CREATE TABLE authz_config (name TEXT,option TEXT,value TEXT);
+INSERT INTO authz_config VALUES('global', 'enabled', 'allow');
 '''
 
 USERS_TEMPLATE='''

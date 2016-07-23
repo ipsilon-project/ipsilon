@@ -8,6 +8,7 @@ from ipsilon.login.common import LoginMgrsInstall
 from ipsilon.info.common import InfoProviderInstall
 from ipsilon.providers.common import ProvidersInstall
 from ipsilon.helpers.common import EnvHelpersInstall
+from ipsilon.authz.common import AuthzProviderInstall
 from ipsilon.util.data import UserStore
 from ipsilon.tools import files, dbupgrade
 import ConfigParser
@@ -163,7 +164,8 @@ def install(plugins, args):
     changes = {'env_helper': {},
                'login_manager': {},
                'info_provider': {},
-               'auth_provider': {}}
+               'auth_provider': {},
+               'authz_provider': {}}
 
     # Move pre-existing dbs away
     admin_db = cherrypy.config['admin.config.db']
@@ -218,6 +220,19 @@ def install(plugins, args):
             msg = 'Configuration of auth provider %s failed' % plugin_name
             raise ConfigurationError(msg)
         changes['auth_provider'][plugin_name] = plugin_changes
+
+    logger.info('Configuring Authorization providers')
+    for plugin_name in args['az_order']:
+        try:
+            plugin = plugins['Authz Providers'][plugin_name]
+        except KeyError:
+            sys.exit('Authorization provider %s not installed' % plugin_name)
+        plugin_changes = {}
+        if plugin.configure(args, plugin_changes) == False:
+            msg = 'Configuration of authorization provider %s failed' % \
+                plugin_name
+            raise ConfigurationError(msg)
+        changes['authz_provider'][plugin_name] = plugin_changes
 
     # Save any changes that were made
     install_changes = os.path.join(instance_conf, 'install_changes')
@@ -300,6 +315,14 @@ def uninstall(plugins, args):
         if plugin.unconfigure(args, plugin_changes) == False:
             logger.info('Removal of auth provider %s failed' % plugin_name)
 
+    logger.info('Removing Authorization providers')
+    for plugin_name in plugins.get('Authz Providers', []):
+        plugin = plugins['Authz Providers'][plugin_name]
+        plugin_changes = changes['authz_provider'].get(plugin_name, {})
+        if plugin.unconfigure(args, plugin_changes) == False:
+            logger.info('Removal of authorization provider %s failed' %
+                        plugin_name)
+
     logger.info('Removing httpd configuration')
     os.remove(httpd_conf)
     logger.info('Erasing instance configuration')
@@ -317,7 +340,8 @@ def find_plugins():
         'Environment Helpers': EnvHelpersInstall().plugins,
         'Login Managers': LoginMgrsInstall().plugins,
         'Info Provider': InfoProviderInstall().plugins,
-        'Auth Providers': ProvidersInstall().plugins
+        'Auth Providers': ProvidersInstall().plugins,
+        'Authz Providers': AuthzProviderInstall().plugins
     }
     return plugins
 
@@ -355,6 +379,8 @@ def parse_args(plugins):
                         action='version', version='%(prog)s 0.1')
     parser.add_argument('-o', '--login-managers-order', dest='lm_order',
                         help='Comma separated list of login managers')
+    parser.add_argument('--authorization-order', dest='az_order',
+                        help='Comma separated list of authorization plugins')
     parser.add_argument('--hostname',
                         help="Machine's fully qualified host name")
     parser.add_argument('--instance', default='idp',
@@ -391,6 +417,7 @@ def parse_args(plugins):
                              'entries (in minutes, default: 30 minutes)')
 
     lms = []
+    azs = []
 
     for plugin_group in plugins:
         group = parser.add_argument_group(plugin_group)
@@ -398,6 +425,8 @@ def parse_args(plugins):
             plugin = plugins[plugin_group][plugin_name]
             if plugin.ptype == 'login':
                 lms.append(plugin.name)
+            elif plugin.ptype == 'authz':
+                azs.append(plugin.name)
             plugin.install_args(group)
 
     args = vars(parser.parse_args())
@@ -436,6 +465,17 @@ def parse_args(plugins):
 
     if len(args['lm_order']) == 0 and args.get('ipa', 'no') != 'yes':
         sys.exit('No login plugins are enabled.')
+
+    if args['az_order'] is None:
+        args['az_order'] = []
+        for name in azs:
+            if args['authz_' + name] == 'yes':
+                args['az_order'].append(name)
+    else:
+        args['az_order'] = args['az_order'].split(',')
+
+    if len(args['az_order']) == 0:
+        sys.exit('No authorization plugins are enabled.')
 
     #FIXME: check instance is only alphanums
 

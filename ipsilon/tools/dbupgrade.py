@@ -99,7 +99,8 @@ def execute_upgrade(cfgfile):
     userstore = UserStore()
     for facility in ['provider_config',
                      'login_config',
-                     'info_config']:
+                     'info_config',
+                     'authz_config']:
         for plugin in root._site[facility].enabled:
             logger.debug('Handling plugin %s', plugin)
             plugin = root._site[facility].available[plugin]

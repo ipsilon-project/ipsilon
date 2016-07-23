@@ -57,6 +57,8 @@ saml2 idp nameid salt = ${IDPSALT}
 811d0231-9362-46c9-a105-a01a64818904 type = SP
 811d0231-9362-46c9-a105-a01a64818904 name = ${SPNAME}
 811d0231-9362-46c9-a105-a01a64818904 metadata = ${SPMETA}
+[authz_config]
+global enabled = allow
 """
 
 sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',

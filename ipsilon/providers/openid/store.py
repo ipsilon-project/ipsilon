@@ -110,5 +110,7 @@ class OpenIDStore(Store, OpenIDStoreInterface):
             for index in table.indexes:
                 self._db.add_index(index)
             return 2
+        elif old_version == 2:
+            return 3
         else:
             raise NotImplementedError()

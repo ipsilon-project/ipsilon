@@ -1,0 +1,21 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "dbinfo" VALUES('OpenIDStore_schema','version','2');
+CREATE TABLE association (
+	uuid TEXT NOT NULL, 
+	name TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE openid_extensions (
+    name TEXT NOT NULL,
+    option TEXT NOT NULL,
+    value TEXT
+);
+CREATE INDEX idx_association_uuid ON association (uuid);
+CREATE INDEX idx_openid_extensions_name ON openid_extensions (name);
+COMMIT;

@@ -11,8 +11,10 @@ from ipsilon.admin.loginstack import LoginStack
 from ipsilon.admin.info import InfoPlugins
 from ipsilon.admin.login import LoginPlugins
 from ipsilon.admin.providers import ProviderPlugins
+from ipsilon.admin.authz import AuthzPlugins
 from ipsilon.rest.common import Rest
 from ipsilon.rest.providers import RestProviderPlugins
+from ipsilon.authz.common import Authz
 import cherrypy
 
 sites = dict()
@@ -34,6 +36,8 @@ class Root(Page):
         cherrypy.config['error_page.404'] = errors.Error_404(self._site)
         cherrypy.config['error_page.500'] = errors.Errors(self._site)
 
+        self._site['authz'] = Authz(self._site)
+
         # set up WebFinger endpoint
         self.webfinger = WebFinger(self._site)
 
@@ -50,6 +54,7 @@ class Root(Page):
         self.stack = LoginStack(self._site, self.admin)
         LoginPlugins(self._site, self.stack)
         InfoPlugins(self._site, self.stack)
+        AuthzPlugins(self._site, self.stack)
         ProviderPlugins(self._site, self.admin)
         RestProviderPlugins(self._site, self.rest)
 

@@ -1,0 +1,43 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE dbinfo (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+INSERT INTO "dbinfo" VALUES('UserStore_schema','version','2');
+CREATE TABLE users (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT
+);
+CREATE TABLE openid_data (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (name, option)
+);
+CREATE TABLE persona_data (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (name, option)
+);
+CREATE TABLE saml2_data (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (name, option)
+);
+CREATE TABLE testauth_data (
+	name TEXT NOT NULL, 
+	option TEXT NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (name, option)
+);
+CREATE INDEX idx_users_name ON users (name);
+CREATE INDEX idx_openid_data_name ON openid_data (name);
+CREATE INDEX idx_persona_data_name ON persona_data (name);
+CREATE INDEX idx_saml2_data_name ON saml2_data (name);
+CREATE INDEX idx_testauth_data_name ON testauth_data (name);
+COMMIT;
