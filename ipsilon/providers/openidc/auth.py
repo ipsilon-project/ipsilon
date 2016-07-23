@@ -129,6 +129,22 @@ class AuthenticateRequest(ProviderPageBase):
         return self._respond(request, {'error': error,
                                        'error_description': message})
 
+    def _authz_stack_check(self, request_data, client, username, userattrs):
+        provinfo = client.copy()
+        provinfo['url'] = provinfo.pop('client_uri')
+        if provinfo['ipsilon_internal']['trusted']:
+            # Trusted OpenIDC clients are added by an Ipsilon admin, so we can
+            # safely use the client name
+            provinfo['name'] = provinfo.pop('client_name')
+
+        if not self._site['authz'].authorize_user('openidc', provinfo,
+                                                  username, userattrs):
+            self.error('Authorization denied by authorization provider')
+            return self._respond_error(request_data, 'access_denied',
+                                       'authorization denied')
+        else:
+            return None
+
 
 class APIError(cherrypy.HTTPError, Log):
 
@@ -594,6 +610,13 @@ class Authorization(AuthenticateRequest):
             self.debug('Redirecting: %s' % redirect)
             raise cherrypy.HTTPRedirect(redirect)
 
+        # Return error if authz check fails
+        authz_check_res = self._authz_stack_check(request_data, client,
+                                                  user.name,
+                                                  us.get_user_attrs())
+        if authz_check_res:
+            return authz_check_res
+
         self.trans.store(data)
         # The user was already signed on, and no request to re-assert its
         # identity. Let's forward directly to /Continue/
@@ -738,6 +761,13 @@ class Continue(AuthenticateRequest):
             return self._respond_error(request_data,
                                        'unauthorized_client',
                                        'Unknown client ID')
+
+        # Return error if authz check fails
+        authz_check_res = self._authz_stack_check(request_data, client,
+                                                  user.name,
+                                                  us.get_user_attrs())
+        if authz_check_res:
+            return authz_check_res
 
         userattrs = self._source_attributes(us)
         if client['ipsilon_internal']['trusted']:
