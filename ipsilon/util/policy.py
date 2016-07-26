@@ -6,32 +6,130 @@ import sys
 
 
 class Policy(Log):
+    """
+    A policy engine to filter and map (rename) attributes.
+    """
 
     def __init__(self, mappings=None, allowed=None):
-        """ A Policy engine to filter attributes.
-        Mappings is a list of lists where the first value ia a list itself
-        and the second value is an attribute name or a list if the values
-        should go in a sub dictionary.
-        Note that mappings is a list and not a dictionary as this allows
-        to map the same original attribute to different resulting attributes
-        if wanted, by simply repeating the 'key list' with different values
-        or 'value lists'.
+        """
+        Create a new policy engine instance with the specified mapping
+        and filter configuration.
 
-            Example: [[['extras', 'shoes'], 'shoeNumber']]
+        mappings is a list of mapping rules.
 
-        A '*' can be used to allow any attribute.
+        Each mapping rule is a two-element list.  The first element defines the
+        name of an attribute to map.  The second element is the name to map the
+        attribute to in the output.
 
-        The default mapping is [[['*'], '*']]
-        This copies all attributes without transformation.
+          For example, given this mapping,
 
-        Allowed is a list of allowed attributes.
-        Normally mapping should be called before filtering, this means
-        allowed attributes should name the mapped attributes.
-        Allowed attributes can be multi-element lists
+          [
+            ['name', 'username']
+          ]
 
-            Example: ['fullname', ['groups', 'domain users']]
+          and this input,
 
-        Allowed is '*' by default.
+          {
+            'name': 'bob',
+            'groups': ['bob', 'allbobs', 'people']
+          }
+
+          the output will be
+
+          {
+            'username': 'bob'
+          }
+
+        Either the input or output name may itself be a two-element list
+        instead of a string.  If the input name is a list, the first element is
+        the name of a dict or list in the input, and the second element is the
+        name of a parameter in that iterable.  If the output name is a list,
+        then the first element is the name of a dict or list to create in the
+        output, and the second element is the name of the value to add to it.
+
+          Given this mapping,
+
+          [
+            [['gecos', 'roomno'], 'roomno'],
+            [['groups', 'people'], ['groups', 'peoplegroup']]
+          ]
+
+          and this input,
+
+          {
+            'gecos': {
+              'roomno': '12B'
+            },
+            'groups': ['bob', 'allbobs', 'people']
+          }
+
+          the output will be
+
+          {
+            'roomno': '12B',
+            'groups': ['peoplegroup']
+          }
+
+        The value '*' can be used as a wildcard.  If the input name is '*',
+        this causes all input attributes to be copied to the output.  If the
+        output name is also '*', the attribute names are unchanged.  '*' can be
+        combined with the two-element for to copy dicts and lists in the input.
+
+        For example:
+
+          [['gecos', '*'], ['gecos', '*']] which is functionally identical to
+          ['gecos', 'gecos']
+
+          ['*', ['allparams', '*']] which copies all input attributes into an
+          output parameter called 'allparams'.
+
+        The default mapping is [['*', '*']] - i.e. all input attributes are
+        copied as-is to the output.
+
+        As the mapping configuration is specified as a list of mappings, this
+        allows input attributes to be mapping to the output in multiple ways at
+        the same time.
+
+
+        allowed is a list of filter rules.
+
+        Each filter rule is either a simple string specifying an attribute
+        name, or a two-element list specifying a dict or list attribute name,
+        and a value in that iterable.
+
+        The filter list can be used as either a whitelist (filtering attributes
+        into the output) or as a blacklist (filtering attributes out of
+        output).
+
+        Filter rules can also use the '*' wildcard.  A filter rule of ['*']
+        matches all attributes.  A filter rule of ['gecos', '*'] matches all
+        elements of a dict or list called 'gecos'.
+
+        The default mapping is ['*'] - i.e. all attributes are matched.
+
+        An example:
+
+          Combining this filter config,
+
+          [
+            'username',
+            ['groups', 'allbobs'],
+            ['groups', 'people']
+          ]
+
+          with this input,
+
+          {
+            'username': 'bob',
+            'groups': ['bob', 'allbobs', 'people']
+          }
+
+          the output will be
+
+          {
+            'username': 'bob',
+            'groups': ['allbobs', 'people']
+          }
         """
 
         self.mappings = None
@@ -66,6 +164,19 @@ class Policy(Log):
             self.allowed = allowed
 
     def map_attributes(self, attributes, ignore_case=False):
+        """
+        Map the specified dictionary of attributes using the mapping
+        configuration specified at policy engine creation time.
+
+        Returns a tuple of two dicts, containing the resulting mapped and
+        unmapped attributes respectively.
+
+        If ignore_case is true, then the mapping list is compared to attribute
+        names in a case-insensitive fashion.  If the attribute list has one or
+        more attributes that differ only in case, then only one of the
+        attributes will be mapped (at random, due to Python's default dict
+        ordering).
+        """
 
         if not isinstance(attributes, dict):
             raise ValueError("Attributes must be dictionary, not %s" %
@@ -189,6 +300,20 @@ class Policy(Log):
         return mapped, not_mapped
 
     def filter_attributes(self, attributes, whitelist=True):
+        """
+        Filter the specified dictionary of attributes using the filter
+        configuration specified at policy engine creation time.
+
+        Returns a dict containing the resulting filter attributes.
+
+        If whitelist is true, the filter specifies which attributes are allowed
+        in the output.  If whitelist is false, the filter specifies which
+        attributes should be removed from the output.
+        """
+
+        if not isinstance(attributes, dict):
+            raise ValueError("Attributes must be dictionary, not %s" %
+                             type(attributes))
 
         filtered = dict()
 
@@ -221,7 +346,8 @@ class Policy(Log):
         if whitelist:
             allowed = filtered
         else:
-            # filtered contains the blacklisted
+            # the filtered dict contains the attributes that are blacklisted,
+            # so take a copy of the original attributes, and remove them
             allowed = copy.deepcopy(attributes)
             for lvl1 in filtered:
                 attr = filtered[lvl1]
