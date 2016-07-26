@@ -22,6 +22,7 @@ setup(
                 'ipsilon.providers.openidc',
                 'ipsilon.providers.openidc.plugins',
                 'ipsilon.providers.persona',
+                'ipsilon.authz',
                 'ipsilon.tools', 'ipsilon.helpers',
                 'tests', 'tests.helpers'],
     data_files = [('share/man/man7', ['man/ipsilon.7']),
