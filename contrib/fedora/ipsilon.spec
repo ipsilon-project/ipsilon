@@ -317,6 +317,7 @@ fi
 %files base
 %{_defaultdocdir}/%{name}-%{version}
 %{python2_sitelib}/ipsilon/admin
+%{python2_sitelib}/ipsilon/authz
 %{python2_sitelib}/ipsilon/rest
 %{python2_sitelib}/ipsilon/tools/dbupgrade.py*
 %dir %{python2_sitelib}/ipsilon/login
