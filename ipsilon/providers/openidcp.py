@@ -69,6 +69,10 @@ Provides OpenID Connect authentication infrastructure. """
                 'idp subject salt',
                 'The salt used for pairwise subjects.',
                 None),
+            pconfig.Condition(
+                'allow dynamic client registration',
+                'Allow Dynamic Client registrations for Relying Parties',
+                True),
             pconfig.MappingList(
                 'default attribute mapping',
                 'Defines how to map attributes',
@@ -126,6 +130,10 @@ Provides OpenID Connect authentication infrastructure. """
     @property
     def idp_subject_salt(self):
         return self.get_config_value('idp subject salt')
+
+    @property
+    def allow_dynamic_client_registration(self):
+        return self.get_config_value('allow dynamic client registration')
 
     @property
     def default_attribute_mapping(self):

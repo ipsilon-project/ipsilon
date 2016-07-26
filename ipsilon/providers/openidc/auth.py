@@ -840,6 +840,10 @@ class Continue(AuthenticateRequest):
 class Registration(APIRequest):
 
     def POST(self, *args, **kwargs):
+        if not self.cfg.allow_dynamic_client_registration:
+            raise APIError(400, 'invalid_request',
+                           'dynamic client registration has been disabled')
+
         try:
             client_metadata = json.loads(cherrypy.request.rfile.read())
         except:
@@ -1135,8 +1139,6 @@ class OpenIDC(ProviderPageBase):
                                            'UserInfo'),
             'jwks_uri': '%s%s' % (self.cfg.endpoint_url,
                                   'Jwks'),
-            'registration_endpoint': '%s%s' % (self.cfg.endpoint_url,
-                                               'Registration'),
             'scopes_supported': self.cfg.supported_scopes,
             'response_types_supported': ['code', 'id_token' 'token',
                                          'token id_token'],
@@ -1182,6 +1184,11 @@ class OpenIDC(ProviderPageBase):
             'op_policy_uri': self.cfg.policy_url,
             'op_tos_uri': self.cfg.tos_url,
         }
+
+        if self.cfg.allow_dynamic_client_registration:
+            configuration['registration_endpoint'] = '%s%s' % (
+                self.cfg.endpoint_url,
+                'Registration')
 
         return json.dumps(configuration)
     wellknown_openid_configuration.public_function = True
