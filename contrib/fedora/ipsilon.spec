@@ -355,6 +355,7 @@ fi
 
 %files client
 %{_bindir}/ipsilon-client-install
+%{_datadir}/ipsilon/templates/install/openidc
 %{_datadir}/ipsilon/templates/install/saml2
 
 %files tools-ipa

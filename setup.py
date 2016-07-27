@@ -46,6 +46,8 @@ setup(
                   (DATA+'templates/openidc', glob('templates/openidc/*')),
                   (DATA+'templates/persona', glob('templates/persona/*.html')),
                   (DATA+'templates/install', glob('templates/install/*.conf')),
+                  (DATA+'templates/install/openidc',
+                   glob('templates/install/openidc/*.conf')),
                   (DATA+'templates/install/pam',
                    glob('templates/install/pam/*.pamd')),
                   (DATA+'templates/install/saml2',
