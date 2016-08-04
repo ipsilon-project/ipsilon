@@ -1,0 +1,23 @@
+{% extends "master-admin.html" %}
+{% block main %}
+<h2>Clients</h2>
+
+<div class="row">
+    <div class="col-md-3 col-sm-3 col-xs-6">
+        <a href="{{ baseurl }}/new">Add New</a>
+    </div>
+</div>
+<hr/>
+{% for cid in clients %}
+    <div id="row_client_{{ cid }}" class="row">
+        <div class="col-md-3 col-sm-3 col-xs-6">
+            <a href="{{ baseurl }}/client/{{ cid }}">{{ cid }}</a>
+        </div>
+        <div class="col-md-3 col-sm-3 col-xs-6">
+             {{ cid }}
+            <a class="btn btn-default" href="{{ baseurl }}/client/{{ cid }}/delete"
+                onclick="return confirm('Do you really want to remove this client?');">Delete</a>
+        </div>
+    </div>
+{% endfor %}
+{% endblock %}

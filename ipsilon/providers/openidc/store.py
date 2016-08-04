@@ -2,15 +2,35 @@
 
 from ipsilon.util.security import (generate_random_secure_string,
                                    constant_time_string_comparison)
-from ipsilon.util.data import Store, UNIQUE_DATA_TABLE
+from ipsilon.util.data import Store, UNIQUE_DATA_TABLE, OPTIONS_TABLE
 
+from uuid import uuid4
 import json
 import time
 
 
-class OpenIDCStore(Store):
+# This is a different store, since this can be a configuration file if the
+# static OpenIDC clients are stored in a configuration file.
+class OpenIDCStaticStore(Store):
+    _should_cleanup = False
+
     def __init__(self, database_url):
         Store.__init__(self, database_url=database_url)
+
+    def _initialize_schema(self):
+        q = self._query(self._db, 'client', OPTIONS_TABLE,
+                        trans=False)
+        q.create()
+        q._con.close()  # pylint: disable=protected-access
+
+    def _upgrade_schema(self, old_version):
+        raise NotImplementedError()
+
+
+class OpenIDCStore(Store):
+    def __init__(self, database_url, static_store):
+        Store.__init__(self, database_url=database_url)
+        self.static_store = static_store
 
     def registerDynamicClient(self, client):
         data = {}
@@ -23,38 +43,101 @@ class OpenIDCStore(Store):
         # Prepend client ID with D- to indicate that this is a dynamic client
         return 'D-%s' % client_id
 
-    def registerStaticClient(self, client):
-        # TODO: Implement static client
+    def registerStaticClient(self, client_id, client):
+        if not client_id:
+            client_id = uuid4().hex
 
-        client_id = None
+        data = {}
+        for key in client:
+            data[key] = json.dumps(client[key])
 
-        # Prepend client ID with S- to indicate that this is a static client
-        return 'S-%s' % client_id
+        self.static_store.save_options('client', client_id, data)
+
+        return client_id
+
+    def updateClient(self, client_id, client):
+        if 'type' in client['ipsilon_internal']:
+            del client['ipsilon_internal']['type']
+        if 'client_id' in client['ipsilon_internal']:
+            del client['ipsilon_internal']['client_id']
+
+        info = {}
+        for key, datum in client:
+            info[key] = json.loads(datum)
+
+        if client_id.startswith('D-'):
+            # This is a dynamically registered client
+            client_id = client_id[2:]
+            self.save_unique_data('client', {client_id: info})
+        else:
+            # This is a statically configured client
+            self.static_store.save_options('client', {client_id: info})
+
+    def getDynamicClients(self):
+        clients = {}
+        results = self.get_unique_data('client')
+        for cid in results:
+            info = {}
+            for key in results[cid]:
+                info[key] = json.loads(results[cid][key])
+
+            info['ipsilon_internal']['type'] = 'dynamic'
+            info['ipsilon_internal']['client_id'] = 'D-%s' % cid
+            clients['D-%s' % cid] = info
+        return clients
+
+    def getStaticClients(self):
+        clients = {}
+        results = self.static_store.load_options('client')
+        for cid in results:
+            info = {}
+            for key in results[cid]:
+                info[key] = json.loads(results[cid][key])
+
+            info['ipsilon_internal']['type'] = 'static'
+            info['ipsilon_internal']['client_id'] = cid
+            clients[cid] = info
+        return clients
 
     def getClient(self, client_id):
         if client_id.startswith('D-'):
             # This is a dynamically registered client
-            client_id = client_id[2:]
-            data = self.get_unique_data('client', client_id)
-        elif client_id.startswith('S-'):
-            # This is a statically configured client
-            client_id = client_id[2:]
-            # TODO: Get the configured client data
-            return None
+            ctype = 'dynamic'
+            data = self.get_unique_data('client', client_id[2:])
         else:
-            # No idea what this is
-            self.debug('Invalid client ID request: %s' % client_id)
-            return None
+            # This is a statically configured client
+            ctype = 'static'
+            data = self.static_store.load_options('client', client_id)
 
         if len(data) < 1:
             return None
-
-        datum = data[client_id]
+        elif len(data) == 1:
+            datum = data[client_id[2:]]
+        else:
+            datum = data
 
         for key in datum:
             datum[key] = json.loads(datum[key])
 
+        datum['ipsilon_internal']['type'] = ctype
+        datum['ipsilon_internal']['client_id'] = client_id
+
         return datum
+
+    def deleteClient(self, client_id):
+        if not self.getClient(client_id):
+            return False
+
+        if client_id.startswith('D-'):
+            # This is a dynamically registered client
+            self.del_unique_data('client', client_id[2:])
+        else:
+            # This is a statically configured client
+            self.static_store.delete_options('client', client_id)
+
+        if self.getClient(client_id):
+            return False
+        return True
 
     def lookupToken(self, token, expected_type, return_expired=False):
         if '_' not in token:

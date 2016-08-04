@@ -4,8 +4,9 @@ from __future__ import absolute_import
 
 from ipsilon.providers.common import ProviderBase, ProviderInstaller
 from ipsilon.providers.openidc.plugins.common import LoadExtensions
-from ipsilon.providers.openidc.store import OpenIDCStore
+from ipsilon.providers.openidc.store import OpenIDCStore, OpenIDCStaticStore
 from ipsilon.providers.openidc.auth import OpenIDC
+from ipsilon.providers.openidc.admin import OpenIDCAdminPage
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 from ipsilon.info.common import InfoMapping
@@ -23,6 +24,7 @@ class IdpProvider(ProviderBase):
         super(IdpProvider, self).__init__('openidc', 'openidc', *pargs)
         self.mapping = InfoMapping()
         self.keyset = None
+        self.admin = None
         self.page = None
         self.datastore = None
         self.server = None
@@ -37,6 +39,10 @@ Provides OpenID Connect authentication infrastructure. """
                 'database url',
                 'Database URL for OpenID Connect storage',
                 'openidc.sqlite'),
+            pconfig.String(
+                'static database url',
+                'Database URL for OpenID Connect static client configuration',
+                'openidc.static.sqlite'),
             pconfig.Choice(
                 'enabled extensions',
                 'Choose the extensions to enable',
@@ -154,12 +160,12 @@ Provides OpenID Connect authentication infrastructure. """
 
     def get_tree(self, site):
         self.page = OpenIDC(site, self)
-        # self.admin = AdminPage(site, self)
+        self.admin = OpenIDCAdminPage(site, self)
 
         return self.page
 
     def used_datastores(self):
-        return [self.datastore]
+        return [self.datastore, self.datastore.static_store]
 
     def init_idp(self):
         self.keyset = JWKSet()
@@ -168,7 +174,10 @@ Provides OpenID Connect authentication infrastructure. """
             for key in loaded_keys['keys']:
                 self.keyset.add(JWK(**key))
 
-        self.datastore = OpenIDCStore(self.get_config_value('database url'))
+        static_store = OpenIDCStaticStore(
+            self.get_config_value('static database url'))
+        self.datastore = OpenIDCStore(self.get_config_value('database url'),
+                                      static_store)
 
     def openid_connect_issuer_wf_rel(self, resource):
         link = {
@@ -206,6 +215,8 @@ class Installer(ProviderInstaller):
                            help='Configure OpenID Connect Provider')
         group.add_argument('--openidc-dburi',
                            help='OpenID Connect database URI')
+        group.add_argument('--openidc-static-dburi',
+                           help='OpenID Connect static client database URI')
         group.add_argument('--openidc-subject-salt', default=None,
                            help='Salt to use for pairwise subject subjects')
         group.add_argument('--openidc-extensions', default='',
@@ -251,6 +262,9 @@ class Installer(ProviderInstaller):
                   'database url': opts['openidc_dburi'] or
                   opts['database_url'] % {
                       'datadir': opts['data_dir'], 'dbname': 'openidc'},
+                  'static database url': opts['openidc_static_dburi'] or
+                  opts['database_url'] % {
+                      'datadir': opts['data_dir'], 'dbname': 'openidc.static'},
                   'enabled extensions': opts['openidc_extensions'],
                   'idp key file': keyfile,
                   'idp sig key id': '%s-sig' % keyid,
