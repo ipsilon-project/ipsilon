@@ -6,21 +6,18 @@ __requires__ = ['sqlalchemy >= 0.8']
 import pkg_resources  # pylint: disable=unused-import
 
 import sys
+import logging
+logging.basicConfig(level=logging.INFO)
+
 from ipsilon import find_config
 from ipsilon.tools import dbupgrade
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == '__main__':
-    def_logger = logging.getLogger()
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.ERROR)
-    def_logger.addHandler(ch)
-
     try:
         dbupgrade.execute_upgrade(find_config())
     except Exception as ex:
-        logger.error(ex)
+        logger.error('Error upgrading database', exc_info=True)
         sys.exit(1)

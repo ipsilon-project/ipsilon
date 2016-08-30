@@ -16,7 +16,15 @@ logger = logging.getLogger(__name__)
 
 
 def _upgrade_database(datastore):
+    """
+    This function actually triggers the update on the datastore class.
+    Returns True for success, False for failure, and None if it didn't do
+    anything because the datastore is readonly, as happens with configfiles.
+    """
     logger.debug('Considering datastore %s', datastore.__class__.__name__)
+    if datastore.is_readonly:
+        logger.warning('Datastore is readonly. Please fix manually!')
+        return None
     # pylint: disable=protected-access
     current_version = datastore._get_schema_version()
     # pylint: disable=protected-access
@@ -34,9 +42,6 @@ def _upgrade_database(datastore):
         logger.debug('Schema for %s is up-to-date',
                      datastore.__class__.__name__)
     if upgrade_required:
-        if datastore.is_readonly:
-            logger.warning('Datastore is readonly. Please fix manually!')
-            return False
         try:
             datastore.upgrade_database()
         except Exception as ex:  # pylint: disable=broad-except
@@ -64,7 +69,7 @@ def execute_upgrade(cfgfile):
 
     adminstore = AdminStore()
     # First try to upgrade the config store before continuing
-    if not _upgrade_database(adminstore):
+    if _upgrade_database(adminstore) not in [True, None]:
         return upgrade_failed()
 
     admin_config = adminstore.load_config()
@@ -84,7 +89,7 @@ def execute_upgrade(cfgfile):
     else:
         dburi = cherrypy.config['tools.sessions.storage_dburi']
         SqlSession.setup(storage_dburi=dburi)
-        if not _upgrade_database(SqlSession._store):
+        if _upgrade_database(SqlSession._store) not in [True, None]:
             return upgrade_failed()
 
     # Now handle the rest of the default datastores
@@ -92,7 +97,7 @@ def execute_upgrade(cfgfile):
         store = store()
         logger.debug('Handling default datastore %s',
                      store.__class__.__name__)
-        if not _upgrade_database(store):
+        if _upgrade_database(store) not in [True, None]:
             return upgrade_failed()
 
     # And now datastores for any of the plugins
@@ -111,7 +116,7 @@ def execute_upgrade(cfgfile):
             for store in plugin.used_datastores():
                 logger.debug('Handling plugin datastore %s',
                              store.__class__.__name__)
-                if not _upgrade_database(store):
+                if _upgrade_database(store) not in [True, None]:
                     return upgrade_failed()
 
     # We are done with the init/upgrade
