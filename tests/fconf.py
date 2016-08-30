@@ -9,6 +9,7 @@ import os
 import pwd
 import sys
 from string import Template
+import subprocess
 import uuid
 
 
@@ -148,6 +149,15 @@ class IpsilonTest(IpsilonTestBase):
         fixup_sp_httpd(os.path.dirname(spconf))
 
         fixup_idp_conf(self.testdir)
+
+        print "Testing database upgrade"
+        cfgfile = os.path.join(self.testdir, 'etc', idpname, 'ipsilon.conf')
+        cmd = [os.path.join(self.rootdir,
+                            'ipsilon/install/ipsilon-upgrade-database'),
+               cfgfile]
+        subprocess.check_call(cmd,
+                              cwd=os.path.join(self.testdir, 'lib', idpname),
+                              env=env)
 
         print "Starting IDP's httpd server"
         self.start_http_server(idpconf, env)
