@@ -743,9 +743,18 @@ class OpenIDC(ProviderPageBase):
             'Content-Type': 'application/json'
         })
 
-        # Sent to jwcrypto as https://github.com/latchset/jwcrypto/pull/20
+        # In jwcrypto 0.3.0, JWKSet was changed to be a dict with all the keys
+        # in a keys field. Before that, it was a set and we need to loop over
+        # the object itself.
+        # We can't use the keyset.export function because in 0.2.0 it did not
+        # accept an argument to exclude private keys from the export, and there
+        # is no way to detect whether we're dealing with 0.3.0 or 0.2.0.
+        keyset = self.cfg.keyset
+        if isinstance(keyset, dict):
+            keyset = keyset['keys']
+
         keys = []
-        for key in self.cfg.keyset:
+        for key in keyset:
             keys.append(json.loads(key.export_public()))
         return json.dumps({'keys': keys})
     Jwks.public_function = True
