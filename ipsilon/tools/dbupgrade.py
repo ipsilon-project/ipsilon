@@ -21,7 +21,7 @@ def _upgrade_database(datastore):
     Returns True for success, False for failure, and None if it didn't do
     anything because the datastore is readonly, as happens with configfiles.
     """
-    logger.debug('Considering datastore %s', datastore.__class__.__name__)
+    logger.info('Considering datastore %s', datastore.__class__.__name__)
     if datastore.is_readonly:
         logger.warning('Datastore is readonly. Please fix manually!')
         return None
@@ -32,15 +32,15 @@ def _upgrade_database(datastore):
     upgrade_required = False
     if current_version is None:
         # Initialize schema
-        logger.debug('Initializing schema for %s',
-                     datastore.__class__.__name__)
+        logger.info('Initializing schema for %s',
+                    datastore.__class__.__name__)
         upgrade_required = True
     elif current_version != code_schema_version:
-        logger.debug('Upgrading schema for %s', datastore.__class__.__name__)
+        logger.info('Upgrading schema for %s', datastore.__class__.__name__)
         upgrade_required = True
     else:
-        logger.debug('Schema for %s is up-to-date',
-                     datastore.__class__.__name__)
+        logger.info('Schema for %s is up-to-date',
+                    datastore.__class__.__name__)
     if upgrade_required:
         try:
             datastore.upgrade_database()
@@ -83,9 +83,9 @@ def execute_upgrade(cfgfile):
     root = Root('default', template_env)
 
     # Handle the session store if that is Sql
-    logger.debug('Handling sessions datastore')
+    logger.info('Handling sessions datastore')
     if cherrypy.config['tools.sessions.storage_type'] != 'sql':
-        logger.debug('Not SQL-based, skipping')
+        logger.info('Not SQL-based, skipping')
     else:
         dburi = cherrypy.config['tools.sessions.storage_dburi']
         SqlSession.setup(storage_dburi=dburi)
@@ -95,8 +95,8 @@ def execute_upgrade(cfgfile):
     # Now handle the rest of the default datastores
     for store in [UserStore, TranStore]:
         store = store()
-        logger.debug('Handling default datastore %s',
-                     store.__class__.__name__)
+        logger.info('Handling default datastore %s',
+                    store.__class__.__name__)
         if _upgrade_database(store) not in [True, None]:
             return upgrade_failed()
 
@@ -107,15 +107,15 @@ def execute_upgrade(cfgfile):
                      'info_config',
                      'authz_config']:
         for plugin in root._site[facility].enabled:
-            logger.debug('Handling plugin %s', plugin)
+            logger.info('Handling plugin %s', plugin)
             plugin = root._site[facility].available[plugin]
-            logger.debug('Creating plugin AdminStore table')
+            logger.info('Creating plugin AdminStore table')
             adminstore.create_plugin_data_table(plugin.name)
-            logger.debug('Creating plugin UserStore table')
+            logger.info('Creating plugin UserStore table')
             userstore.create_plugin_data_table(plugin.name)
             for store in plugin.used_datastores():
-                logger.debug('Handling plugin datastore %s',
-                             store.__class__.__name__)
+                logger.info('Handling plugin datastore %s',
+                            store.__class__.__name__)
                 if _upgrade_database(store) not in [True, None]:
                     return upgrade_failed()
 
