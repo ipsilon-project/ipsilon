@@ -44,7 +44,7 @@ class SessionStore(Store):
         table = SqlQuery(self._db, 'sessions', SESSION_TABLE)._table
         # pylint: disable=no-value-for-parameter
         d = table.delete().where(table.c.expiration_time <=
-                                 datetime.datetime.now())
+                                 str(datetime.datetime.now()))
         return d.execute().rowcount
 
 

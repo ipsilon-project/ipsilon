@@ -791,7 +791,7 @@ class TranStore(Store):
         in_one_hour = datetime.datetime.now() - datetime.timedelta(hours=1)
         sel = select([table.c.uuid]). \
             where(and_(table.c.name == 'origintime',
-                       table.c.value <= in_one_hour))
+                       table.c.value <= str(in_one_hour)))
         # pylint: disable=no-value-for-parameter
         d = table.delete().where(table.c.uuid.in_(sel))
         return d.execute().rowcount
@@ -827,7 +827,7 @@ class SAML2SessionStore(Store):
         table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
         sel = select([table.c.uuid]). \
             where(and_(table.c.name == 'expiration_time',
-                       table.c.value <= datetime.datetime.now()))
+                       table.c.value <= str(datetime.datetime.now())))
         # pylint: disable=no-value-for-parameter
         d = table.delete().where(table.c.uuid.in_(sel))
         return d.execute().rowcount
