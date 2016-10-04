@@ -30,6 +30,16 @@ def url_from_image(image):
     )
 
 
+class FieldValueError(ValueError):
+
+    def __init__(self, field, *args):
+        super(FieldValueError, self).__init__(*args)
+        self.field = field
+
+    def __str__(self):
+        return ValueError.__str__(self) + ', field: %s' % self.field
+
+
 class Config(Log):
 
     def __init__(self, name, *args):
@@ -38,7 +48,8 @@ class Config(Log):
         self._dict = dict()
         for item in args:
             if not isinstance(item, Option):
-                raise ValueError('Invalid option type for %s' % repr(item))
+                raise FieldValueError(self.name, 'Invalid option type for %s'
+                                      % repr(item))
             self._list.append(item.name)
             self._dict[item.name] = item
         self.debug('Config(%s) %s' % (self.name, self._dict))
@@ -57,7 +68,7 @@ class Config(Log):
 
     def __setitem__(self, key, value):
         if not isinstance(value, Option):
-            raise ValueError('Invalid type for %s' % value)
+            raise FieldValueError(self.name, 'Invalid type for %s' % value)
         if key != value.name:
             raise NameError('Name mismatch, key=%s but value.name=%s' % (
                 key, value.name))
@@ -139,7 +150,7 @@ class Option(Log):
 
     def _str_import_value(self, value):
         if not isinstance(value, str):
-            raise ValueError('Value must be string')
+            raise FieldValueError(self.name, 'Value must be string')
         self._assigned_value = value
 
     def is_readonly(self):
@@ -248,7 +259,8 @@ class Template(Option):
 
     def templatize(self, args):
         if not args:
-            raise ValueError('Templatized called w/o arguments')
+            raise FieldValueError(self.name,
+                                  'Templatized called w/o arguments')
 
         return self.get_value() % args
 
@@ -278,7 +290,8 @@ class List(Option):
 
     def import_value(self, value):
         if not isinstance(value, str):
-            raise ValueError('Value (type: %s) must be string' % type(value))
+            raise FieldValueError(self.name, 'Value (type: %s) must be string'
+                                  % type(value))
         self._assigned_value = [x.strip() for x in value.split(',')]
 
 
@@ -288,8 +301,9 @@ class ComplexList(List):
         if value is None:
             return
         if not isinstance(value, list):
-            raise ValueError('The value type must be a list, not "%s"' %
-                             type(value))
+            raise FieldValueError(self.name,
+                                  'The value type must be a list, not "%s"' %
+                                  type(value))
 
     def set_value(self, value):
         self._check_value(value)
@@ -302,8 +316,9 @@ class ComplexList(List):
 
     def import_value(self, value):
         if not isinstance(value, str):
-            raise ValueError('The value type must be a string, not "%s"' %
-                             type(value))
+            raise FieldValueError(self.name,
+                                  'The value type must be a string, not "%s"' %
+                                  type(value))
         jsonval = json.loads(value)
         self.set_value(jsonval)
 
@@ -314,19 +329,24 @@ class MappingList(ComplexList):
         if value is None:
             return
         if not isinstance(value, list):
-            raise ValueError('The value type must be a list, not "%s"' %
-                             type(value))
+            raise FieldValueError(self.name,
+                                  'The value type must be a list, not "%s"' %
+                                  type(value))
         for v in value:
             if not isinstance(v, list):
-                raise ValueError('Each element must be a list, not "%s"' %
-                                 type(v))
+                raise FieldValueError(self.name,
+                                      'Each element must be a list, not "%s"' %
+                                      type(v))
             if len(v) != 2:
-                raise ValueError('Each element must contain 2 values,'
-                                 ' not %d' % len(v))
+                raise FieldValueError(self.name,
+                                      'Each element must contain 2 values,'
+                                      ' not %d' % len(v))
 
     def import_value(self, value):
         if not isinstance(value, str):
-            raise ValueError('Value (type: %s) must be string' % type(value))
+            raise FieldValueError(self.name,
+                                  'Value (type: %s) must be string'
+                                  % type(value))
         jsonval = json.loads(value)
         self.set_value(jsonval)
 
@@ -345,7 +365,8 @@ class Choice(Option):
             default = []
         for name in default:
             if name not in self._allowed_values:
-                raise ValueError(
+                raise FieldValueError(
+                    self.name,
                     'item [%s] is not in allowed [%s]' % (name, allowed))
             self._default_value.append(name)
 
@@ -366,7 +387,8 @@ class Choice(Option):
         self._assigned_value = list()
         for val in value:
             if val not in self._allowed_values:
-                raise ValueError(
+                raise FieldValueError(
+                    self.name,
                     'Value "%s" not allowed [%s]' % (val,
                                                      self._allowed_values))
             self._assigned_value.append(val)
@@ -408,12 +430,15 @@ class Pick(Option):
         super(Pick, self).__init__(name, description, readonly=readonly)
         self._allowed_values = list(allowed)
         if default_value not in self._allowed_values:
-            raise ValueError('The default value is not in the allowed list')
+            raise FieldValueError(
+                self.name,
+                'The default value is not in the allowed list')
         self._default_value = default_value
 
     def set_value(self, value):
         if value not in self._allowed_values:
-            raise ValueError(
+            raise FieldValueError(
+                self.name,
                 'Value "%s" not allowed [%s]' % (value, self._allowed_values))
         self._assigned_value = value
 
