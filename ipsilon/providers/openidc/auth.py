@@ -228,7 +228,7 @@ class Authorization(AuthenticateRequest):
             try:
                 # FIXME: Implement decryption
                 decoded = JWT(jwt=jwt_object)
-                if 'request_object_signing_alg' in client:
+                if client['request_object_signing_alg'] != 'none':
                     # Client told us we need to check signature
                     if decoded.token.jose_header['alg'] != \
                             client['request_object_signing_alg']:
@@ -240,7 +240,7 @@ class Authorization(AuthenticateRequest):
                             decoded.token.objects['payload'])
                     else:
                         keyset = None
-                        if 'jkws' in client:
+                        if client['jwks']:
                             keys = json.loads(client['jkws'])
                         else:
                             keys = requests.get(client['jwks_uri']).json()
@@ -375,7 +375,7 @@ class Authorization(AuthenticateRequest):
 
         needs_auth = True
         if not user.is_anonymous:
-            if request_data['max_age'] is None:
+            if request_data['max_age'] in [None, 0]:
                 needs_auth = False
             else:
                 auth_time = us.get_user_attrs()['_auth_time']
@@ -431,7 +431,7 @@ class Continue(AuthenticateRequest):
             userinfo['sub'] = user.name
         else:
             h = hashlib.sha256()
-            if 'sector_identifier_uri' in client:
+            if client['sector_identifier_uri']:
                 domain = get_url_hostpart(
                     client['sector_identifier_uri'])
             else:
