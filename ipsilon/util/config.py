@@ -175,6 +175,26 @@ class String(Option):
         self._str_import_value(value)
 
 
+class Integer(String):
+
+    def __init__(self, name, description, default_value=None, readonly=False):
+        super(Integer, self).__init__(name, description, readonly=readonly)
+        self._default_value = int(default_value)
+
+    def _check_value(self, value):
+        if not value:
+            return
+        try:
+            int(value)
+        except ValueError:
+            raise FieldValueError(self.name, 'The value must be an integer')
+
+    def set_value(self, value):
+        self._check_value(value)
+        if value:
+            self._assigned_value = int(value)
+
+
 class Image(Option):
     """
     An image has two components: the binary blob of the image itself and

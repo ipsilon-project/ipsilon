@@ -78,7 +78,7 @@
               {% set value = v.get_value() -%}
               {% if v.__class__.__name__ == 'String' and v.multiline -%}
                 <textarea class="form-control" name="{{ v.name }}" rows="10" cols="80"}">{{value}}</textarea>
-              {% elif v.__class__.__name__ in ['String', 'Template'] -%}
+              {% elif v.__class__.__name__ in ['String', 'Template', 'Integer'] -%}
                 <input type="text" class="form-control" name="{{ v.name }}"
                   {%- if value %}
                     value="{{ value }}"
