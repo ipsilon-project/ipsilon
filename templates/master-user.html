@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="ie8"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="ipsilon-user">
+<!--<![endif]-->
+  <head>
+    <title>{{ title }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ basepath }}/ui/css/patternfly.css" rel="stylesheet" media="screen, print">
+    <link href="{{ basepath }}/ui/css/styles.css" rel="stylesheet" media="screen, print">
+    {%- if heads %}
+      {%- for group, value in heads.items() %}
+        {%- for head in value %}
+    {{ head }}
+        {%- endfor %}
+      {%- endfor %}
+    {%- endif %}
+  </head>
+  <body>
+    <div class="container-fluid headerbar-ipsilon-user">
+      <div class="row">
+        <div class="col-md-6">
+          <a href="{{ basepath }}/" id="badge" tabindex="-1">
+            <img class="ipsilon-logotext" src="{{ basepath }}/ui/img/brand-lg.png" alt="Ipsilon" />
+          </a>
+        </div>
+        <div class="col-md-6 text-right">
+          <a href="{{ basepath }}/" id="badge" tabindex="-1">
+            <img src="{{ basepath }}/ui/img/logo.svg" alt="Ipsilon IdP" />
+          </a>
+      </div>
+      </div>
+    </div>
+
+    <div class="container-fluid main-content">
+      <div class="row">
+        {% block main %}
+        {% endblock %}
+      </div>
+    </div>
+  </body>
+</html>

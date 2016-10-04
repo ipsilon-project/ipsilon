@@ -3467,3 +3467,35 @@ table.datatable th:active {
   border-radius: 1px;
   border-radius: 25px;
 }
+.headerbar-ipsilon-user {
+  padding-top: 1em;
+  padding-bottom: 1em;
+  margin-bottom: 2em;
+}
+.ipsilon-user body {
+  background: #1d2124 url("../img/bg-login.jpg") repeat-x 50% 0;
+  background-size: auto;
+}
+@media (min-width: 768px) {
+  .ipsilon-user body {
+    background-size: 100% auto;
+  }
+}
+.ipsilon-user .container-fluid.main-content {
+  background-color: rgba(255, 255, 255, 0.055);
+  color: #fff;
+  padding-bottom: 40px;
+  padding-top: 20px;
+}
+.ipsilon-user .list-group-item {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.01);
+}
+.ipsilon-user .list-group {
+  border-top: 1px solid rgba(255, 255, 255, 0.01);
+}
+.ipsilon-logotext {
+  margin-top: 2em;
+  height: 18px;
+  padding-left: 1em;
+}
