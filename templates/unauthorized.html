@@ -7,6 +7,10 @@
   {% else %}
     <p>Authentication was not successful</p>
   {% endif %}
+  {% if ipsilon_transaction_id %}
+  <p><a href="{{ basepath }}/login?ipsilon_transaction_id={{ ipsilon_transaction_id }}" title="Login">Try to login again</a></p>
+  {% else %}
   <p><a href="{{ basepath }}/login" title="Login">Try to login again</a></p>
+  {% endif %}
 </div>
 {% endblock %}

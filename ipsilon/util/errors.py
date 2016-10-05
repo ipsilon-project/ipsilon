@@ -1,6 +1,7 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
 from ipsilon.util.page import Page
+import cherrypy
 
 
 class Errors(Page):
@@ -34,8 +35,13 @@ class Error_400(Errors):
 class Error_401(Errors):
 
     def handler(self, status, message, traceback, version):
+        try:
+            tid = self.get_valid_transaction('login').transaction_id
+        except cherrypy.HTTPError:
+            tid = None
         return self._error_template('unauthorized.html',
-                                    title='Unauthorized', message=message)
+                                    title='Unauthorized', message=message,
+                                    ipsilon_transaction_id=tid)
 
 
 class Error_404(Errors):
