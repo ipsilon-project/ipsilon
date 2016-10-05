@@ -13,6 +13,7 @@ sys.stdout = sys.stderr
 import glob
 import os
 import atexit
+import string
 import cherrypy
 from ipsilon import find_config
 from ipsilon.util.data import AdminStore
@@ -67,9 +68,13 @@ template_env = Environment(loader=ChoiceLoader(template_loaders),
                            autoescape=True,
                            extensions=['jinja2.ext.autoescape'])
 
+transchars = string.punctuation.replace('-', '').replace('.', '')
+trans = string.maketrans(transchars, '_' * len(transchars))
 if __name__ == "__main__":
     conf = {'global': {'server.socket_host': '0.0.0.0'},
-            '/': {'tools.staticdir.root': os.getcwd()},
+            '/': {'tools.staticdir.root': os.getcwd(),
+                  'request.dispatch':
+                    cherrypy.dispatch.Dispatcher(translate=trans)},
             '/ui': {'tools.staticdir.on': True,
                     'tools.staticdir.dir': 'ui'},
             '/cache': {'tools.staticdir.on': True,
@@ -80,9 +85,12 @@ if __name__ == "__main__":
 else:
     cherrypy.config['environment'] = 'embedded'
 
+    conf = {'/': {'request.dispatch':
+        cherrypy.dispatch.Dispatcher(translate=trans)}}
+
     if cherrypy.__version__.startswith('3.0') and cherrypy.engine.state == 0:
         cherrypy.engine.start(blocking=False)
         atexit.register(cherrypy.engine.stop)
 
     application = cherrypy.Application(Root('default', template_env),
-                                       script_name=None, config=None)
+                                       script_name=None, config=conf)
