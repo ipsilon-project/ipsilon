@@ -85,7 +85,7 @@ class AuthenticateRequest(ProviderPageBase):
 
         if request is None:
             self.debug('No request')
-            raise cherrypy.HTTPRedirect(self.basepath)
+            raise cherrypy.HTTPRedirect(self.basepath or '/')
 
         return request
 
