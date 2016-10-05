@@ -90,6 +90,7 @@ TESTDIR := $(shell mktemp --directory /tmp/ipsilon-testdir.XXXXXXXX)
 tests: wrappers
 	echo "Testdir: $(TESTDIR)"
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=test1
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testroot
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testlogout
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testnameid
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testrest

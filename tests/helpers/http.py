@@ -80,6 +80,12 @@ class HttpSessions(object):
 
         raise ValueError("Unknown URL: %s" % url)
 
+    def get_idp_uri(self, idp):
+        if idp == 'root':
+            return ''
+        else:
+            return '/%s' % idp
+
     def get(self, url, krb=False, **kwargs):
         session = self.get_session(url)
         allow_redirects = False
@@ -336,7 +342,7 @@ class HttpSessions(object):
     def auth_to_idp(self, idp, krb=False, rule=None, expected=None):
 
         srv = self.servers[idp]
-        target_url = '%s/%s/' % (srv['baseuri'], idp)
+        target_url = '%s%s/' % (srv['baseuri'], self.get_idp_uri(idp))
 
         r = self.access('get', target_url, krb=krb)
         if r.status_code != 200:
@@ -359,7 +365,7 @@ class HttpSessions(object):
     def logout_from_idp(self, idp):
 
         srv = self.servers[idp]
-        target_url = '%s/%s/logout' % (srv['baseuri'], idp)
+        target_url = '%s%s/logout' % (srv['baseuri'], self.get_idp_uri(idp))
 
         r = self.access('get', target_url)
         if r.status_code != 200:
@@ -378,7 +384,8 @@ class HttpSessions(object):
         expected_status = 200
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
-        url = '%s/%s/admin/providers/saml2/admin/new' % (idpuri, idp)
+        url = '%s%s/admin/providers/saml2/admin/new' % (idpuri,
+                                                        self.get_idp_uri(idp))
         headers = {'referer': url}
         if rest:
             expected_status = 201
@@ -390,7 +397,9 @@ class HttpSessions(object):
                 'splink': 'https://test.example.com/secret/',
             }
             headers['content-type'] = 'application/x-www-form-urlencoded'
-            url = '%s/%s/rest/providers/saml2/SPS/%s' % (idpuri, idp, desc)
+            url = '%s%s/rest/providers/saml2/SPS/%s' % (idpuri,
+                                                        self.get_idp_uri(idp),
+                                                        desc)
             r = self.post(url, headers=headers, data=urlencode(payload))
         else:
             metafile = {'metafile': m}
@@ -410,7 +419,8 @@ class HttpSessions(object):
         """
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
-        url = '%s/%s/admin/providers/saml2/admin/sp/%s' % (idpuri, idp, sp)
+        url = '%s%s/admin/providers/saml2/admin/sp/%s' % (
+            idpuri, self.get_idp_uri(idp), sp)
         headers = {'referer': url}
         headers['content-type'] = 'application/x-www-form-urlencoded'
         payload = {'submit': 'Submit',
@@ -439,8 +449,8 @@ class HttpSessions(object):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
         if spname:  # per-SP setting
-            url = '%s/%s/admin/providers/saml2/admin/sp/%s' % (
-                idpuri, idp, spname)
+            url = '%s%s/admin/providers/saml2/admin/sp/%s' % (
+                idpuri, self.get_idp_uri(idp), spname)
             mapname = 'Attribute Mapping'
             attrname = 'Allowed Attributes'
         else:  # global default
@@ -476,9 +486,9 @@ class HttpSessions(object):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
 
-        url = '%s/%s/admin/loginstack/%s/enable/%s' % (
-            idpuri, idp, plugtype, plugin)
-        rurl = '%s/%s/admin/loginstack' % (idpuri, idp)
+        url = '%s%s/admin/loginstack/%s/enable/%s' % (
+            idpuri, self.get_idp_uri(idp), plugtype, plugin)
+        rurl = '%s%s/admin/loginstack' % (idpuri, self.get_idp_uri(idp))
         headers = {'referer': rurl}
         r = idpsrv['session'].get(url, headers=headers)
         if r.status_code != 200:
@@ -495,9 +505,9 @@ class HttpSessions(object):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
 
-        url = '%s/%s/admin/loginstack/%s/disable/%s' % (
-            idpuri, idp, plugtype, plugin)
-        rurl = '%s/%s/admin/loginstack' % (idpuri, idp)
+        url = '%s%s/admin/loginstack/%s/disable/%s' % (
+            idpuri, self.get_idp_uri(idp), plugtype, plugin)
+        rurl = '%s%s/admin/loginstack' % (idpuri, self.get_idp_uri(idp))
         headers = {'referer': rurl}
         r = idpsrv['session'].get(url, headers=headers)
         if r.status_code != 200:
@@ -514,8 +524,8 @@ class HttpSessions(object):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
 
-        url = '%s/%s/admin/loginstack/%s/order' % (
-            idpuri, idp, plugtype)
+        url = '%s%s/admin/loginstack/%s/order' % (
+            idpuri, self.get_idp_uri(idp), plugtype)
         headers = {'referer': url}
         headers['content-type'] = 'application/x-www-form-urlencoded'
         payload = {'order': ','.join(order)}
@@ -530,8 +540,8 @@ class HttpSessions(object):
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
 
-        url = '%s/%s/admin/providers/openidc/admin/client/%s/delete' % (
-            idpuri, idp, client_id)
+        url = '%s%s/admin/providers/openidc/admin/client/%s/delete' % (
+            idpuri, self.get_idp_uri(idp), client_id)
         headers = {'referer': url}
         headers['content-type'] = 'application/x-www-form-urlencoded'
         r = idpsrv['session'].get(url, headers=headers)
@@ -560,8 +570,9 @@ class HttpSessions(object):
 
     def get_rest_sp(self, idpname, spname=None):
         if spname is None:
-            uri = '/%s/rest/providers/saml2/SPS/' % idpname
+            uri = '%s/rest/providers/saml2/SPS/' % self.get_idp_uri(idpname)
         else:
-            uri = '/%s/rest/providers/saml2/SPS/%s' % (idpname, spname)
+            uri = '%s/rest/providers/saml2/SPS/%s' % (
+                self.get_idp_uri(idpname), spname)
 
         return self.fetch_rest_page(idpname, uri)
