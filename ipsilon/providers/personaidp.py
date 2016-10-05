@@ -101,8 +101,9 @@ class Installer(ProviderInstaller):
         for c in key.n[4:]:
             key_n = (key_n*256) + ord(c)
         wellknown = dict()
-        wellknown['authentication'] = '/%s/persona/SignIn/' % opts['instance']
-        wellknown['provisioning'] = '/%s/persona/' % opts['instance']
+        wellknown['authentication'] = ('%s/persona/SignIn/'
+                                       % opts['instanceurl'])
+        wellknown['provisioning'] = '%s/persona/' % opts['instanceurl']
         wellknown['public-key'] = {'algorithm': 'RS',
                                    'e': str(exponent),
                                    'n': str(key_n)}

@@ -85,7 +85,7 @@ CONF_TEMPLATE = """
 LoadModule intercept_form_submit_module modules/mod_intercept_form_submit.so
 LoadModule authnz_pam_module modules/mod_authnz_pam.so
 
-<Location /${instance}/login/form>
+<Location ${instanceurl}/login/form>
   InterceptFormPAMService ${service}
   InterceptFormLogin login_name
   InterceptFormPassword login_password
@@ -113,7 +113,7 @@ class Installer(LoginManagerInstaller):
         if opts['form'] != 'yes':
             return
 
-        confopts = {'instance': opts['instance'],
+        confopts = {'instanceurl': opts['instanceurl'],
                     'service': opts['form_service']}
 
         tmpl = Template(CONF_TEMPLATE)

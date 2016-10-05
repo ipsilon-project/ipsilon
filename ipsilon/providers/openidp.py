@@ -158,8 +158,8 @@ class Installer(ProviderInstaller):
         proto = 'https'
         if opts['secure'].lower() == 'no':
             proto = 'http'
-        url = '%s://%s/%s/openid/' % (
-            proto, opts['hostname'], opts['instance'])
+        url = '%s://%s%s/openid/' % (
+            proto, opts['hostname'], opts['instanceurl'])
 
         # Add configuration data to database
         po = PluginObject(*self.pargs)

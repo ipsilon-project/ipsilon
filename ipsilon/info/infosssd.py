@@ -106,7 +106,7 @@ Info plugin that uses mod_lookup_identity and SSSD to retrieve user data."""
 CONF_TEMPLATE = """
 LoadModule lookup_identity_module modules/mod_lookup_identity.so
 
-<Location /${instance}>
+<Location ${instanceurl}>
   LookupUserAttr sn REMOTE_USER_LASTNAME
   LookupUserAttr st REMOTE_USER_STATE
   LookupUserAttr locality REMOTE_USER_CITY
@@ -142,7 +142,7 @@ class Installer(InfoProviderInstaller):
 
         configured = 0
 
-        confopts = {'instance': opts['instance']}
+        confopts = {'instanceurl': opts['instanceurl']}
 
         tmpl = Template(CONF_TEMPLATE)
         hunk = tmpl.substitute(**confopts)

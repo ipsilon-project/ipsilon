@@ -518,7 +518,7 @@ class Installer(ProviderInstaller):
         proto = 'https'
         if opts['secure'].lower() == 'no':
             proto = 'http'
-        url = '%s://%s/%s' % (proto, opts['hostname'], opts['instance'])
+        url = '%s://%s%s' % (proto, opts['hostname'], opts['instanceurl'])
         validity = int(opts['saml2_metadata_validity'])
         meta = IdpMetadataGenerator(url, cert,
                                     timedelta(validity))

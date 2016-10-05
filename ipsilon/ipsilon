@@ -80,7 +80,7 @@ if __name__ == "__main__":
             '/cache': {'tools.staticdir.on': True,
                        'tools.staticdir.dir': 'cache'}}
     cherrypy.quickstart(Root('default', template_env),
-                        cherrypy.config['base.mount'], conf)
+                        cherrypy.config.get('base.mount') or '/', conf)
 
 else:
     cherrypy.config['environment'] = 'embedded'

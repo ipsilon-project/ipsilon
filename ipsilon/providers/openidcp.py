@@ -246,8 +246,8 @@ class Installer(ProviderInstaller):
             m.write(keyset.export())
 
         proto = 'https'
-        url = '%s://%s/%s/openidc/' % (
-            proto, opts['hostname'], opts['instance'])
+        url = '%s://%s%s/openidc/' % (
+            proto, opts['hostname'], opts['instanceurl'])
 
         subject_salt = uuid.uuid4().hex
         if opts['openidc_subject_salt']:

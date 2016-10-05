@@ -96,6 +96,9 @@ def install(plugins, args):
     if not os.path.exists(instance_conf):
         os.makedirs(instance_conf, 0700)
     confopts = {'instance': args['instance'],
+                'instanceurl': args['instanceurl'],
+                'needs_mount': args.get('needs_mount'),
+                'script_alias': args.get('script_alias'),
                 'datadir': args['data_dir'],
                 'publicdatadir': args['public_data_dir'],
                 'wellknowndir': args['wellknown_dir'],
@@ -385,6 +388,8 @@ def parse_args(plugins):
                         help="Machine's fully qualified host name")
     parser.add_argument('--instance', default='idp',
                         help="IdP instance name, each is a separate idp")
+    parser.add_argument('--root-instance', default=False, action='store_true',
+                        help='Configure Ipsilon to mount to the web root')
     parser.add_argument('--system-user', default='ipsilon',
                         help="User account used to run the server")
     parser.add_argument('--admin-user', default='admin',
@@ -494,6 +499,19 @@ if __name__ == '__main__':
         logger.debug('Installation arguments:')
         for k in sorted(opts.iterkeys()):
             logger.debug('%s: %s', k, opts[k])
+
+        if not opts['root_instance'] and opts['instance'] == 'root':
+            raise ValueError('Instance name "root" is reserved')
+
+        if opts['root_instance']:
+            opts['instance'] = 'root'
+            opts['instanceurl'] = ''
+            opts['needs_mount'] = '# '
+            opts['script_alias'] = '/'
+        else:
+            opts['instanceurl'] = '/%s' % opts['instance']
+            opts['needs_mount'] = ''
+            opts['script_alias'] = opts['instanceurl']
 
         if 'uninstall' in opts and opts['uninstall'] is True:
             if not os.path.exists(os.path.join(CONFDIR, opts['instance'])):

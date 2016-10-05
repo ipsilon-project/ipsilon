@@ -86,7 +86,7 @@ apache plugin for actual authentication. """
 
 CONF_TEMPLATE = """
 
-<Location /${instance}/login/gssapi/negotiate>
+<Location ${instanceurl}/login/gssapi/negotiate>
   AuthName "GSSAPI Single Sign On Login"
   <IfModule mod_auth_gssapi.c>
     GssapiCredStore keytab:$keytab
@@ -102,8 +102,8 @@ CONF_TEMPLATE = """
   </IfModule>
   Require valid-user
 
-  ErrorDocument 401 /${instance}/login/gssapi/unauthorized
-  ErrorDocument 500 /${instance}/login/gssapi/failed
+  ErrorDocument 401 ${instanceurl}/login/gssapi/unauthorized
+  ErrorDocument 500 ${instanceurl}/login/gssapi/failed
 </Location>
 """
 
@@ -126,7 +126,7 @@ class Installer(LoginManagerInstaller):
         if opts['gssapi'] != 'yes':
             return
 
-        confopts = {'instance': opts['instance']}
+        confopts = {'instanceurl': opts['instanceurl']}
 
         if os.path.exists(opts['gssapi_httpd_keytab']):
             confopts['keytab'] = opts['gssapi_httpd_keytab']
