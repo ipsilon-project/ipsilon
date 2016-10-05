@@ -185,6 +185,19 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
+    print "test1: Update second SP ...",
+    try:
+        # This is a test to see whether we can update SAML SPs where the name
+        # is an FQDN (includes hyphens and dots). See bug #196
+        sess.set_attributes_and_mapping(idpname, [],
+                                        ['namefull', 'givenname', 'surname'],
+                                        spname=sp2name)
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
     print "test1: Try authentication failure ...",
     newsess = HttpSessions()
     newsess.add_server(idpname, 'https://127.0.0.10:45080', user, 'wrong')
