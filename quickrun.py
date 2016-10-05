@@ -76,7 +76,11 @@ def config(workdir):
         conf_template = f.read()
     t = Template(conf_template)
     text = t.substitute({'debugging': 'True',
-                         'instance': 'idp',
+                         'root_instance': True,
+                         'needs_mount': '# ',
+                         'instance': 'root',
+                         'instanceurl': '',
+                         'script_alias': '/',
                          'staticdir': os.getcwd(),
                          'datadir': workdir,
                          'cachedir': cachedir,
@@ -99,7 +103,7 @@ def init(workdir):
     # Initialize SAML2, since this is quite tricky to get right
     cert = Certificate(os.path.join(workdir, 'saml2'))
     cert.generate('certificate', 'ipsilon-quickrun')
-    url = 'http://localhost:8080/idp'
+    url = 'http://localhost:8080/'
     validity = 365 * 5
     meta = IdpMetadataGenerator(url, cert,
                                 timedelta(validity))
