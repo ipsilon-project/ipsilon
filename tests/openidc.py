@@ -315,6 +315,15 @@ if __name__ == '__main__':
             info['scope'].remove(scope)
         if len(info['scope']) != 0:
             raise Exception('Unexpected scopes found: %s' % info['scope'])
+
+        # Delete test client and then try to use it
+        sess.delete_oidc_client(idpname, reg_resp['client_id'])
+        r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
+                          data={'token': token['access_token'],
+                                'client_id': reg_resp['client_id'],
+                                'client_secret': reg_resp['client_secret']})
+        if r.status_code != 400:
+            raise Exception('Deleted client accepted')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)

@@ -523,6 +523,23 @@ class HttpSessions(object):
         if r.status_code != 200:
             raise ValueError('Failed to post IDP data [%s]' % repr(r))
 
+    def delete_oidc_client(self, idp, client_id):
+        """
+        Delete the specified client from the OpenID client list.
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s/%s/admin/providers/openidc/admin/client/%s/delete' % (
+            idpuri, idp, client_id)
+        headers = {'referer': url}
+        headers['content-type'] = 'application/x-www-form-urlencoded'
+        r = idpsrv['session'].get(url, headers=headers)
+        if r.status_code != 200:
+            raise ValueError('Failed to delete client [%s]' % repr(r))
+        if client_id in r.text:
+            raise ValueError('Client was not gone after deletion')
+
     def fetch_rest_page(self, idpname, uri):
         """
         idpname - the name of the IDP to fetch the page from
