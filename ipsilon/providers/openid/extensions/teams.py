@@ -17,13 +17,13 @@ class Teams(OpenidExtensionBase):
     def _resp(self, request, userdata):
         req = teams.TeamsRequest.fromOpenIDRequest(request)
         if req is None:
-            return {}
+            return None
         data = userdata.get('_groups', [])
         return teams.TeamsResponse.extractResponse(req, data)
 
     def _display(self, request, userdata):
         resp = self._resp(request, userdata)
-        if resp.teams:
+        if resp and resp.teams:
             return {'Groups': resp.teams}
         return {}
 

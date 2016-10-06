@@ -17,6 +17,8 @@ class OpenidExtension(OpenidExtensionBase):
 
     def _resp(self, request, userdata):
         req = sreg.SRegRequest.fromOpenIDRequest(request)
+        if req is None:
+            return None
         data = dict()
         for name in sreg.data_fields:
             if name in userdata:
@@ -25,7 +27,9 @@ class OpenidExtension(OpenidExtensionBase):
 
     def _display(self, request, userdata):
         resp = self._resp(request, userdata)
-        return resp.data
+        if resp and resp.data:
+            return resp.data
+        return {}
 
     def _response(self, request, userdata):
         return self._resp(request, userdata)

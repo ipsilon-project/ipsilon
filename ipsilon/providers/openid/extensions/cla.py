@@ -18,13 +18,13 @@ class OpenidExtension(OpenidExtensionBase):
         req = cla.CLARequest.fromOpenIDRequest(request)
         self.debug(req)
         if req is None:
-            return {}
+            return None
         data = userdata.get('_extras', {}).get('cla', [])
         return cla.CLAResponse.extractResponse(req, data)
 
     def _display(self, request, userdata):
         resp = self._resp(request, userdata)
-        if resp.clas:
+        if resp and resp.clas:
             return {'CLA': 'yes'}
         return {}
 
