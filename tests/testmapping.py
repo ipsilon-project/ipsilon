@@ -214,9 +214,10 @@ if __name__ == '__main__':
 
     print "testmapping: Set default global mapping ...",
     try:
-        sess.set_attributes_and_mapping(idpname,
-                                        [['*', '*'],
-                                         ['fullname', 'namefull']])
+        sess.set_attributes_and_mapping(
+            idpname,
+            [['*', '*'],
+             ['fullname', 'namefull']])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -242,8 +243,10 @@ if __name__ == '__main__':
 
     print "testmapping: Set default allowed attributes ...",
     try:
-        sess.set_attributes_and_mapping(idpname, [],
-                                        ['namefull', 'givenname', 'surname'])
+        sess.set_attributes_and_mapping(
+            idpname,
+            [],
+            ['namefull', 'givenname', 'surname'])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -266,9 +269,10 @@ if __name__ == '__main__':
 
     print "testmapping: Set SP allowed attributes ...",
     try:
-        sess.set_attributes_and_mapping(idpname, [['*', '*']],
-                                        ['wholename', 'givenname', 'surname',
-                                        'email', 'fullname'], sp['name'])
+        sess.set_attributes_and_mapping(
+            idpname, [['*', '*']],
+            ['wholename', 'givenname', 'surname',
+             'email', 'fullname'], sp['name'])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -292,13 +296,14 @@ if __name__ == '__main__':
 
     print "testmapping: Set SP attribute mapping ...",
     try:
-        sess.set_attributes_and_mapping(idpname,
-                                        [['*', '*'],
-                                         ['fullname', 'wholename']],
-                                        ['wholename', 'givenname',
-                                         'surname',
-                                         'email', 'fullname'],
-                                        sp['name'])
+        sess.set_attributes_and_mapping(
+            idpname,
+            [['*', '*'],
+             ['fullname', 'wholename']],
+            ['wholename', 'givenname',
+             'surname',
+             'email', 'fullname'],
+            sp['name'])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -321,16 +326,54 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Set SP URL attribute mapping ...",
+    try:
+        sess.set_attributes_and_mapping(
+            idpname,
+            [['*', '*'],
+             ['fullname', 'http://localhost/SAML/Name'],
+             ['fullname', 'https://localhost/SAML/Name']],
+            ['http://localhost/SAML/Name',
+             'https://localhost/SAML/Name',
+             'givenname',
+             'surname',
+             'email',
+             'fullname'],
+            sp['name'])
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
+    print "testmapping: Test SP URL attribute mapping ...",
+    try:
+        expect = {
+            'http://localhost/SAML/Name': 'Test User %s' % user,
+            'https://localhost/SAML/Name': 'Test User %s' % user,
+            'fullname': 'Test User %s' % user,
+            'surname': user,
+            'givenname': u'Test User 一',
+            'email': '%s@example.com' % user,
+        }
+        check_info_plugin(sess, idpname, spurl, expect)
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
     print "testmapping: Set SP username mapping ...",
     try:
-        sess.set_attributes_and_mapping(idpname,
-                                        [['*', '*'],
-                                         ['fullname', 'wholename'],
-                                         ['email', '_username']],
-                                        ['wholename', 'givenname',
-                                         'surname',
-                                         'email', 'fullname'],
-                                        sp['name'])
+        sess.set_attributes_and_mapping(
+            idpname,
+            [['*', '*'],
+             ['fullname', 'wholename'],
+             ['email', '_username']],
+            ['wholename', 'givenname',
+             'surname',
+             'email', 'fullname'],
+            sp['name'])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -356,9 +399,10 @@ if __name__ == '__main__':
 
     print "testmapping: Drop SP attribute mapping ...",
     try:
-        sess.set_attributes_and_mapping(idpname, [],
-                                        ['givenname', 'surname', 'email',
-                                         'fullname'], sp['name'])
+        sess.set_attributes_and_mapping(
+            idpname, [],
+            ['givenname', 'surname', 'email',
+             'fullname'], sp['name'])
     except Exception, e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)

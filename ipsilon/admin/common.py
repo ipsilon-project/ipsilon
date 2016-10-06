@@ -363,7 +363,11 @@ def get_complex_list_value(name, old_value, **kwargs):
 
     # perform requested changes
     for index, val in change.iteritems():
-        val_list = val.split('/')
+        if val.startswith(('http://', 'https://')):
+            val_list = [val]
+        else:
+            val_list = val.split('/')
+
         stripped = list()
         for v in val_list:
             stripped.append(v.strip())
@@ -431,7 +435,11 @@ def get_mapping_list_value(name, old_value, **kwargs):
         for k in 'from', 'to':
             if k in fields:
                 val = fields[k]
-                val_list = val.split('/')
+                if val.startswith(('http://', 'https://')):
+                    val_list = [val]
+                else:
+                    val_list = val.split('/')
+
                 stripped = list()
                 for v in val_list:
                     stripped.append(v.strip())
