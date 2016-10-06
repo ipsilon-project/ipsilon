@@ -348,6 +348,7 @@ class Authorization(AuthenticateRequest):
             data = e.get_claims(request_data['scope'])
             self.debug('%s returned %s' % (n, repr(data)))
             for claim in data:
+                # pylint: disable=invalid-sequence-index
                 request_data['claims']['userinfo'][claim] = None
 
         # Store data so we can continue with the request
