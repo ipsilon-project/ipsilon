@@ -116,7 +116,9 @@ class AuthenticateRequest(ProviderPageBase):
             raise InvalidRequest('Invalid response_mode requested')
 
     def _respond_error(self, request, error, message):
+        self.log('Responding with error: %s, message: %s' % (error, message))
         if request.get('redirect_uri') is None:
+            self.log('No valid redirect URI')
             raise InvalidRequest('Request is missing redirct_uri')
 
         return self._respond(request, {'error': error,
