@@ -106,7 +106,7 @@ class ClientAdminPage(AdminPage):
                                    (name, value), severity=logging.DEBUG)
                 new_db_values[name] = value
 
-        client_id = kwargs['Client ID']
+        client_id = kwargs.get('Client ID')
         if self.new_client and client_id:
             if re.search(INVALID_IN_CLIENT_ID, client_id):
                 message = 'Invalid character in client ID'

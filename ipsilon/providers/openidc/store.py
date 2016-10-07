@@ -62,8 +62,8 @@ class OpenIDCStore(Store):
             del client['ipsilon_internal']['client_id']
 
         info = {}
-        for key, datum in client:
-            info[key] = json.loads(datum)
+        for key in client:
+            info[key] = json.dumps(client[key])
 
         if client_id.startswith('D-'):
             # This is a dynamically registered client
@@ -71,7 +71,7 @@ class OpenIDCStore(Store):
             self.save_unique_data('client', {client_id: info})
         else:
             # This is a statically configured client
-            self.static_store.save_options('client', {client_id: info})
+            self.static_store.save_options('client', client_id, info)
 
     def getDynamicClients(self):
         clients = {}
