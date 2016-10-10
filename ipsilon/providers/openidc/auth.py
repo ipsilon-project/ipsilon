@@ -86,7 +86,7 @@ class AuthenticateRequest(ProviderPageBase):
             self.debug('Using default query response mode')
 
         # If the client sent a state, we need to pass that back
-        if 'state' in request:
+        if 'state' in request and request['state']:
             contents['state'] = request['state']
 
         # Build a response-string, which is sent with either query, form
