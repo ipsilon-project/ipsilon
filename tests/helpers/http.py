@@ -475,6 +475,30 @@ class HttpSessions(object):
         if r.status_code != 200:
             raise ValueError('Failed to post IDP data [%s]' % repr(r))
 
+    def update_options(self, idp, relurl, options):
+        """
+        Update options on a specific page.
+
+        relurl must be the relative url to the admin page, not starting with /.
+
+        options must be a dict of options to change.
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s%s/admin/%s' % (
+            idpuri, self.get_idp_uri(idp), relurl)
+        headers = {'referer': url}
+        r = idpsrv['session'].post(url, data=options, headers=headers)
+        if r.status_code != 200:
+            raise ValueError('Failed to update settings [%s]' % repr(r))
+        if not 'alert alert-success' in r.text:
+            raise Exception('No success message returned')
+        for key in options:
+            if options[key] not in r.text:
+                raise Exception('Option value %s (key %s) not found' %
+                                (options[key], key))
+
     def enable_plugin(self, idp, plugtype, plugin):
         """
         Enable a login stack plugin.
