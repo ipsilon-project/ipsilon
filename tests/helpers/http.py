@@ -492,7 +492,7 @@ class HttpSessions(object):
         r = idpsrv['session'].post(url, data=options, headers=headers)
         if r.status_code != 200:
             raise ValueError('Failed to update settings [%s]' % repr(r))
-        if not 'alert alert-success' in r.text:
+        if 'alert alert-success' not in r.text:
             raise Exception('No success message returned')
         for key in options:
             if options[key] not in r.text:

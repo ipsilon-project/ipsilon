@@ -262,6 +262,17 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
+    print "openidc: Update first SP client name ...",
+    try:
+        sess.update_options(
+            idpname,
+            'providers/openidc/admin/client/%s' % reg_resp['client_id'],
+            {'Client Name': 'Test suite client updated'})
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
     print "openidc: Retrieving token info ...",
     try:
         # Testing token without client auth
