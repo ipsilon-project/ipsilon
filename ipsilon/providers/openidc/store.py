@@ -281,8 +281,13 @@ class OpenIDCStore(Store):
             'expires_in': expires_in,
         }
 
-    def invalidateToken(self, token):
-        self.del_unique_data('token', token)
+    def invalidateToken(self, token_id):
+        data = self.get_unique_data('token', token_id)
+        if data:
+            datum = data[token_id]
+            self.del_unique_data('userinfo', datum['userinfocode'])
+
+        self.del_unique_data('token', token_id)
 
     def storeUserInfo(self, userinfo):
         to_store = {}
@@ -360,9 +365,28 @@ class OpenIDCStore(Store):
 
         return token
 
+    def _cleanupExpiredTokens(self):
+        tokens = self.get_unique_data('token')
+        cleaned = 0
+        for iden in tokens:
+            if tokens[iden]['expires_at'] <= int(time.time()):
+                cleaned += 1
+                self.invalidateToken(iden)
+        return cleaned
+
+    def _cleanupUnreferencedTokens(self):
+        tokens = self.get_unique_data('token')
+        cleaned = 0
+        for iden in tokens:
+            if not self.getClient(tokens[iden]['client_id']):
+                cleaned += 1
+                self.invalidateToken(iden)
+        return cleaned
+
     def _cleanup(self):
-        # TODO: Clean up any tokens with expiry <= time.time()
-        return 0
+        res1 = self._cleanupExpiredTokens()
+        res2 = self._cleanupUnreferencedTokens()
+        return res1 + res2
 
     def _initialize_schema(self):
         q = self._query(self._db, 'client', UNIQUE_DATA_TABLE,
