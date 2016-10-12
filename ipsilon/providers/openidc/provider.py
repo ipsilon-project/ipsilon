@@ -103,6 +103,16 @@ class Client(pconfig.ConfigHelper):
         metadata['client_id_issued_at'] = \
             self.client_info['client_id_issued_at']
         metadata['ipsilon_internal'] = self.client_info['ipsilon_internal']
+
+        # This is used to store values that the client provides that we do not
+        # yet support, so that when we do support them in a future version, we
+        # have not thrown them away.
+        metadata['ipsilon_internal']['extra'] = \
+            self.client_info['ipsilon_internal'].get('extra', {})
+        for key in self.client_info:
+            if key != 'ipsilon_internal' and key not in metadata:
+                metadata['ipsilon_internal']['extra'][key] = \
+                    self.client_info[key]
         return metadata
 
     def generate_public(self):
@@ -191,6 +201,10 @@ class Client(pconfig.ConfigHelper):
             return self.client_id or ''
         elif option in self.client_info:
             return self.client_info[option]
+        elif option in self.client_info['ipsilon_internal'].get('extra', {}):
+            # This was an option that was unsupported and stored to the side in
+            # a previous release, but that we can now actually use.
+            return self.client_info['ipsilon_internal']['extra'][option]
         elif option in ['redirect_uris', 'contacts', 'request_uris']:
             return []
         elif option == 'response_types':
