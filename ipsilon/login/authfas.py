@@ -2,8 +2,8 @@
 
 from ipsilon.login.common import LoginFormBase, LoginManagerBase, \
     LoginManagerInstaller
+from ipsilon.info.infofas import fas_make_userdata
 from ipsilon.util.plugin import PluginObject
-from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
 import cherrypy
 import logging
@@ -12,39 +12,10 @@ from fedora.client.fasproxy import FasProxyClient
 from fedora.client import AuthError
 
 
-try:
-    import openid_cla.cla as cla
-
-    CLA_GROUPS = {
-        'cla_click': cla.CLA_URI_FEDORA_CLICK,
-        'cla_dell': cla.CLA_URI_FEDORA_DELL,
-        'cla_done': cla.CLA_URI_FEDORA_DONE,
-        'cla_fedora': cla.CLA_URI_FEDORA_FEDORA,
-        'cla_fpca': cla.CLA_URI_FEDORA_FPCA,
-        'cla_ibm': cla.CLA_URI_FEDORA_IBM,
-        'cla_intel': cla.CLA_URI_FEDORA_INTEL,
-        'cla_redhat': cla.CLA_URI_FEDORA_REDHAT,
-    }
-except ImportError:
-    CLA_GROUPS = dict()
-
-fas_mapping = [
-    ['username', 'nickname'],
-    ['telephone', 'phone'],
-    ['country_code', 'country'],
-    ['human_name', 'fullname'],
-    ['email', 'email'],
-    ['timezone', 'timezone'],
-    ['ssh_key', 'ssh_key'],
-    ['gpg_keyid', 'gpg_keyid'],
-]
-
-
 class FAS(LoginFormBase):
 
     def __init__(self, site, mgr, page):
         super(FAS, self).__init__(site, mgr, page)
-        self.mapper = Policy(fas_mapping)
 
     def POST(self, *args, **kwargs):
         username = kwargs.get("login_name")
@@ -63,7 +34,7 @@ class FAS(LoginFormBase):
                                    severity=logging.ERROR)
 
             if data and data.user:
-                userdata = self.make_userdata(data.user)
+                userdata = fas_make_userdata(data.user)
                 return self.lm.auth_successful(self.trans,
                                                data.user['username'],
                                                userdata=userdata)
@@ -82,29 +53,6 @@ class FAS(LoginFormBase):
         )
         self.lm.set_auth_error()
         return self._template(self.formtemplate, **context)
-
-    def make_userdata(self, fas_data):
-        userdata, fas_extra = self.mapper.map_attributes(fas_data)
-
-        # We need to split ssh keys by newline, since we can't send newlines
-        userdata['ssh_key'] = userdata['ssh_key'].split('\n')
-
-        # compute and store groups and cla groups
-        userdata['_groups'] = []
-        userdata['_extras'] = {'fas': fas_extra, 'cla': []}
-        for group in fas_data.get('approved_memberships', {}):
-            if 'name' not in group:
-                continue
-            if group.get('group_type') == 'cla':
-                if group['name'] in CLA_GROUPS:
-                    group_name = CLA_GROUPS[group['name']]
-                else:
-                    group_name = group['name']
-                userdata['_extras']['cla'].append(group_name)
-            else:
-                userdata['_groups'].append(group['name'])
-
-        return userdata
 
 
 class LoginManager(LoginManagerBase):
