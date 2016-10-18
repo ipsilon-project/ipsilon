@@ -42,7 +42,8 @@ def fas_make_userdata(fas_data):
     userdata, fas_extra = fas_mapper.map_attributes(fas_data)
 
     # We need to split ssh keys by newline, since we can't send newlines
-    userdata['ssh_key'] = userdata['ssh_key'].split('\n')
+    if userdata.get('ssh_key'):
+        userdata['ssh_key'] = userdata['ssh_key'].split('\n')
 
     # compute and store groups and cla groups
     userdata['_groups'] = []
