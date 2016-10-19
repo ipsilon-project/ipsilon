@@ -544,6 +544,10 @@ class Store(Log):
                 else:
                     q.insert((name, opt, options[opt]))
 
+            for opt in curvals:
+                if opt not in options:
+                    q.delete({'name': name, 'option': opt})
+
             q.commit()
         except Exception, e:  # pylint: disable=broad-except
             if q:
