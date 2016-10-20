@@ -530,6 +530,24 @@ class Continue(AuthenticateRequest):
         h = hashlib.sha256(msg.encode()).digest()
         return base64.urlsafe_b64encode(h[:16]).rstrip(b'=').decode()
 
+    def _valid_claims(self, claims, userattrs):
+        d = []
+        for claimtype in claims:
+            for claim in claims[claimtype]:
+                if claim in userattrs:
+                    d.append(claim)
+        return sorted(d)
+
+    def _valid_scopes(self, scopes):
+        d = []
+        for dummy_n, e in self.cfg.extensions.available().items():
+            if e.enabled:
+                extscopes = e.get_scopes()
+                for scope in scopes:
+                    if scope in extscopes:
+                        d.append(scope)
+        return sorted(d)
+
     def _perform_continue(self, *args, **kwargs):
         us = UserSession()
         user = us.get_user()
@@ -571,6 +589,27 @@ class Continue(AuthenticateRequest):
                                          user,
                                          userattrs)
 
+        consentdata = user.get_consent('openidc', request_data['client_id'])
+        if consentdata is not None:
+            # Consent has already been granted
+            self.debug('Consent already granted')
+
+            consclaimset = set(consentdata['claims'])
+            claimset = set(self._valid_claims(request_data['claims'],
+                                              userattrs))
+            consscopeset = set(consentdata['scopes'])
+            scopeset = set(self._valid_scopes(request_data['scope']))
+
+            if claimset.issubset(consclaimset) and \
+                    scopeset.issubset(consscopeset):
+                return self._respond_success(request_data,
+                                             client,
+                                             user,
+                                             userattrs)
+            else:
+                self.debug('Client is asking for new claims or scopes, user '
+                           'must give consent again')
+
         if 'none' in request_data['prompt']:
             # We were asked to not show any UI
             return self._respond_error(request_data,
@@ -582,6 +621,17 @@ class Continue(AuthenticateRequest):
             # The user has been shown the form, let's process his choice
             if 'decided_allow' in kwargs:
                 # User allowed the request
+
+                # Record the consent for the future, including the list of
+                # claims that the user was informed of at the time.
+                consentdata = {
+                    'claims': self._valid_claims(request_data['claims'],
+                                                 userattrs),
+                    'scopes': self._valid_scopes(request_data['scope'])
+                }
+                user.grant_consent('openidc', request_data['client_id'],
+                                   consentdata)
+
                 return self._respond_success(request_data,
                                              client,
                                              user,
@@ -599,7 +649,6 @@ class Continue(AuthenticateRequest):
                     'openidc_request': json.dumps(request_data)}
             self.trans.store(data)
 
-            userattrs = self._source_attributes(us)
             claim_requests = {}
             for claimtype in request_data['claims']:
                 for claim in request_data['claims'][claimtype]:
