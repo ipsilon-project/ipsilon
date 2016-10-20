@@ -134,6 +134,9 @@ class PluginObject(Log):
     def on_disable(self):
         return
 
+    def on_reconfigure(self):
+        return
+
     def save_enabled_state(self):
         enabled = []
         self._plugins.refresh_enabled()
@@ -192,6 +195,7 @@ class PluginObject(Log):
             except Exception, e:  # pylint: disable=broad-except
                 self.error('Failed to refresh config for %s (%s)' %
                            (self.name, e))
+        self.on_reconfigure()
 
     def save_plugin_config(self, config=None):
         if config is None:
