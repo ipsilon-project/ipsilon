@@ -733,10 +733,77 @@ class UserStore(Store):
     def load_plugin_data(self, plugin, user):
         return self.load_options(plugin+"_data", user)
 
-    def _initialize_schema(self):
-        q = self._query(self._db, 'users', OPTIONS_TABLE, trans=False)
+    def _cons_key(self, provider, clientid):
+        return '%s-%s' % (provider, clientid)
+
+    def _split_cons_key(self, key):
+        return key.split('-', 1)
+
+    def store_consent(self, user, provider, clientid, parameters):
+        q = None
+        try:
+            key = self._cons_key(provider, clientid)
+            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+            rows = q.select({'name': user, 'option': key}, ['value'])
+            if len(list(rows)) > 0:
+                q.update({'value': parameters}, {'name': user, 'option': key})
+            else:
+                q.insert((user, key, parameters))
+            q.commit()
+        except Exception, e:  # pylint: disable=broad-except
+            if q:
+                q.rollback()
+            self.error('Failed to store consent: [%s]' % e)
+            raise
+
+    def delete_consent(self, user, provider, clientid):
+        q = None
+        try:
+            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+            q.delete({'name': user,
+                      'option': self._cons_key(provider, clientid)})
+            q.commit()
+        except Exception, e:  # pylint: disable=broad-except
+            if q:
+                q.rollback()
+            self.error('Failed to delete consent: [%s]' % e)
+            raise
+
+    def get_consent(self, user, provider, clientid):
+        try:
+            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+            rows = q.select({'name': user,
+                             'option': self._cons_key(provider, clientid)},
+                            ['value'])
+            data = list(rows)
+            if len(data) > 0:
+                return data[0][0]
+            else:
+                return None
+        except Exception, e:  # pylint: disable=broad-except
+            self.error('Failed to get consent: [%s]' % e)
+            return None
+
+    def get_all_consents(self, user):
+        d = []
+        try:
+            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+            rows = q.select({'name': user}, ['option', 'value'])
+            for r in rows:
+                prov, clientid = self._split_cons_key(r[0])
+                d.append((prov, clientid, r[1]))
+        except Exception, e:  # pylint: disable=broad-except
+            self.error('Failed to get consents: [%s]' % e)
+        return d
+
+    def _initialize_table(self, tablename):
+        q = self._query(self._db, tablename, OPTIONS_TABLE, trans=False)
         q.create()
         q._con.close()  # pylint: disable=protected-access
+
+    def _initialize_schema(self):
+        self._initialize_table('users')
+        self._initialize_table('user_consent')
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
@@ -755,11 +822,7 @@ class UserStore(Store):
 
     def create_plugin_data_table(self, plugin_name):
         if not self.is_readonly:
-            table = plugin_name+'_data'
-            q = self._query(self._db, table, OPTIONS_TABLE,
-                            trans=False)
-            q.create()
-            q._con.close()  # pylint: disable=protected-access
+            self._initialize_table(plugin_name + '_data')
 
 
 class TranStore(Store):

@@ -48,6 +48,7 @@ INSERT INTO authz_config VALUES('global', 'enabled', 'allow');
 USERS_TEMPLATE='''
 CREATE TABLE users(name TEXT, option TEXT, value TEXT);
 INSERT INTO users VALUES('admin', 'is_admin', '1');
+CREATE TABLE user_consent(name TEXT, option TEXT, value TEXT);
 '''
 
 def config(workdir):

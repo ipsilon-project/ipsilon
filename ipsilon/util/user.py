@@ -4,6 +4,7 @@ from ipsilon.util.data import UserStore
 from ipsilon.util.log import Log
 import cherrypy
 import logging
+import json
 
 
 class Site(object):
@@ -89,6 +90,36 @@ class User(object):
     def load_plugin_data(self, plugin):
         store = UserStore()
         return store.load_plugin_data(plugin, self.name)
+
+    def grant_consent(self, provider, clientid, parameters):
+        store = UserStore()
+        store.store_consent(self.name, provider, clientid,
+                            json.dumps(parameters))
+
+    def revoke_consent(self, provider, clientid):
+        store = UserStore()
+        store.delete_consent(self.name, provider, clientid)
+
+    def get_consent(self, provider, clientid):
+        store = UserStore()
+        data = store.get_consent(self.name, provider, clientid)
+        if data is not None:
+            return json.loads(data)
+        return None
+
+    def list_consents(self, provider=None):
+        store = UserStore()
+        d = []
+        for prov, clientid, parameters in store.get_all_consents(self.name):
+            if provider is not None:
+                if prov != provider:
+                    continue
+            d.append({
+                'provider': prov,
+                'client': clientid,
+                'attrs': json.loads(parameters)
+            })
+        return d
 
 
 class UserSession(Log):
