@@ -223,6 +223,12 @@ Provides OpenID Connect authentication infrastructure. """
 
         return d
 
+    def on_reconfigure(self):
+        super(IdpProvider, self).on_reconfigure()
+        self.init_idp()
+        self.extensions.enable(self._config['enabled extensions'].get_value(),
+                               self)
+
 
 class Installer(ProviderInstaller):
 
