@@ -17,7 +17,8 @@ import os
 class IdpProvider(ProviderBase):
 
     def __init__(self, *pargs):
-        super(IdpProvider, self).__init__('persona', 'persona', *pargs)
+        super(IdpProvider, self).__init__('persona', 'Persona', 'persona',
+                                          *pargs)
         self.mapping = InfoMapping()
         self.page = None
         self.basepath = None
@@ -71,6 +72,12 @@ Provides Persona authentication infrastructure. """
     def on_enable(self):
         super(IdpProvider, self).on_enable()
         self.init_idp()
+
+    def get_client_display_name(self, clientid):
+        return clientid
+
+    def consent_to_display(self, consentdata):
+        return []
 
 
 class Installer(ProviderInstaller):

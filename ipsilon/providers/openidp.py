@@ -16,7 +16,7 @@ from openid.server.server import Server
 class IdpProvider(ProviderBase):
 
     def __init__(self, *pargs):
-        super(IdpProvider, self).__init__('openid', 'openid', *pargs)
+        super(IdpProvider, self).__init__('openid', 'OpenID', 'openid', *pargs)
         self.mapping = InfoMapping()
         self.page = None
         self.datastore = None
@@ -134,6 +134,12 @@ Provides OpenID 2.0 authentication infrastructure. """
         super(IdpProvider, self).on_enable()
         self.init_idp()
         self.extensions.enable(self._config['enabled extensions'].get_value())
+
+    def get_client_display_name(self, clientid):
+        return clientid
+
+    def consent_to_display(self, consentdata):
+        return []
 
 
 class Installer(ProviderInstaller):

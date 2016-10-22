@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <meta charset="utf-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ basepath }}/ui/css/patternfly.css" rel="stylesheet" media="screen, print">
+    <link href="{{ basepath }}/ui/css/styles.css" rel="stylesheet" media="screen, print">
+  </head>
+  <body class="cards-pf">
+    <nav class="navbar navbar-default navbar-pf navbar-pf-lg" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{{ basepath }}/">
+          <img type="image/svg+xml" src="{{ basepath }}/ui/img/brand.png" alt="Ipsilon" width="auto" height="10px" />
+        </a>
+      </div>
+      <div class="collapse navbar-collapse navbar-collapse-1">
+        {% if user.name %}
+        <ul class="nav navbar-nav navbar-utility">
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <span class="pficon pficon-user"></span>
+                {{ user.fullname }}<b class="caret"></b>
+              </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a href="{{ basepath }}/portal" id="userportal">Self service</a>
+              </li>
+              <li class="divider"></li>
+              <li>
+                <a href="{{ basepath }}/logout" id="logout">Log Out</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        {% endif %}
+      </div>
+    </nav>
+
+        {% block main %}
+        {% endblock %}
+
+    <!-- JS -->
+    <script src="{{ basepath }}/ui/js/jquery.js"></script>
+    <script src="{{ basepath }}/ui/js/bootstrap.js"></script>
+    <script src="{{ basepath }}/ui/js/patternfly.js"></script>
+    <script src="{{ basepath }}/ui/js/divfilter.js"></script>
+  </body>
+</html>

@@ -21,7 +21,8 @@ import uuid
 class IdpProvider(ProviderBase):
 
     def __init__(self, *pargs):
-        super(IdpProvider, self).__init__('openidc', 'openidc', *pargs)
+        super(IdpProvider, self).__init__('openidc', 'OpenID Connect',
+                                          'openidc', *pargs)
         self.mapping = InfoMapping()
         self.keyset = None
         self.admin = None
@@ -201,6 +202,26 @@ Provides OpenID Connect authentication infrastructure. """
         self._root.webfinger.unregister_rel(
             'http://openid.net/specs/connect/1.0/issuer'
         )
+
+    def get_client_display_name(self, clientid):
+        return self.datastore.getClient(clientid)['client_name']
+
+    def consent_to_display(self, consentdata):
+        d = []
+
+        if len(consentdata['scopes']) > 0:
+            scopes = []
+            for dummy_n, e in self.extensions.available().items():
+                data = e.get_display_data(consentdata['scopes'])
+                if len(data) > 0:
+                    scopes.append(e.get_display_name())
+            d.append('Scopes: %s' % ', '.join(sorted(scopes)))
+
+        if len(consentdata['claims']) > 0:
+            d.append('Claims: %s' % ', '.join([self.mapping.display_name(x) for
+                                               x in consentdata['claims']]))
+
+        return d
 
 
 class Installer(ProviderInstaller):

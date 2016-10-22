@@ -48,10 +48,11 @@ class UnauthorizedRequest(ProviderException):
 
 class ProviderBase(ConfigHelper, PluginObject):
 
-    def __init__(self, name, path, *pargs):
+    def __init__(self, name, displayname, path, *pargs):
         ConfigHelper.__init__(self)
         PluginObject.__init__(self, *pargs)
         self.name = name
+        self.displayname = displayname
         self._root = None
         self.path = path
         self.tree = None
@@ -74,6 +75,15 @@ class ProviderBase(ConfigHelper, PluginObject):
 
     def get_providers(self):
         return []
+
+    def get_display_name(self):
+        return self.displayname
+
+    def get_client_display_name(self, clientid):
+        raise NotImplementedError
+
+    def consent_to_display(self, consentdata):
+        raise NotImplementedError
 
 
 class ProviderPageBase(Page):

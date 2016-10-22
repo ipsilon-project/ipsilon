@@ -217,7 +217,7 @@ class SAML2(ProviderPageBase):
 class IdpProvider(ProviderBase):
 
     def __init__(self, *pargs):
-        super(IdpProvider, self).__init__('saml2', 'saml2', *pargs)
+        super(IdpProvider, self).__init__('saml2', 'SAML 2.0', 'saml2', *pargs)
         self.admin = None
         self.rest = None
         self.page = None
@@ -455,6 +455,12 @@ Provides SAML 2.0 authentication infrastructure. """
 
         self.debug('Sending initial logout request to %s' % logout.msgUrl)
         raise cherrypy.HTTPRedirect(logout.msgUrl)
+
+    def get_client_display_name(self, clientid):
+        return clientid
+
+    def consent_to_display(self, consentdata):
+        return []
 
 
 class IdpMetadataGenerator(object):

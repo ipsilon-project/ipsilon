@@ -14,6 +14,7 @@ from ipsilon.admin.providers import ProviderPlugins
 from ipsilon.admin.authz import AuthzPlugins
 from ipsilon.rest.common import Rest
 from ipsilon.rest.providers import RestProviderPlugins
+from ipsilon.user.common import UserPortal
 from ipsilon.authz.common import Authz
 import cherrypy
 
@@ -52,6 +53,7 @@ class Root(Page):
         self.admin = Admin(self._site, 'admin')
         self.rest = Rest(self._site, 'rest')
         self.stack = LoginStack(self._site, self.admin)
+        self.portal = UserPortal(self._site, 'portal')
         LoginPlugins(self._site, self.stack)
         InfoPlugins(self._site, self.stack)
         AuthzPlugins(self._site, self.stack)

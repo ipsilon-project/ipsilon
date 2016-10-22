@@ -14,7 +14,7 @@
             <a href="{{ baseurl }}/client/{{ cid }}">{{ cid }}</a>
         </div>
         <div class="col-md-3 col-sm-3 col-xs-6">
-             {{ cid }}
+             {{ clients[cid]['client_name'] }}
             <a class="btn btn-default" href="{{ baseurl }}/client/{{ cid }}/delete"
                 onclick="return confirm('Do you really want to remove this client?');">Delete</a>
         </div>

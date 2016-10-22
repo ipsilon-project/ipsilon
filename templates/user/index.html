@@ -1,0 +1,48 @@
+{% extends "master-portal.html" %}
+{% block main %}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <h2>Granted Consent</h2>
+      <div class="row">
+        <div class="col-xs-2">
+          <p><b>Provider</b></p>
+        </div>
+        <div class="col-xs-4">
+          <p><b>Client</b></p>
+        </div>
+        <div class="col-xs-4">
+          <p><b>Consent Data</b></p>
+        </div>
+        <div class="col-xs-2">
+        </div>
+      </div>
+{%- for item in consents %}
+      <div class="row ipsilon-row">
+        <div class="col-xs-2">
+          <p><strong>{{ item.providerdn }}</strong></p>
+        </div>
+        <div class="col-xs-4">
+          <p>{{ item.clientdn }}</p>
+        </div>
+        <div class="col-xs-4">
+{%- for attr in item.attrs %}
+          <p>{{ attr }}</p>
+{%- endfor %}
+        </div>
+        <div class="col-xs-2">
+            <a id="revoke-{{ item.client }}" class="btn btn-default" href="{{ baseurl }}/consent/revoke/{{ item.provider }}/{{ item.client }}" onclick="return confirm('Do you really want to revoke this consent?');">Revoke</a>
+        </div>
+      </div>
+{%- endfor %}
+    </div>
+  </div>
+  <!--
+  <div class="row">
+    <div class="col-sm-12">
+      <h2>Active Sessions</h2>
+    </div>
+  </div>
+  -->
+</div>
+{% endblock %}
