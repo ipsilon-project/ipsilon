@@ -245,7 +245,8 @@ if __name__ == '__main__':
 
     print "openidc: Access first SP Protected Area ...",
     try:
-        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/',
+                               require_consent=True)
         h = hashlib.sha256()
         h.update('127.0.0.11')
         h.update(user)
@@ -257,6 +258,37 @@ if __name__ == '__main__':
             'acr': '0'
         }
         token = check_info_results(page.text, expect)
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openidc: Log back in to first SP Protected Area without consent" \
+        " ...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.11:45081/sp/redirect_uri?log'
+                               'out=https%3A%2F%2F127.0.0.11%3A45081%2Fsp%2F',
+                               require_consent=False)
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openidc: Revoking SP consent ...",
+    try:
+        page = sess.revoke_oidc_consent(idpname)
+    except ValueError, e:
+        print >> sys.stderr, "" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openidc: Log back in to first SP Protected Area with consent ...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.11:45081/sp/redirect_uri?log'
+                               'out=https%3A%2F%2F127.0.0.11%3A45081%2Fsp%2F',
+                               require_consent=True)
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)

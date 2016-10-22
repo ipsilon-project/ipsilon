@@ -268,7 +268,8 @@ class HttpSessions(object):
 
         return ['post', url, {'data': params}]
 
-    def fetch_page(self, idp, target_url, follow_redirect=True, krb=False):
+    def fetch_page(self, idp, target_url, follow_redirect=True, krb=False,
+                   require_consent=None):
         """
         Fetch a page and parse the response code to determine what to do
         next.
@@ -276,10 +277,15 @@ class HttpSessions(object):
         The login process consists of redirections (302/303) and
         potentially an unauthorized (401). For the case of unauthorized
         try the page returned in case of fallback authentication.
+
+        require_consent indicates whether consent should or should not be asked
+        or if that's not in this test. None means not tested, False means must
+        not be asked, True means must be asked.
         """
         url = target_url
         action = 'get'
         args = {}
+        seen_consent = False
 
         while True:
             r = self.access(action, url, krb=krb, **args)
@@ -317,12 +323,14 @@ class HttpSessions(object):
 
                 try:
                     (action, url, args) = self.handle_openid_consent_form(page)
+                    seen_consent = True
                     continue
                 except WrongPage:
                     pass
 
                 try:
                     (action, url, args) = self.handle_openid_form(page)
+                    seen_consent = True
                     continue
                 except WrongPage:
                     pass
@@ -334,6 +342,13 @@ class HttpSessions(object):
                     pass
 
                 # Either we got what we wanted, or we have to stop anyway
+                if (not seen_consent) and require_consent:
+                    raise ValueError('IDP did not present consent page, but '
+                                     'consent is required.')
+                elif seen_consent and (require_consent is False):
+                    raise ValueError('IDP presented consent page, but '
+                                     'consent is disallowed.')
+
                 return page
             else:
                 raise ValueError("Unhandled status (%d) on url %s" % (
@@ -573,6 +588,31 @@ class HttpSessions(object):
             raise ValueError('Failed to delete client [%s]' % repr(r))
         if client_id in r.text:
             raise ValueError('Client was not gone after deletion')
+
+    def revoke_oidc_consent(self, idp):
+        """
+        Revoke user's consent for all OpenIDC clients.
+        """
+        idpsrv = self.servers[idp]
+        idpuri = idpsrv['baseuri']
+
+        url = '%s%s/portal' % (idpuri, self.get_idp_uri(idp))
+        headers = {'referer': url}
+        r = idpsrv['session'].get(url, headers=headers)
+        if r.status_code != 200:
+            ValueError('Failed to load user portal [%s]' % repr(r))
+        page = PageTree(r)
+
+        revbtns = page.all_values('//a[starts-with(@id, "revoke-")]')
+
+        for btn in revbtns:
+            url = '%s%s' % (idpuri, btn.get('href'))
+            headers = {'referer': url}
+            headers['content-type'] = 'application/x-www-form-urlencoded'
+
+            r = idpsrv['session'].get(url, headers=headers)
+            if btn.get('id') in r.text:
+                raise ValueError('Client was not gone after revoke')
 
     def fetch_rest_page(self, idpname, uri):
         """
