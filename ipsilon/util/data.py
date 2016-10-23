@@ -823,6 +823,8 @@ class UserStore(Store):
                 self._db.add_index(index)
             return 2
         elif old_version == 2:
+            # In schema 3 for UserStore, we added user_consent
+            self._initialize_table('user_consent')
             return 3
         else:
             raise NotImplementedError()
