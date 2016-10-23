@@ -175,6 +175,7 @@ class Installer(InfoProviderInstaller):
                 try:
                     changes['domains'][domain] = {
                         'ldap_user_extra_attrs':
+                            # noqa (pep8 E126)
                             sssd_domain.get_option('ldap_user_extra_attrs')}
                 except SSSDConfig.NoOptionError:
                     pass
@@ -263,7 +264,7 @@ class Installer(InfoProviderInstaller):
                     sssd_domain.set_option('ldap_user_extra_attrs',
                                            changes['domains'][domain][
                                                'ldap_user_extra_attrs'].encode(
-                                                   'utf-8'))
+                                               'utf-8'))
                 else:
                     sssd_domain.remove_option('ldap_user_extra_attrs')
                 sssdconfig.save_domain(sssd_domain)

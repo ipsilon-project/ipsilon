@@ -40,6 +40,7 @@ sp_g = {'HTTPDCONFD': '${TESTDIR}/${NAME}/conf.d',
 
 sp_a = {'hostname': '${ADDRESS}',
         'saml_idp_metadata':
+            # noqa (pep8 E126)
             'https://%s:45080/idp1/saml2/metadata' % WRAP_HOSTNAME,
         'saml_auth': '/sp',
         'httpd_user': '${TEST_USER}'}

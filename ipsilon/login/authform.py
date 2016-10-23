@@ -13,7 +13,7 @@ import subprocess
 # other languages.
 PAM_AUTH_ERRORS = {
     "Authentication token is no longer valid; new one required":
-        "Password is expired",
+        "Password is expired",  # noqa (pep8 126)
     "Authentication failure":
         "Authentication failure",
 }
