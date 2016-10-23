@@ -104,7 +104,38 @@ if __name__ == '__main__':
     print "openid: Run OpenID Protocol ...",
     try:
         page = sess.fetch_page(idpname,
-                               'https://127.0.0.11:45081/?extensions=NO')
+                               'https://127.0.0.11:45081/?extensions=NO',
+                               require_consent=True)
+        page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
+    except ValueError as e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openid: Run OpenID Protocol without consent ...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.11:45081/?extensions=NO',
+                               require_consent=False)
+        page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
+    except ValueError as e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openid: Revoking SP consent ...",
+    try:
+        page = sess.revoke_all_consent(idpname)
+    except ValueError, e:
+        print >> sys.stderr, "" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openid: Run OpenID Protocol without consent ...",
+    try:
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.11:45081/?extensions=NO',
+                               require_consent=True)
         page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
     except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
@@ -113,8 +144,10 @@ if __name__ == '__main__':
 
     print "openid: Run OpenID Protocol with extensions ...",
     try:
+        # We expect consent again because we added more attributes
         page = sess.fetch_page(idpname,
-                               'https://127.0.0.11:45081/?extensions=YES')
+                               'https://127.0.0.11:45081/?extensions=YES',
+                               require_consent=True)
         page.expected_value('text()', 'SUCCESS, WITH EXTENSIONS')
     except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
