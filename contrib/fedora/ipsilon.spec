@@ -237,18 +237,17 @@ BuildArch:      noarch
 Provides an info plugin to retrieve info from the Fedora Authentication System
 
 %package infosssd
-Summary:        SSSD & mod_lookup_identity-based identity plugin
+Summary:        SSSD & DBus-based identity plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Requires:       %{name} = %{version}-%{release}
-Requires:       mod_lookup_identity
+Requires:       dbus
 Requires:       libsss_simpleifp
 Requires:       sssd >= 1.12.4
 BuildArch:      noarch
 
 %description infosssd
-Provides an info plugin to allow retrieval via mod_lookup_identity and
-SSSD.
+Provides an info plugin to allow retrieval via DBus and SSSD.
 
 %prep
 %setup -q

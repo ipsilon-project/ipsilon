@@ -160,10 +160,10 @@ LDAP Base DN
 Use passwd data to populate user attrs
 .TP
 \fB\-\-info\-sssd\fR \fI
-Use mod_lookup_identity and SSSD to populate user attrs. SSSD must be pre\-configured for at least one domain.
+Use DBus to populate user attrs from SSSD. SSSD must be pre\-configured for at least one domain.
 .TP
 \fB\-\-info\-sssd\-domain\fR \fIINFO_SSSD_DOMAIN\fR
-SSSD domain to enable mod_lookup_identity for (default is all)
+SSSD domain to enable for attribute passthrough (default is all)
 
 .SS ENVIRONMENT HELPER OPTIONS
 \fB\-\-ipa\fR

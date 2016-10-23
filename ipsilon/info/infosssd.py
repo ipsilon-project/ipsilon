@@ -1,19 +1,17 @@
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
-# Info plugin for mod_lookup_identity Apache module via SSSD
-# http://www.adelton.com/apache/mod_lookup_identity/
+# Info plugin for SSSD attributes via DBus
 
 from ipsilon.info.common import InfoProviderBase
 from ipsilon.info.common import InfoProviderInstaller
 from ipsilon.util.plugin import PluginObject
 from ipsilon.util.policy import Policy
 from ipsilon.util import config as pconfig
-from string import Template
-import cherrypy
 import time
 import subprocess
 import SSSDConfig
 import logging
+import dbus
 
 SSSD_CONF = '/etc/sssd/sssd.conf'
 
@@ -27,18 +25,18 @@ SSSD_ATTRS = ['mail',
               'givenname',
               'sn']
 
-# Map the mod_lookup_identity env variables to Ipsilon. The inverse of
-# this is in the httpd template.
+# These are mapped from the infosssd configuration in sssd.conf
 sssd_mapping = [
-    ['REMOTE_USER_GECOS', 'fullname'],
-    ['REMOTE_USER_EMAIL', 'email'],
-    ['REMOTE_USER_FIRSTNAME', 'givenname'],
-    ['REMOTE_USER_LASTNAME', 'surname'],
-    ['REMOTE_USER_STREET', 'street'],
-    ['REMOTE_USER_STATE', 'state'],
-    ['REMOTE_USER_CITY', 'city'],
-    ['REMOTE_USER_POSTALCODE', 'postcode'],
-    ['REMOTE_USER_TELEPHONENUMBER', 'phone'],
+    ['gecos', 'fullname'],
+    ['mail', 'email'],
+    ['givenname', 'givenname'],
+    ['sn', 'surname'],
+    ['street', 'street'],
+    ['st', 'state'],
+    ['locality', 'city'],
+    ['postalCode', 'postcode'],
+    ['telephoneNumber', 'phone'],
+    ['*', '*'],
 ]
 
 
@@ -49,7 +47,8 @@ class InfoProvider(InfoProviderBase):
         self.mapper = Policy(sssd_mapping)
         self.name = 'sssd'
         self.description = """
-Info plugin that uses mod_lookup_identity and SSSD to retrieve user data."""
+Info plugin that uses DBus to retrieve user data from SSSd."""
+        self.bus = None
         self.new_config(
             self.name,
             pconfig.Condition(
@@ -61,19 +60,46 @@ Info plugin that uses mod_lookup_identity and SSSD to retrieve user data."""
     def _get_user_data(self, user):
         reply = dict()
         groups = []
-        expectgroups = int(cherrypy.request.wsgi_environ.get(
-            'REMOTE_USER_GROUP_N', 0))
-        for key in cherrypy.request.wsgi_environ:
-            if key.startswith('REMOTE_USER_'):
-                if key == 'REMOTE_USER_GROUP_N':
-                    continue
-                if key.startswith('REMOTE_USER_GROUP_'):
-                    groups.append(cherrypy.request.wsgi_environ[key])
-                else:
-                    reply[key] = cherrypy.request.wsgi_environ[key]
-        if len(groups) != expectgroups:
-            self.error('Number of groups expected was not found. Expected'
-                       ' %d got %d' % (expectgroups, len(groups)))
+
+        # Get object for sssd infopipe
+        infosssd_obj = self.bus.get_object('org.freedesktop.sssd.infopipe',
+                                           '/org/freedesktop/sssd/infopipe')
+
+        # Get Users object and interface from DBus
+        users_obj = self.bus.get_object('org.freedesktop.sssd.infopipe',
+                                        '/org/freedesktop/sssd/infopipe/Users')
+        users_if = dbus.Interface(users_obj,
+                                  'org.freedesktop.sssd.infopipe.Users')
+
+        # Get path, object, and interface for specific user
+        user_path = users_if.FindByName(user)
+        user_obj = self.bus.get_object('org.freedesktop.sssd.infopipe',
+                                       user_path)
+
+        # Get GECOS, attributes, and groups
+        reply['gecos'] = str(user_obj.Get(
+            'org.freedesktop.sssd.infopipe.Users.User',
+            'gecos',
+            dbus_interface=dbus.PROPERTIES_IFACE))
+        user_attrs = user_obj.Get('org.freedesktop.sssd.infopipe.Users.User',
+                                  'extraAttributes',
+                                  dbus_interface=dbus.PROPERTIES_IFACE)
+        user_groups = infosssd_obj.GetUserGroups(
+            user,
+            dbus_interface='org.freedesktop.sssd.infopipe')
+
+        for group in user_groups:
+            groups.append(str(group))
+
+        for attr_name in user_attrs:
+            attr_name = str(attr_name)
+            if len(user_attrs[attr_name]) == 1:
+                reply[attr_name] = str(user_attrs[attr_name][0])
+            else:
+                reply[attr_name] = []
+                for attr_val in user_attrs[attr_name]:
+                    reply[attr_name].append(str(attr_val))
+
         return reply, groups
 
     def get_user_attrs(self, user):
@@ -100,24 +126,8 @@ Info plugin that uses mod_lookup_identity and SSSD to retrieve user data."""
         self.refresh_plugin_config()
         if not self.get_config_value('preconfigured'):
             raise Exception("SSSD Can be enabled only if pre-configured")
+        self.bus = dbus.SystemBus()
         super(InfoProvider, self).enable()
-
-
-CONF_TEMPLATE = """
-LoadModule lookup_identity_module modules/mod_lookup_identity.so
-
-<Location ${instanceurl}>
-  LookupUserAttr sn REMOTE_USER_LASTNAME
-  LookupUserAttr st REMOTE_USER_STATE
-  LookupUserAttr locality REMOTE_USER_CITY
-  LookupUserAttr street REMOTE_USER_STREET
-  LookupUserAttr telephoneNumber REMOTE_USER_TELEPHONENUMBER
-  LookupUserAttr givenname REMOTE_USER_FIRSTNAME
-  LookupUserAttr mail REMOTE_USER_EMAIL
-  LookupUserAttr postalCode REMOTE_USER_POSTALCODE
-  LookupUserGroupsIter REMOTE_USER_GROUP
-</Location>
-"""
 
 
 class Installer(InfoProviderInstaller):
@@ -130,24 +140,17 @@ class Installer(InfoProviderInstaller):
     def install_args(self, group):
         group.add_argument('--info-sssd', choices=['yes', 'no'],
                            default='no',
-                           help='Use mod_lookup_identity and SSSD to populate'
-                                ' user attrs')
+                           help='Use SSSD to populate user attributes'
+                                ' via DBus')
         group.add_argument('--info-sssd-domain', action='append',
-                           help='SSSD domain to enable mod_lookup_identity'
-                                ' for')
+                           help='SSSD domain to enable for attribute'
+                                ' passthrough')
 
     def configure(self, opts, changes):
         if opts['info_sssd'] != 'yes':
             return
 
         configured = 0
-
-        confopts = {'instanceurl': opts['instanceurl']}
-
-        tmpl = Template(CONF_TEMPLATE)
-        hunk = tmpl.substitute(**confopts)
-        with open(opts['httpd_conf'], 'a') as httpd_conf:
-            httpd_conf.write(hunk)
 
         try:
             sssdconfig = SSSDConfig.SSSDConfig()
@@ -210,7 +213,7 @@ class Installer(InfoProviderInstaller):
                     'user_attributes')
             except SSSDConfig.NoOptionError:
                 pass
-        ifp.set_option('allowed_uids', 'apache, root')
+        ifp.set_option('allowed_uids', 'ipsilon, root')
         ifp.set_option('user_attributes', '+' + ', +'.join(SSSD_ATTRS))
 
         sssdconfig.save_service(ifp)
