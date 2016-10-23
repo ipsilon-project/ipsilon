@@ -10,6 +10,7 @@ from ipsilon.util.plugin import PluginObject
 from ipsilon.util import config as pconfig
 from ipsilon.info.common import InfoMapping
 
+from base64 import b64decode
 from openid.server.server import Server
 
 
@@ -136,10 +137,12 @@ Provides OpenID 2.0 authentication infrastructure. """
         self.extensions.enable(self._config['enabled extensions'].get_value())
 
     def get_client_display_name(self, clientid):
-        return clientid
+        # We store this base64-encoded to get around limitations in the url
+        # routing of cherrypy
+        return b64decode(clientid)
 
     def consent_to_display(self, consentdata):
-        return []
+        return consentdata['attributes']
 
 
 class Installer(ProviderInstaller):

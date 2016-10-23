@@ -10,8 +10,8 @@ from ipsilon.util.user import UserSession
 
 from openid.server.server import ProtocolError, EncodingError
 
+from base64 import b64encode
 import cherrypy
-import time
 import json
 
 
@@ -147,17 +147,29 @@ class AuthenticateRequest(ProviderPageBase):
         if request.trust_root in self.cfg.trusted_roots:
             return self._respond(self._response(request, us))
 
-        allowroot = 'allow-%s' % request.trust_root
+        # Add extension data to this dictionary
+        ad = {
+            "Trust Root": request.trust_root,
+        }
+        userattrs = self._source_attributes(us)
+        for n, e in self.cfg.extensions.available().items():
+            data = e.get_display_data(request, userattrs)
+            self.debug('%s returned %s' % (n, repr(data)))
+            for key, value in data.items():
+                ad[self.cfg.mapping.display_name(key)] = value
 
-        try:
-            userdata = user.load_plugin_data(self.cfg.name)
-            expiry = int(userdata[allowroot])
-        except Exception, e:  # pylint: disable=broad-except
-            self.debug(e)
-            expiry = 0
-        if expiry > int(time.time()):
-            self.debug("User has unexpired previous authorization")
-            return self._respond(self._response(request, us))
+        # We base64 encode the trust_root when looking up consent data to
+        # ensure the client ID is safe for the cherrypy url routing
+        consentdata = user.get_consent('openid', b64encode(request.trust_root))
+        if consentdata is not None:
+            # Consent has already been granted
+            self.debug('Consent already granted')
+
+            attrlist = set(ad.keys())
+            consattrs = set(consentdata['attributes'])
+
+            if attrlist.issubset(consattrs):
+                return self._respond(self._response(request, us))
 
         if immediate:
             raise UnauthorizedRequest("No consent for immediate")
@@ -168,16 +180,13 @@ class AuthenticateRequest(ProviderPageBase):
             allow = form.get('decided_allow', False)
             if not allow:
                 raise UnauthorizedRequest("User declined")
-            try:
-                days = int(form.get('remember_for_days', '0'))
-                if days < 0 or days > 7:
-                    raise InvalidRequest('Invalid number of days to ' +
-                                         'remember specified')
-                userdata = {allowroot: str(int(time.time()) + (days*86400))}
-                user.save_plugin_data(self.cfg.name, userdata)
-            except Exception, e:  # pylint: disable=broad-except
-                self.debug(e)
-                days = 0
+
+            # Store new consent
+            consentdata = {
+                'attributes': ad.keys()
+            }
+            user.grant_consent('openid', b64encode(request.trust_root),
+                               consentdata)
 
             # all done we consent!
             return self._respond(self._response(request, us))
@@ -186,17 +195,6 @@ class AuthenticateRequest(ProviderPageBase):
             data = {'openid_stage': 'consent',
                     'openid_request': json.dumps(kwargs)}
             self.trans.store(data)
-
-            # Add extension data to this dictionary
-            ad = {
-                "Trust Root": request.trust_root,
-            }
-            userattrs = self._source_attributes(us)
-            for n, e in self.cfg.extensions.available().items():
-                data = e.get_display_data(request, userattrs)
-                self.debug('%s returned %s' % (n, repr(data)))
-                for key, value in data.items():
-                    ad[self.cfg.mapping.display_name(key)] = value
 
             context = {
                 "title": 'Consent',
