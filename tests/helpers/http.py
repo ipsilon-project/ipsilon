@@ -330,7 +330,6 @@ class HttpSessions(object):
 
                 try:
                     (action, url, args) = self.handle_openid_form(page)
-                    seen_consent = True
                     continue
                 except WrongPage:
                     pass
