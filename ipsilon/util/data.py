@@ -4,7 +4,7 @@ import cherrypy
 import datetime
 from ipsilon.util.log import Log
 from sqlalchemy import create_engine
-from sqlalchemy import MetaData, Table, Column, Text
+from sqlalchemy import MetaData, Table, Column, Text, String
 from sqlalchemy.pool import QueuePool, SingletonThreadPool
 from sqlalchemy.schema import (PrimaryKeyConstraint, Index, AddConstraint,
                                CreateIndex)
@@ -17,11 +17,13 @@ import time
 
 
 CURRENT_SCHEMA_VERSION = 3
-OPTIONS_TABLE = {'columns': ['name', 'option', 'value'],
+OPTIONS_TABLE = {'columns': [('name', String(255)), ('option', String(255)),
+                             ('value', Text())],
                  'primary_key': ('name', 'option'),
                  'indexes': [('name',)]
                  }
-UNIQUE_DATA_TABLE = {'columns': ['uuid', 'name', 'value'],
+UNIQUE_DATA_TABLE = {'columns': [('uuid', String(255)), ('name', String(255)),
+                                 ('value', Text())],
                      'primary_key': ('uuid', 'name'),
                      'indexes': [('uuid',)]
                      }
@@ -119,8 +121,11 @@ class SqlQuery(Log):
                          'indexes': [],
                          'primary_key': None}
         table_creation = []
-        for col_name in table_def['columns']:
-            table_creation.append(Column(col_name, Text()))
+        for col_def in table_def['columns']:
+            if not isinstance(col_def, tuple):
+                col_def = (col_def, Text())
+            col = Column(col_def[0], col_def[1])
+            table_creation.append(col)
         if table_def['primary_key']:
             table_creation.append(PrimaryKeyConstraint(
                 *table_def['primary_key']))
@@ -213,6 +218,8 @@ class FileQuery(Log):
         # We don't need indexes in a FileQuery, so drop that info
         if isinstance(table_def, dict):
             columns = table_def['columns']
+            if isinstance(columns[0], tuple):
+                columns = [column[0] for column in columns]
         else:
             columns = table_def
         self._fstore = fstore
