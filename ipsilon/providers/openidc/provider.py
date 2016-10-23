@@ -229,7 +229,6 @@ class Client(pconfig.ConfigHelper):
         elif option == 'default_max_age':
             return 0
         else:
-            self.error('Unknown')
             return ''
 
     def load_config(self):
