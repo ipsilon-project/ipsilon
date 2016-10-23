@@ -277,7 +277,7 @@ if __name__ == '__main__':
 
     print "openidc: Revoking SP consent ...",
     try:
-        page = sess.revoke_oidc_consent(idpname)
+        page = sess.revoke_all_consent(idpname)
     except ValueError, e:
         print >> sys.stderr, "" % repr(e)
         sys.exit(1)

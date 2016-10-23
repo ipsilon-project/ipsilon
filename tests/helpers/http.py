@@ -589,9 +589,9 @@ class HttpSessions(object):
         if client_id in r.text:
             raise ValueError('Client was not gone after deletion')
 
-    def revoke_oidc_consent(self, idp):
+    def revoke_all_consent(self, idp):
         """
-        Revoke user's consent for all OpenIDC clients.
+        Revoke user's consent for all clients.
         """
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
