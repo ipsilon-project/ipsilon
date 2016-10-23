@@ -169,6 +169,7 @@ Summary:        Fedora Authentication System login plugin
 Group:          System Environment/Base
 License:        GPLv3+
 Requires:       %{name} = %{version}-%{release}
+Requires:       %{name}-infofas = %{version}-%{release}
 Requires:       python-fedora
 BuildArch:      noarch
 
@@ -223,6 +224,17 @@ BuildArch:      noarch
 
 %description authldap
 Provides a login plugin to allow authentication and info retrieval via LDAP.
+
+%package infofas
+Summary:        Fedora Authentication System login plugin
+Group:          System Environment/Base
+License:        GPLv3+
+Requires:       %{name} = %{version}-%{release}
+Requires:       python-fedora
+BuildArch:      noarch
+
+%description infofas
+Provides an info plugin to retrieve info from the Fedora Authentication System
 
 %package infosssd
 Summary:        SSSD & mod_lookup_identity-based identity plugin
@@ -399,6 +411,9 @@ fi
 %files authldap
 %{python2_sitelib}/ipsilon/login/authldap*
 %{python2_sitelib}/ipsilon/info/infoldap*
+
+%files infofas
+%{python2_sitelib}/ipsilon/info/infofas.*
 
 %files infosssd
 %{python2_sitelib}/ipsilon/info/infosssd.*
