@@ -345,9 +345,11 @@ fi
 %{python2_sitelib}/ipsilon/providers/common*
 %{python2_sitelib}/ipsilon/root.py*
 %{python2_sitelib}/ipsilon/util
+%{python2_sitelib}/ipsilon/user
 %{_mandir}/man*/ipsilon*
 %{_datadir}/ipsilon/templates/*.html
 %{_datadir}/ipsilon/templates/admin
+%{_datadir}/ipsilon/templates/user
 %dir %{_datadir}/ipsilon/templates/login
 %{_datadir}/ipsilon/templates/login/index.html
 %{_datadir}/ipsilon/templates/login/form.html
