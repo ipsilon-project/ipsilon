@@ -184,5 +184,6 @@ class Installer(EnvHelpersInstaller):
         if 'gssapi' not in opts['lm_order']:
             opts['lm_order'].insert(0, 'gssapi')
         opts['form'] = 'yes'
+        opts['info_sssd'] = 'yes'
         if not any(lm in opts['lm_order'] for lm in ('form', 'pam')):
             opts['lm_order'].append('form')
