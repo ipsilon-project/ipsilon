@@ -247,6 +247,11 @@ class Installer(InfoProviderInstaller):
         po.save_enabled_state()
 
     def unconfigure(self, opts, changes):
+        if 'domains' not in changes:
+            # We always record domains on configure, if we don't have that, we
+            # were not configured.
+            return
+
         try:
             sssdconfig = SSSDConfig.SSSDConfig()
             sssdconfig.import_config()
