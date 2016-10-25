@@ -72,6 +72,7 @@ Requires:       %{name}-saml2-base = %{version}-%{release}
 Requires:       mod_auth_mellon >= 0.11.0
 Requires:       mod_auth_openidc
 Requires:       mod_ssl
+Requires:       python-requests
 BuildArch:      noarch
 
 %description client
