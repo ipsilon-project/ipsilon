@@ -373,10 +373,14 @@ def saml2_verify_arguments(args):
 def openidc():
     logger.info('Installing OpenID Connect Relying Party')
 
+    requests_args = {}
+    if args['openidc_skip_ssl_validation']:
+        requests_args['verify'] = False
+
     discovery_url = '%s/openidc/wellknown_openid_configuration' % \
                     args['openidc_idp_url']
     try:
-        r = requests.get(discovery_url)
+        r = requests.get(discovery_url, **requests_args)
         r.raise_for_status()
         discovered_info = r.json()
     except Exception, e:  # pylint: disable=broad-except
@@ -410,7 +414,7 @@ def openidc():
     logger.info('Registering RP with the IdP')
     try:
         r = requests.post(discovered_info['registration_endpoint'],
-                          json=client_info)
+                          json=client_info, **requests_args)
         r.raise_for_status()
         registration_response = r.json()
     except Exception, e:  # pylint: disable=broad-except
