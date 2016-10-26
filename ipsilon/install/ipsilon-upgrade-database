@@ -5,6 +5,7 @@
 __requires__ = ['sqlalchemy >= 0.8']
 import pkg_resources  # pylint: disable=unused-import
 
+from argparse import ArgumentParser
 import sys
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -16,8 +17,20 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='Upgrade the ipsilon database')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('cfgfile', metavar='CONFIGFILE', nargs='?',
+                       help='Path to config file')
+    group.add_argument('--instance', default='idp', help='IdP instance name')
+    group.add_argument('--root-instance', default=False, action='store_true',
+                       help='Web root mounted instance')
+    args = parser.parse_args()
+
+    if args.root_instance:
+        args.instance = 'root'
+
     try:
-        dbupgrade.execute_upgrade(find_config())
+        dbupgrade.execute_upgrade(find_config(args.instance, args.cfgfile))
     except Exception as ex:
         logger.error('Error upgrading database', exc_info=True)
         sys.exit(1)

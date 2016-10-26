@@ -35,7 +35,7 @@ def nuke_session_locks():
         except Exception:  # pylint: disable=broad-except
             pass
 
-cfgfile = find_config()
+cfgfile = find_config(None, None)
 
 cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
 cherrypy.config.update(cfgfile)

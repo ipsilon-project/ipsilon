@@ -427,14 +427,21 @@ class Store(Log):
             return
 
         current_version = self._get_schema_version()
+
+        base = cherrypy.config.get('base.mount', '/')
+        if base == '/':
+            updbargs = '--root-instance'
+        else:
+            updbargs = '--instance %s' % base[1:]
+
         if current_version is None:
             self.error('Database initialization required! ' +
-                       'Please run ipsilon-upgrade-database')
+                       'Please run ipsilon-upgrade-database ' + updbargs)
             raise DatabaseError('Database initialization required for %s' %
                                 self.__class__.__name__)
         if current_version != self._code_schema_version():
             self.error('Database upgrade required! ' +
-                       'Please run ipsilon-upgrade-database')
+                       'Please run ipsilon-upgrade-database ' + updbargs)
             raise DatabaseError('Database upgrade required for %s' %
                                 self.__class__.__name__)
 

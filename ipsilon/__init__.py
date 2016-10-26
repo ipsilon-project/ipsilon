@@ -1,17 +1,20 @@
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
-import sys
 import os
 
 
-def find_config():
+def find_config(instance, path):
     cfgfile = None
-    if (len(sys.argv) > 1):
-        cfgfile = sys.argv[-1]
-    elif os.path.isfile('ipsilon.conf'):
+
+    if path is not None:
+        cfgfile = path
+    elif instance is None:
         cfgfile = 'ipsilon.conf'
-    elif os.path.isfile('/etc/ipsilon/ipsilon.conf'):
-        cfgfile = '/etc/ipsilon/ipsilon.conf'
+    elif instance != '':
+        cfgfile = '/etc/ipsilon/%s/ipsilon.conf' % instance
     else:
+        cfgfile = '/etc/ipsilon/ipsilon.conf'
+
+    if not os.path.isfile(cfgfile):
         raise IOError("Configuration file not found")
     return cfgfile
