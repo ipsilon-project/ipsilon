@@ -320,8 +320,7 @@ class Admin(AdminPage):
         for item in self.menu:
             name = getattr(item, 'name', None)
             if name:
-                urls['%s_url' % name] = cherrypy.url('/%s/%s' % (self.mount,
-                                                                 name))
+                urls['%s_url' % name] = '%s/%s' % (self.url, name)
         return urls
 
     @admin_protect
