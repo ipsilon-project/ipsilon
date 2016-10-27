@@ -345,6 +345,12 @@ class Client(pconfig.ConfigHelper):
                 ['RS256'],
                 self.get_current_info('id_token_signed_response_alg'),
                 readonly=self.readonly),
+            pconfig.Pick(
+                'UserInfo Signed Response Alg',
+                'Algorithm used to sign userinfo',
+                ['', 'RS256'],
+                self.get_current_info('userinfo_signed_response_alg'),
+                readonly=self.readonly),
             pconfig.String(
                 'Initiate Login URI',
                 'URI that third party can use to initiate login at client.',
@@ -363,7 +369,6 @@ class Client(pconfig.ConfigHelper):
             # TODO:
             # id_token_encrypted_response_alg
             # id_token_encrypted_response_enc
-            # userinfo_signed_response_alg
             # userinfo_encrypted_response_alg
             # userinfo_encrypted_response_enc
             # request_object_signing_alg (defualt none)
