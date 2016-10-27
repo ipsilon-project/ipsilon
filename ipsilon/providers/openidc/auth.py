@@ -237,21 +237,21 @@ class Authorization(AuthenticateRequest):
                         raise Exception('Invalid algorithm used: %s'
                                         % decoded.token.jose_header['alg'])
 
-                    if client['request_object_signing_alg'] == 'none':
-                        jwt_request = json.loads(
-                            decoded.token.objects['payload'])
+                if client['request_object_signing_alg'] == 'none':
+                    jwt_request = json.loads(
+                        decoded.token.objects['payload'])
+                else:
+                    keyset = None
+                    if client['jwks']:
+                        keys = json.loads(client['jkws'])
                     else:
-                        keyset = None
-                        if client['jwks']:
-                            keys = json.loads(client['jkws'])
-                        else:
-                            keys = requests.get(client['jwks_uri']).json()
-                        keyset = JWKSet()
-                        for key in keys['keys']:
-                            keyset.add(JWK(**key))
-                        key = keyset.get_key(decoded.token.jose_header['kid'])
-                        decoded = JWT(jwt=jwt_object, key=key)
-                        jwt_request = json.loads(decoded.claims)
+                        keys = requests.get(client['jwks_uri']).json()
+                    keyset = JWKSet()
+                    for key in keys['keys']:
+                        keyset.add(JWK(**key))
+                    key = keyset.get_key(decoded.token.jose_header['kid'])
+                    decoded = JWT(jwt=jwt_object, key=key)
+                    jwt_request = json.loads(decoded.claims)
 
             except Exception as ex:  # pylint: disable=broad-except
                 self.debug('Unable to parse request: %s' % ex)
