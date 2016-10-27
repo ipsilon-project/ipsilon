@@ -66,7 +66,7 @@ class Page(Endpoint):
         if len(args) > 0:
             op = getattr(self, args[0], None)
             if callable(op) and getattr(op, 'public_function', None):
-                return op(*args[1:], **kwargs)
+                return op(*args[1:], **kwargs).encode('utf-8')
         else:
             if self._is_form_page:
                 self.debug("method: %s" % cherrypy.request.method)
@@ -84,13 +84,13 @@ class Page(Endpoint):
                             self.debug("Wrong referer %s in request to %s"
                                        % (referer, url))
                             raise cherrypy.HTTPError(403)
-                    return op(*args, **kwargs)
+                    return op(*args, **kwargs).encode('utf-8')
             else:
                 op = getattr(self, 'root', None)
                 if callable(op):
-                    return op(*args, **kwargs)
+                    return op(*args, **kwargs).encode('utf-8')
 
-        return self.default(*args, **kwargs)
+        return self.default(*args, **kwargs).encode('utf-8')
 
     def _template_model(self):
         model = dict()
