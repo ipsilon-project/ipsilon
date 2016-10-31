@@ -716,6 +716,7 @@ class AdminStore(Store):
                             trans=False)
             q.create()
             q._con.close()  # pylint: disable=protected-access
+            self.save_options('authz_config', 'global', {'enabled': 'allow'})
             return 3
         else:
             raise NotImplementedError()
