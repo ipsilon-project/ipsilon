@@ -1,7 +1,7 @@
 # Bundling request for bootstrap/patternfly: https://fedorahosted.org/fpc/ticket/483
 
 Name:       ipsilon
-Version:    2.0.0
+Version:    2.0.1
 Release:    1%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
@@ -421,6 +421,9 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Mon Oct 31 2016 Patrick Uiterwijk <puiterwijk@redhat.com> - 2.0.1-1
+- Enabling allow authz on upgrade
+
 * Tue Oct 25 2016 Patrick Uiterwijk <puiterwijk@redhat.com> - 2.0.0-1
 - Release 2.0.0
 
