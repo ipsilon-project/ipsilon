@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
-__requires__ = ['sqlalchemy >= 0.8']
+__requires__ = ['sqlalchemy >= 0.8', 'jinja2 >= 2.4']
 import pkg_resources  # pylint: disable=unused-import
 
 from ipsilon.login.common import LoginMgrsInstall
