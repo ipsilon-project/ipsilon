@@ -374,10 +374,11 @@ class Logout(Page):
     def root(self, *args, **kwargs):
         us = UserSession()
 
-        for provider in self.handlers:
-            self.debug("Calling logout for provider %s" % provider)
-            obj = self.handlers[provider]
-            obj()
+        if us.user is not None:
+            for provider in self.handlers:
+                self.debug("Calling logout for provider %s" % provider)
+                obj = self.handlers[provider]
+                obj()
 
         us.logout(self.user)
         return self._template('logout.html', title='Logout')

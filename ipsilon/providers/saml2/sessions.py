@@ -108,7 +108,6 @@ class SAMLSessionFactory(Log):
     """
     def __init__(self, database_url):
         self._ss = SAML2SessionStore(database_url=database_url)
-        self.user = None
 
     def _data_to_samlsession(self, uuidval, data):
         """
@@ -137,8 +136,6 @@ class SAMLSessionFactory(Log):
         :param request_id: The request ID of the Logout
         :param supported_logout_mechs: A list of logout protocols supported
         """
-        self.user = user
-
         ttl = cherrypy_config['tools.sessions.timeout'] * 60
 
         data = {'session_id': session_id,
@@ -165,11 +162,11 @@ class SAMLSessionFactory(Log):
 
         return self._data_to_samlsession(uuidval, data)
 
-    def get_session_id_by_provider_id(self, provider_id):
+    def get_session_id_by_provider_id(self, provider_id, user):
         """
         Return a tuple of logged-in session IDs by provider_id
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         session_ids = []
         for c in candidates:
@@ -218,7 +215,7 @@ class SAMLSessionFactory(Log):
         self._ss.update_session(datum)
 
     def get_next_logout(self, peek=False,
-                        logout_mechs=None):
+                        logout_mechs=None, user=None):
         """
         Get the next session in the logged-in state and move
         it to the logging_out state.  Return the session that is
@@ -236,7 +233,7 @@ class SAMLSessionFactory(Log):
         Returns a tuple of (mechanism, session) or
         (None, None) if no more sessions in LOGGED_IN state.
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
         if logout_mechs is None:
             logout_mechs = [SAML2_METADATA_BINDING_REDIRECT, ]
 
@@ -250,13 +247,13 @@ class SAMLSessionFactory(Log):
                     return (mech, samlsession)
         return (None, None)
 
-    def get_initial_logout(self):
+    def get_initial_logout(self, user):
         """
         Get the initial logout request.
 
         Raises ValueError if no sessions in INIT_LOGOUT state.
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         # FIXME: what does it mean if there are multiple in init? We
         #        just return the first one for now. How do we know
@@ -272,11 +269,11 @@ class SAMLSessionFactory(Log):
     def wipe_data(self):
         self._ss.wipe_data()
 
-    def dump(self):
+    def dump(self, user):
         """
         Dump all sessions to debug log
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         count = 0
         for c in candidates:
@@ -304,13 +301,13 @@ if __name__ == '__main__':
                                  SAML2_METADATA_BINDING_REDIRECT])
 
     # Test finding sessions by provider
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, user='admin')
     assert(len(ids) == 1)
 
     sess3 = factory.add_session('_345678', provider2, "testuser",
                                 "<Login/>", '_3456',
                                 [SAML2_METADATA_BINDING_REDIRECT])
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, user='testuser')
     assert(len(ids) == 2)
 
     # Test finding sessions by session ID
@@ -333,13 +330,13 @@ if __name__ == '__main__':
     test2 = factory.get_session_by_id('_789012')
     factory.start_logout(test2, initial=True)
 
-    (lmech, test3) = factory.get_next_logout()
+    (lmech, test3) = factory.get_next_logout(user='admin')
     assert(test3.session_id == '_345678')
 
-    test4 = factory.get_initial_logout()
+    test4 = factory.get_initial_logout(user='admin')
     assert(test4.session_id == '_789012')
 
     # Even though we've started logout, make sure we can still find
     # all sessions for a provider.
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, user='admin')
     assert(len(ids) == 2)
