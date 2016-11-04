@@ -410,7 +410,7 @@ Provides SAML 2.0 authentication infrastructure. """
         saml_sessions = self.sessionfactory
         # pylint: disable=unused-variable
         (mech, session) = saml_sessions.get_next_logout(
-            logout_mechs=[lasso.SAML2_METADATA_BINDING_REDIRECT])
+            logout_mechs=[lasso.SAML2_METADATA_BINDING_REDIRECT], user=us.user)
         if session is None:
             return
 
