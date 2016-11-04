@@ -251,7 +251,7 @@ class LogoutRequest(ProviderPageBase):
             lasso.SAML2_METADATA_BINDING_REDIRECT,
         ]
         (logout_mech, session) = saml_sessions.get_next_logout(
-            logout_mechs=logout_order)
+            logout_mechs=logout_order, user=us.user)
         while session:
             self.debug('Going to log out %s' % session.provider_id)
 
@@ -279,7 +279,7 @@ class LogoutRequest(ProviderPageBase):
             # log out
             self.debug('logging out provider id %s' % session.provider_id)
             indexes = saml_sessions.get_session_id_by_provider_id(
-                session.provider_id
+                session.provider_id, us.user
             )
             self.debug('Requesting logout for sessions %s' % (indexes,))
             req = logout.get_request()
@@ -313,7 +313,7 @@ class LogoutRequest(ProviderPageBase):
                     self.error('Provider does not support SOAP')
 
             (logout_mech, session) = saml_sessions.get_next_logout(
-                logout_mechs=logout_order)
+                logout_mechs=logout_order, user=us.user)
 
         # done while
 
@@ -321,7 +321,7 @@ class LogoutRequest(ProviderPageBase):
         # original request using the response we cached earlier.
 
         try:
-            session = saml_sessions.get_initial_logout()
+            session = saml_sessions.get_initial_logout(us.user)
         except ValueError:
             self.debug('SLO get_last_session() unable to find last session')
             raise cherrypy.HTTPError(400, 'Unable to determine logout state')
