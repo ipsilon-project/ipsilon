@@ -217,7 +217,7 @@ class LogoutRequest(ProviderPageBase):
         # Fall through to handle any remaining sessions.
 
         # Find the next SP to logout and send a LogoutRequest
-        session = saml_sessions.get_next_logout()
+        session = saml_sessions.get_next_logout(us.user)
         if session:
             self.debug('Going to log out %s' % session.provider_id)
 
@@ -241,7 +241,7 @@ class LogoutRequest(ProviderPageBase):
             # log out
             self.debug('logging out provider id %s' % session.provider_id)
             indexes = saml_sessions.get_session_id_by_provider_id(
-                session.provider_id
+                session.provider_id, us.user
             )
             self.debug('Requesting logout for sessions %s' % indexes)
             req = logout.get_request()
@@ -262,7 +262,7 @@ class LogoutRequest(ProviderPageBase):
         # response we cached earlier.
 
         try:
-            session = saml_sessions.get_initial_logout()
+            session = saml_sessions.get_initial_logout(us.user)
         except ValueError:
             self.debug('SLO get_last_session() unable to find last session')
             raise cherrypy.HTTPError(400, 'Unable to determine logout state')

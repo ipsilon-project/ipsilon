@@ -400,7 +400,7 @@ Provides SAML 2.0 authentication infrastructure. """
         user = us.get_user()
 
         saml_sessions = self.sessionfactory
-        session = saml_sessions.get_next_logout()
+        session = saml_sessions.get_next_logout(us.user)
         if session is None:
             return
 

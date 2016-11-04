@@ -103,7 +103,6 @@ class SAMLSessionFactory(Log):
     """
     def __init__(self, database_url):
         self._ss = SAML2SessionStore(database_url=database_url)
-        self.user = None
 
     def _data_to_samlsession(self, uuidval, data):
         """
@@ -125,8 +124,6 @@ class SAMLSessionFactory(Log):
         """
         Add a new login session to the table.
         """
-        self.user = user
-
         timeout = cherrypy_config['tools.sessions.timeout']
         t = datetime.timedelta(seconds=timeout * 60)
         expiration_time = datetime.datetime.now() + t
@@ -157,11 +154,11 @@ class SAMLSessionFactory(Log):
 
         return self._data_to_samlsession(uuidval, data)
 
-    def get_session_id_by_provider_id(self, provider_id):
+    def get_session_id_by_provider_id(self, provider_id, user):
         """
         Return a tuple of logged-in session IDs by provider_id
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         session_ids = []
         for c in candidates:
@@ -209,7 +206,7 @@ class SAMLSessionFactory(Log):
         datum = samlsession.convert()
         self._ss.update_session(datum)
 
-    def get_next_logout(self, peek=False):
+    def get_next_logout(self, user, peek=False):
         """
         Get the next session in the logged-in state and move
         it to the logging_out state.  Return the session that is
@@ -221,7 +218,7 @@ class SAMLSessionFactory(Log):
 
         Return None if no more sessions in LOGGED_IN state.
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         for c in candidates:
             key = c.keys()[0]
@@ -231,13 +228,13 @@ class SAMLSessionFactory(Log):
                 return samlsession
         return None
 
-    def get_initial_logout(self):
+    def get_initial_logout(self, user):
         """
         Get the initial logout request.
 
         Return None if no sessions in INIT_LOGOUT state.
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         # FIXME: what does it mean if there are multiple in init? We
         #        just return the first one for now. How do we know
@@ -253,11 +250,11 @@ class SAMLSessionFactory(Log):
     def wipe_data(self):
         self._ss.wipe_data()
 
-    def dump(self):
+    def dump(self, user):
         """
         Dump all sessions to debug log
         """
-        candidates = self._ss.get_user_sessions(self.user)
+        candidates = self._ss.get_user_sessions(user)
 
         count = 0
         for c in candidates:
@@ -280,11 +277,11 @@ if __name__ == '__main__':
     sess2 = factory.add_session('_789012', provider2, "testuser", "<Login/>")
 
     # Test finding sessions by provider
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, 'admin')
     assert(len(ids) == 1)
 
     sess3 = factory.add_session('_345678', provider2, "testuser", "<Login/>")
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, 'testuser')
     assert(len(ids) == 2)
 
     # Test finding sessions by session ID
@@ -315,5 +312,5 @@ if __name__ == '__main__':
 
     # Even though we've started logout, make sure we can still find
     # all sessions for a provider.
-    ids = factory.get_session_id_by_provider_id(provider2)
+    ids = factory.get_session_id_by_provider_id(provider2, 'admin')
     assert(len(ids) == 2)
