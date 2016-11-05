@@ -99,6 +99,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=attrs
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=trans
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=pgdb
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testetcd
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=fconf
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldap
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldapdown

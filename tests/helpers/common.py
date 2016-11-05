@@ -256,6 +256,21 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         with open(filename, 'a') as f:
             f.write(auth)
 
+    def start_etcd_server(self, datadir, addr, clientport, srvport, env):
+        env['ETCD_NAME'] = 'ipsilon'
+        env['ETCD_DATA_DIR'] = datadir
+        env['ETCD_LISTEN_CLIENT_URLS'] = 'http://%s:%s' % (addr, clientport)
+        env['ETCD_LISTEN_PEER_URLS'] = 'http://%s:%s' % (addr, srvport)
+        env['ETCD_FORCE_NEW_CLUSTER'] = 'true'
+        env['ETCD_INITIAL_CLUSTER'] = 'ipsilon=http://%s:%s' % (addr, srvport)
+        env['ETCD_ADVERTISE_CLIENT_URLS'] = 'http://%s:%s' % (addr, clientport)
+        env['ETCD_INITIAL_ADVERTISE_PEER_URLS'] = 'http://%s:%s' % (addr,
+                                                                    srvport)
+        p = subprocess.Popen(['/usr/bin/etcd'],
+                             env=env, preexec_fn=os.setsid)
+        self.processes.append(p)
+        return p
+
     def start_http_server(self, conf, env):
         env['MALLOC_CHECK_'] = '3'
         env['MALLOC_PERTURB_'] = str(random.randint(0, 32767) % 255 + 1)
