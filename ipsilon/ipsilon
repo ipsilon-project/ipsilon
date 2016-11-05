@@ -38,6 +38,7 @@ def nuke_session_locks():
 cfgfile = find_config(None, None)
 
 cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
+cherrypy.lib.sessions.EtcdSession = ipsilon.util.sessions.EtcdSession
 cherrypy.config.update(cfgfile)
 
 # Force cherrypy logging to work. Note that this ignores the config-file

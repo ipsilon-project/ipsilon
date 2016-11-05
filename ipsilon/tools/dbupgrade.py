@@ -7,7 +7,7 @@ import os
 from jinja2 import Environment, FileSystemLoader
 import ipsilon.util.sessions
 from ipsilon.util.data import AdminStore, Store, UserStore, TranStore
-from ipsilon.util.sessions import SqlSession
+from ipsilon.util.sessions import SqlSession, EtcdSession
 from ipsilon.root import Root
 
 import logging
@@ -62,6 +62,7 @@ def upgrade_failed():
 
 def execute_upgrade(cfgfile):
     cherrypy.lib.sessions.SqlSession = ipsilon.util.sessions.SqlSession
+    cherrypy.lib.sessions.EtcdSession = ipsilon.util.sessions.EtcdSession
     cherrypy.config.update(cfgfile)
 
     # pylint: disable=protected-access
@@ -84,13 +85,19 @@ def execute_upgrade(cfgfile):
 
     # Handle the session store if that is Sql
     logger.info('Handling sessions datastore')
-    if cherrypy.config['tools.sessions.storage_type'] != 'sql':
-        logger.info('Not SQL-based, skipping')
-    else:
+    sesstype = cherrypy.config['tools.sessions.storage_type'].lower()
+    if sesstype == 'sql':
         dburi = cherrypy.config['tools.sessions.storage_dburi']
         SqlSession.setup(storage_dburi=dburi)
         if _upgrade_database(SqlSession._store) not in [True, None]:
             return upgrade_failed()
+    elif sesstype == 'etcd':
+        dburi = cherrypy.config['tools.sessions.storage_dburi']
+        EtcdSession.setup(storage_dburi=dburi)
+        if _upgrade_database(EtcdSession._store) not in [True, None]:
+            return upgrade_failed()
+    else:
+        logger.info('File based, skipping')
 
     # Now handle the rest of the default datastores
     for store in [UserStore, TranStore]:
