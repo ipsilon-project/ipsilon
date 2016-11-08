@@ -73,13 +73,14 @@ KEY_TYPE = "aes256-cts-hmac-sha1-96:normal"
 
 class IpsilonTestBase(object):
 
-    def __init__(self, name, execname):
+    def __init__(self, name, execname, allow_wrappers=True):
         self.name = name
         self.execname = execname
         self.rootdir = os.getcwd()
         self.testdir = None
         self.testuser = pwd.getpwuid(os.getuid())[0]
         self.processes = []
+        self.allow_wrappers = allow_wrappers
 
     def platform_supported(self):
         """This return whether the current platform supports this test.

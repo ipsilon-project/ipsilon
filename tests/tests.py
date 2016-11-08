@@ -40,8 +40,8 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-def try_wrappers(base, wrappers):
-    if wrappers == 'no':
+def try_wrappers(base, wrappers, allow_wrappers):
+    if wrappers == 'no' or not allow_wrappers:
         return {}
 
     pkgcfg = subprocess.Popen(['pkg-config', '--exists', 'socket_wrapper'])
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     test.setup_base(args['path'], test)
 
-    env = try_wrappers(test.testdir, args['wrappers'])
+    env = try_wrappers(test.testdir, args['wrappers'], test.allow_wrappers)
     env['PYTHONPATH'] = test.rootdir
     env['TESTDIR'] = test.testdir
 
