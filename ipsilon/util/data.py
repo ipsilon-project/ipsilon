@@ -934,6 +934,8 @@ class TranStore(Store):
 
 class SAML2SessionStore(Store):
 
+    _auto_cleanup_tables = ['saml2_sessions']
+
     def __init__(self, database_url):
         super(SAML2SessionStore, self).__init__(database_url=database_url)
         self.table = 'saml2_sessions'
@@ -954,20 +956,10 @@ class SAML2SessionStore(Store):
             raise ValueError("Multiple entries returned")
         return data.keys()[0]
 
-    def _cleanup(self):
-        # pylint: disable=protected-access
-        table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
-        sel = select([table.c.uuid]). \
-            where(and_(table.c.name == 'expiration_time',
-                       table.c.value <= str(datetime.datetime.now())))
-        # pylint: disable=no-value-for-parameter
-        d = table.delete().where(table.c.uuid.in_(sel))
-        return d.execute().rowcount
-
     def get_data(self, idval=None, name=None, value=None):
         return self.get_unique_data(self.table, idval, name, value)
 
-    def new_session(self, datum):
+    def new_session(self, datum, ttl):
         if 'supported_logout_mechs' in datum:
             datum['supported_logout_mechs'] = ','.join(
                 datum['supported_logout_mechs']
@@ -975,7 +967,7 @@ class SAML2SessionStore(Store):
         for attr in datum:
             if isinstance(datum[attr], str):
                 datum[attr] = unicode(datum[attr], 'utf-8')
-        return self.new_unique_data(self.table, datum)
+        return self.new_unique_data(self.table, datum, ttl)
 
     def get_session(self, session_id=None, request_id=None):
         if session_id:

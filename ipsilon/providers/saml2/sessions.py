@@ -3,7 +3,6 @@
 from cherrypy import config as cherrypy_config
 from ipsilon.util.log import Log
 from ipsilon.util.data import SAML2SessionStore
-import datetime
 from lasso import (
     SAML2_METADATA_BINDING_SOAP,
     SAML2_METADATA_BINDING_REDIRECT,
@@ -32,13 +31,11 @@ class SAMLSession(Log):
                     logout response will include an InResponseTo value
                     which matches this.
        logout_request - the Logout request object
-       expiration_time - the time the login session expires
        supported_logout_mechs - logout mechanisms supported by this session
     """
     def __init__(self, uuidval, session_id, provider_id, user,
                  login_session, logoutstate=None, relaystate=None,
                  logout_request=None, request_id=None,
-                 expiration_time=None,
                  supported_logout_mechs=None):
 
         self.uuidval = uuidval
@@ -50,7 +47,6 @@ class SAMLSession(Log):
         self.relaystate = relaystate
         self.request_id = request_id
         self.logout_request = logout_request
-        self.expiration_time = expiration_time
         if supported_logout_mechs is None:
             supported_logout_mechs = []
         self.supported_logout_mechs = supported_logout_mechs
@@ -91,7 +87,6 @@ class SAMLSession(Log):
         data['relaystate'] = self.relaystate
         data['logout_request'] = self.logout_request
         data['request_id'] = self.request_id
-        data['expiration_time'] = self.expiration_time
 
         return {self.uuidval: data}
 
@@ -128,7 +123,6 @@ class SAMLSessionFactory(Log):
                            data.get('relaystate'),
                            data.get('logout_request'),
                            data.get('request_id'),
-                           data.get('expiration_time'),
                            data.get('supported_logout_mechs'))
 
     def add_session(self, session_id, provider_id, user, login_session,
@@ -145,25 +139,21 @@ class SAMLSessionFactory(Log):
         """
         self.user = user
 
-        timeout = cherrypy_config['tools.sessions.timeout']
-        t = datetime.timedelta(seconds=timeout * 60)
-        expiration_time = datetime.datetime.now() + t
+        ttl = cherrypy_config['tools.sessions.timeout'] * 60
 
         data = {'session_id': session_id,
                 'provider_id': provider_id,
                 'user': user,
                 'login_session': login_session,
                 'logoutstate': LOGGED_IN,
-                'expiration_time': expiration_time,
                 'request_id': request_id,
                 'supported_logout_mechs': supported_logout_mechs}
 
-        uuidval = self._ss.new_session(data)
+        uuidval = self._ss.new_session(data, ttl)
 
         return SAMLSession(uuidval, session_id, provider_id, user,
                            login_session, LOGGED_IN,
-                           request_id=request_id,
-                           expiration_time=expiration_time)
+                           request_id=request_id)
 
     def get_session_by_id(self, session_id):
         """
