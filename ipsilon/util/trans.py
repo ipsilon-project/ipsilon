@@ -9,6 +9,8 @@ from ipsilon.util.cookies import SecureCookie
 TRANSTABLE = 'transactions'
 TRANSID = "ipsilon_transaction_id"
 
+SESSION_DURATION = 3600
+
 
 class Transaction(Log):
 
@@ -45,7 +47,8 @@ class Transaction(Log):
     def create_tid(self):
         data = {'provider': self.provider,
                 'origintime': str(datetime.now())}
-        self.transaction_id = self._ts.new_unique_data(TRANSTABLE, data)
+        self.transaction_id = self._ts.new_unique_data(TRANSTABLE, data,
+                                                       ttl=SESSION_DURATION)
         self._set_cookie()
         self.debug('Transaction: %s %s' % (self.provider,
                                            self.transaction_id))
@@ -55,7 +58,7 @@ class Transaction(Log):
         self.cookie.send()
         cookiedata = {'cookie': self.cookie.name}
         data = {self.transaction_id: cookiedata}
-        self._ts.save_unique_data(TRANSTABLE, data)
+        self._ts.save_unique_data(TRANSTABLE, data, ttl=SESSION_DURATION)
 
     def _get_cookie(self, data=None):
         if data is None:
@@ -80,7 +83,7 @@ class Transaction(Log):
 
     def store(self, data):
         savedata = {self.transaction_id: data}
-        self._ts.save_unique_data(TRANSTABLE, savedata)
+        self._ts.save_unique_data(TRANSTABLE, savedata, ttl=SESSION_DURATION)
 
     def retrieve(self):
         data = self._ts.get_unique_data(TRANSTABLE,

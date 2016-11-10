@@ -895,6 +895,8 @@ class UserStore(Store):
 
 class TranStore(Store):
 
+    _auto_cleanup_tables = ['transactions']
+
     def __init__(self, path=None):
         super(TranStore, self).__init__('transactions.db')
         self.table = 'transactions'
@@ -919,17 +921,6 @@ class TranStore(Store):
             return 3
         else:
             raise NotImplementedError()
-
-    def _cleanup(self):
-        # pylint: disable=protected-access
-        table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
-        in_one_hour = datetime.datetime.now() - datetime.timedelta(hours=1)
-        sel = select([table.c.uuid]). \
-            where(and_(table.c.name == 'origintime',
-                       table.c.value <= str(in_one_hour)))
-        # pylint: disable=no-value-for-parameter
-        d = table.delete().where(table.c.uuid.in_(sel))
-        return d.execute().rowcount
 
 
 class SAML2SessionStore(Store):
