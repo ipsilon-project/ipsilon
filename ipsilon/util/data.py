@@ -172,7 +172,7 @@ class SqlQuery(Log):
         return self._con.execute(select(self._columns(columns),
                                         self._where(kvfilter)))
 
-    def insert(self, values):
+    def insert(self, values, ttl=None):
         self._con.execute(self._table.insert(values))
 
     def update(self, values, kvfilter):
@@ -180,6 +180,15 @@ class SqlQuery(Log):
 
     def delete(self, kvfilter):
         self._con.execute(self._table.delete(self._where(kvfilter)))
+
+    def perform_auto_cleanup(self):
+        table = self._table
+        sel = select([table.c.uuid]). \
+            where(and_(table.c.name == 'expiration_time',
+                       table.c.value <= str(datetime.datetime.now())))
+        # pylint: disable=no-value-for-parameter
+        d = table.delete().where(table.c.uuid.in_(sel))
+        return d.execute().rowcount
 
 
 class FileStore(BaseStore):
@@ -297,13 +306,16 @@ class FileQuery(Log):
                                                  repr(res)))
         return res
 
-    def insert(self, values):
+    def insert(self, values, ttl=None):
         raise NotImplementedError
 
     def update(self, values, kvfilter):
         raise NotImplementedError
 
     def delete(self, kvfilter):
+        raise NotImplementedError
+
+    def perform_auto_cleanup(self):
         raise NotImplementedError
 
 
@@ -313,8 +325,12 @@ class Store(Log):
     __cleanups = {}
 
     # Static, class-level variables
-    # Either set this to False, or implement _cleanup, in child classes
+    # Either set this to False, or implement cleanup
+    # The two methods for cleanup are:
+    # - Implement a method _cleanup in the child class
+    # - Set _auto_cleanups to a list of UNIQUE_DATA tables
     _should_cleanup = True
+    _auto_cleanup_tables = []
 
     def __init__(self, config_name=None, database_url=None):
         if config_name is None and database_url is None:
@@ -373,6 +389,11 @@ class Store(Log):
                                'removed_entries': -1})
 
             # Cleanup has been long enough ago, let's run
+            self.debug('Starting autoclean for %s' % self.__class__.__name__)
+            auto_removed_entries = self._auto_cleanup()
+            self.debug('Auto-cleaned up %i entries for %s' %
+                       (auto_removed_entries, self.__class__.__name__))
+
             self.debug('Cleaning up for %s' % self.__class__.__name__)
             removed_entries = self._cleanup()
             self.debug('Cleaned up %i entries for %s' %
@@ -382,12 +403,24 @@ class Store(Log):
                               {'timestamp': int(time.time()),
                                'removed_entries': removed_entries})
 
+    def _auto_cleanup(self):
+        # This function runs an automated cleanup for all subclasses that have
+        # set some auto_cleanup_tables. This requires that the tables mentioned
+        # use the standard UNIQUE_DATA_TABLE system, and they specify either an
+        # expiration_time or a ttl to new_unique_data.
+        cleaned = 0
+        for table in self._auto_cleanup_tables:
+            self.debug('Auto-cleaning %s' % table)
+            q = self._query(self._db, table, UNIQUE_DATA_TABLE)
+            cleaned_table = q.perform_auto_cleanup()
+            self.debug('Cleaned up %i entries' % cleaned_table)
+            cleaned += cleaned_table
+        return cleaned
+
     def _cleanup(self):
         # The default cleanup is to do nothing
         # This function should return the number of rows it cleaned up.
         # This information may be used to automatically tune the clean period.
-        self.error('Cleanup for %s not implemented' %
-                   self.__class__.__name__)
         return 0
 
     def _code_schema_version(self):
@@ -587,13 +620,22 @@ class Store(Log):
             self.error("Failed to delete from %s: [%s]" % (table, e))
             raise
 
-    def new_unique_data(self, table, data):
+    def new_unique_data(self, table, data, ttl=None, expiration_time=None):
+        if expiration_time:
+            ttl = expiration_time - int(time.time())
+        elif ttl:
+            expiration_time = int(time.time()) + ttl
+        if ttl and ttl < 0:
+            raise ValueError('Negative TTL specified: %s' % ttl)
+
         newid = str(uuid.uuid4())
         q = None
         try:
             q = self._query(self._db, table, UNIQUE_DATA_TABLE)
             for name in data:
-                q.insert((newid, name, data[name]))
+                q.insert((newid, name, data[name]), ttl)
+            if expiration_time:
+                q.insert((newid, 'expiration_time', expiration_time), ttl)
             q.commit()
         except Exception, e:  # pylint: disable=broad-except
             if q:
@@ -612,7 +654,14 @@ class Store(Log):
             kvfilter['value'] = value
         return self._load_data(table, UNIQUE_DATA_TABLE, kvfilter)
 
-    def save_unique_data(self, table, data):
+    def save_unique_data(self, table, data, ttl=None, expiration_time=None):
+        if expiration_time:
+            ttl = expiration_time - int(time.time())
+        elif ttl:
+            expiration_time = int(time.time()) + ttl
+        if ttl and ttl < 0:
+            raise ValueError('Negative TTL specified: %s' % ttl)
+
         q = None
         try:
             q = self._query(self._db, table, UNIQUE_DATA_TABLE)
@@ -623,6 +672,8 @@ class Store(Log):
                     curvals[r[0]] = r[1]
 
                 datum = data[uid]
+                if expiration_time:
+                    datum['expiration_time'] = expiration_time
                 for name in datum:
                     if name in curvals:
                         if datum[name] is None:
@@ -632,7 +683,7 @@ class Store(Log):
                                      {'uuid': uid, 'name': name})
                     else:
                         if datum[name] is not None:
-                            q.insert((uid, name, datum[name]))
+                            q.insert((uid, name, datum[name]), ttl)
 
             q.commit()
         except Exception, e:  # pylint: disable=broad-except
