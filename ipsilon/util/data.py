@@ -886,9 +886,6 @@ class SAML2SessionStore(Store):
     def __init__(self, database_url):
         super(SAML2SessionStore, self).__init__(database_url=database_url)
         self.table = 'saml2_sessions'
-        # pylint: disable=protected-access
-        table = SqlQuery(self._db, self.table, UNIQUE_DATA_TABLE)._table
-        table.create(checkfirst=True)
 
     def _get_unique_id_from_column(self, name, value):
         """
