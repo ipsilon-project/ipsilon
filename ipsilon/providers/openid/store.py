@@ -11,6 +11,8 @@ from time import time
 
 
 class OpenIDStore(Store, OpenIDStoreInterface):
+    _auto_cleanup_tables = ['association', 'nonce']
+
     def __init__(self, database_url):
         Store.__init__(self, database_url=database_url)
 
@@ -22,7 +24,7 @@ class OpenIDStore(Store, OpenIDStoreInterface):
                  'assoc_type': assoc.assoc_type}
 
         data = {iden: datum}
-        self.save_unique_data('association', data)
+        self.save_unique_data('association', data, ttl=assoc.lifetime)
 
     def getAssociation(self, server_url, handle=None):
         iden = '%s-%s' % (server_url, handle)
@@ -48,6 +50,10 @@ class OpenIDStore(Store, OpenIDStoreInterface):
         iden = '%s-%s' % (server_url, handle)
         self.del_unique_data('association', iden)
 
+    def cleanupAssociations(self):
+        # This is automatically cleaned up
+        return
+
     def useNonce(self, server_url, timestamp, salt):
         if abs(timestamp - time()) > NonceSKEW:
             return False
@@ -61,33 +67,13 @@ class OpenIDStore(Store, OpenIDStoreInterface):
 
         datum = {'timestamp': timestamp}
         data = {iden: datum}
-        self.save_unique_data('nonce', data)
+        self.save_unique_data('nonce', data, ttl=NonceSKEW)
 
         return True
 
-    def _cleanup(self):
-        res1 = self.cleanupNonces()
-        res2 = self.cleanupAssociations()
-        return res1 + res2
-
     def cleanupNonces(self):
-        nonces = self.get_unique_data('nonce')
-        cleaned = 0
-        for iden in nonces:
-            if nonces[iden]['timestamp'] < (time() - NonceSKEW):
-                cleaned += 1
-                self.del_unique_data('nonce', iden)
-        return cleaned
-
-    def cleanupAssociations(self):
-        assocs = self.get_unique_data('association')
-        cleaned = 0
-        for iden in assocs:
-            if ((int(assocs[iden]['issued']) + int(assocs[iden]['lifetime'])) <
-                    time()):
-                cleaned += 1
-                self.del_unique_data('association', iden)
-        return cleaned
+        # This is automatically cleaned up
+        return
 
     def _initialize_schema(self):
         q = self._query(self._db, 'association', UNIQUE_DATA_TABLE,
