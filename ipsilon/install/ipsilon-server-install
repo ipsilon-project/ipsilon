@@ -104,6 +104,7 @@ def install(plugins, args):
                 'wellknowndir': args['wellknown_dir'],
                 'sysuser': args['system_user'],
                 'cleanup_interval': args['cleanup_interval'],
+                'session_timeout': args['session_timeout'],
                 'ipsilondir': BINDIR,
                 'staticdir': STATICDIR,
                 'cachedir': CACHEDIR,
@@ -417,9 +418,12 @@ def parse_args(plugins):
     parser.add_argument('--samlsessions-dburi',
                         help='SAML 2 sessions database URI (override ' +
                              'template)')
-    parser.add_argument('--cleanup-interval', default=30,
+    parser.add_argument('--cleanup-interval', default=30, type=int,
                         help='Interval between cleaning up stale database ' +
                              'entries (in minutes, default: 30 minutes)')
+    parser.add_argument('--session-timeout', default=30, type=int,
+                        help='Time that sessions are valid for (in minutes, ' +
+                             'default: 30 minutes)')
 
     lms = []
     azs = []

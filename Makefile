@@ -106,6 +106,7 @@ tests: wrappers
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openidc
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=authz
 	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=dbupgrades
+	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testcleanup
 
 test: lp-test unittests tests
 
