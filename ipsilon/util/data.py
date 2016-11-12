@@ -563,8 +563,7 @@ class Store(Log):
 
     def load_config(self):
         table = 'config'
-        columns = ['name', 'value']
-        return self._load_data(table, columns)
+        return self._load_data(table, OPTIONS_TABLE)
 
     def load_options(self, table, name=None):
         kvfilter = dict()
