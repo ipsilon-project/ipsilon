@@ -93,6 +93,7 @@ def config(workdir):
                          'sessval': os.path.join(workdir, 'sessions'),
                          'secure': 'False',
                          'cleanup_interval': 1,
+                         'session_timeout': 30,
                         })
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
