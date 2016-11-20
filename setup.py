@@ -9,7 +9,7 @@ DATA = 'share/ipsilon/'
 
 setup(
     name = 'ipsilon',
-    version = '1.1.1',
+    version = '1.1.2',
     license = 'GPLv3+',
     maintainer = 'Ipsilon project Contributors',
     maintainer_email = 'ipsilon@lists.fedorahosted.org',
