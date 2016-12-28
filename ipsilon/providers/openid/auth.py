@@ -225,6 +225,19 @@ class AuthenticateRequest(ProviderPageBase):
         try:
             self.debug('Response: %s' % response)
             webresponse = self.cfg.server.encodeResponse(response)
+            resplen = len(json.dumps(webresponse.headers))
+            if resplen > (4 * 1024):
+                # This is a mostly arbitrary limit, but we should be able to at
+                # the very least encode 4k into the response header. If it
+                # gets too much though, Apache will think we have started
+                # sending the actual page while we're still sending headers.
+                self.error('WARNING: Response size exceeded 4KB. Apache will '
+                           'most likely abort the request.')
+                if resplen > (8 * 1024):
+                    # Over 8kb, we don't even wait for Apache to cancel us
+                    # anymore, as the chance we'll be able to send this with
+                    # success is pretty close to 0. Just show the user an error
+                    raise InvalidRequest('Response size exceeded limits')
             cherrypy.response.headers.update(webresponse.headers)
             cherrypy.response.status = webresponse.code
             return webresponse.body
