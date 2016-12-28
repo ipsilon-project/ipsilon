@@ -68,7 +68,7 @@ class AuthenticateRequest(ProviderPageBase):
                         self.cfg.default_allowed_attributes)
         userattrs = session.get_user_attrs()
         if 'email' not in userattrs and self.cfg.default_email_domain:
-            userattrs['email'] = '%s@%s' % (userattrs['username'],
+            userattrs['email'] = '%s@%s' % (userattrs['_username'],
                                             self.cfg.default_email_domain)
         mappedattrs, _ = policy.map_attributes(userattrs)
         attributes = policy.filter_attributes(mappedattrs)
