@@ -319,14 +319,19 @@ class UserInfo(APIRequest):
             return self._respond_error('invalid_request',
                                        'No userinfo for token')
 
-        if 'userinfo_signed_response_alg' in self.api_client:
+        if self.api_client.get('userinfo_signed_response_alg'):
             cherrypy.response.headers.update({
                 'Content-Type': 'application/jwt'
             })
 
-            sig = JWT(header={'alg': 'RS256',
-                              'kid': self.cfg.idp_sig_key_id},
-                      claims=info)
+            if self.api_client.get('userinfo_signed_response_alg') == 'RS256':
+                sig = JWT(header={'alg': 'RS256',
+                                  'kid': self.cfg.idp_sig_key_id},
+                          claims=info)
+            else:
+                return self._respond_error(
+                    'unsupported_response_type',
+                    'Requested signing mech not supported')
             # FIXME: Maybe add other algorithms in the future
             sig.make_signed_token(self.cfg.keyset.get_key(
                 self.cfg.idp_sig_key_id))
