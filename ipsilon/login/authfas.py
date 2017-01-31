@@ -120,11 +120,14 @@ Form based login Manager that uses the Fedora Authentication Server
         return self.get_config_value('FAS Insecure Auth')
 
     def get_tree(self, site):
+        self.page = FAS(site, self, 'login/fas')
+        return self.page
+
+    def on_enable(self):
+        super(LoginManager, self).on_enable()
         self.fpc = FasProxyClient(base_url=self.fas_url,
                                   useragent=self.user_agent,
                                   insecure=self.insecure)
-        self.page = FAS(site, self, 'login/fas')
-        return self.page
 
 
 class Installer(LoginManagerInstaller):
