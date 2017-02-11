@@ -207,6 +207,9 @@ class APIRequest(ProviderPageBase):
             # Bearer token
             token = post_args['access_token']
             self._handle_token_authentication(token)
+        if self.requires_valid_token and not self.api_token:
+            self.error('No token provided in call that requires one')
+            raise APIError(403, 'no_token_provided')
 
     def require_scope(self, scope):
         if scope not in self.api_scopes:
