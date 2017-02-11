@@ -372,6 +372,31 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
+    print "openidc: Checking user info ...",
+    try:
+        # Testing user info without token
+        r = requests.post('https://127.0.0.10:45080/idp1/openidc/UserInfo')
+        if r.status_code != 403:
+            raise Exception('No 403 provided with token-less request')
+
+        # Testing valid token
+        r = requests.post('https://127.0.0.10:45080/idp1/openidc/UserInfo',
+                          data={'access_token': token['access_token']})
+        r.raise_for_status()
+        info = r.json()
+        if 'sub' not in info:
+            raise Exception('No sub claim provided')
+        h = hashlib.sha256()
+        h.update('127.0.0.11')
+        h.update(user)
+        h.update('testcase')
+        if info['sub'] != h.hexdigest():
+            raise Exception('Sub claim invalid')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
     print "openidc: Access second SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.12:45082/sp/')
