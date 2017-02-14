@@ -81,6 +81,15 @@ class IpsilonTestBase(object):
         self.testuser = pwd.getpwuid(os.getuid())[0]
         self.processes = []
 
+    def platform_supported(self):
+        """This return whether the current platform supports this test.
+
+        This is used for example with specific modules or features that are not
+        supported on all platforms due to dependency availability.
+        """
+        # Every test defaults to being available on every platform
+        return True
+
     def force_remove(self, op, name, info):
         os.chmod(name, 0700)
         os.remove(name)

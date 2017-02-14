@@ -87,6 +87,10 @@ if __name__ == '__main__':
         sys.exit(1)
     test = tests.plugins[args['test']]
 
+    if not test.platform_supported():
+        print >> sys.stderr, "Test %s not supported on platform" % args['test']
+        sys.exit(0)
+
     if not os.path.exists(args['path']):
         os.makedirs(args['path'])
 
