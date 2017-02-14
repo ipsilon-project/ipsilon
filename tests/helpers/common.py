@@ -124,8 +124,8 @@ policy = myca_policy
 [ myca_policy ]
 commonName = supplied
 [ alt_names ]
-[ alt_names ]
 DNS.1 = ${ENV::ADDR}
+IP.1 = ${ENV::IPADDR}
 [ myca_extensions ]
 subjectKeyIdentifier = hash
 subjectAltName = @alt_names
@@ -203,7 +203,15 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
                '-config', os.path.join(self.testdir, 'certs', 'openssl.conf'),
                '-in', '%s.csr' % certpath,
                '-out', certpath]
-        subprocess.check_call(cmd, env={'ADDR': addr})
+        ipaddr = addr
+        if not ipaddr.startswith('127.'):
+            # Lazy check whether this is a hostname (like in testnameid)
+            # Note: this IP address might not be correct, but if when the
+            # hostname is consistently used, that doesn't matter.
+            # We just set it to a known value to make sure openssl doesn't
+            # crash.
+            ipaddr = '127.0.0.10'
+        subprocess.check_call(cmd, env={'ADDR': addr, 'IPADDR': ipaddr})
 
     def setup_idp_server(self, profile, name, addr, port, env):
         http_conf_file = self.setup_http(name, addr, port)
