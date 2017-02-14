@@ -363,6 +363,34 @@ if __name__ == '__main__':
     else:
         print " SUCCESS"
 
+    print "testmapping: Set SP explicit mapping ...",
+    try:
+        sess.set_attributes_and_mapping(
+            idpname,
+            [['fullname', 'wholename'],
+             ['email', 'email']],
+            ['wholename', 'email'],
+            sp['name'])
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
+    print "testmapping: Test SP explicit mapping ...",
+    try:
+        expect = {
+            'wholename': 'Test User %s' % user,
+            'email': '%s@example.com' % user,
+            'NAME_ID': user,
+        }
+        check_info_plugin(sess, idpname, spurl, expect)
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    else:
+        print " SUCCESS"
+
     print "testmapping: Set SP username mapping ...",
     try:
         sess.set_attributes_and_mapping(
