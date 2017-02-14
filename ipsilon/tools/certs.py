@@ -37,6 +37,12 @@ class Certificate(object):
         with open(self.cert, 'r') as f:
             cert = f.readlines()
 
+        # Find the beginning of the certificate
+        # This helps if the admin pointed us to a certificate that includes
+        # the OpenSSL textual representation (openssl x509 -text)
+        begin = cert.index('-----BEGIN CERTIFICATE-----\n')
+        cert = cert[begin:]
+
         # poor man stripping of BEGIN/END lines
         if cert[0] == '-----BEGIN CERTIFICATE-----\n':
             cert = cert[1:]
