@@ -185,6 +185,13 @@ class Policy(Log):
         not_mapped = copy.deepcopy(attributes)
         mapped = dict()
 
+        # This is an implicit _* -> _* mapping.
+        # This is done because we expect certain internal attributes (_*) to be
+        # passed along always.
+        for k in attributes:
+            if k.startswith('_'):
+                mapped[k] = attributes[k]
+
         # If ignore_case is True,
         # then PD translates case insensitively prefixes
         PD = dict()
