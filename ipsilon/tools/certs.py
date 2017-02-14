@@ -21,7 +21,7 @@ class Certificate(object):
         self.cert = os.path.join(self.path, '%s.pem' % prefix)
         self.subject = '/CN=%s' % subject
         command = ['openssl',
-                   'req', '-x509', '-batch', '-days', '1825',
+                   'req', '-x509', '-batch', '-days', '1825', '-text',
                    '-newkey', 'rsa:2048', '-nodes', '-subj', self.subject,
                    '-keyout', self.key, '-out', self.cert]
         proc = Popen(command)
