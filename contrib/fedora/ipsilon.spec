@@ -1,7 +1,7 @@
 # Bundling request for bootstrap/patternfly: https://fedorahosted.org/fpc/ticket/483
 
 Name:       ipsilon
-Version:    2.0.1
+Version:    2.0.2
 Release:    1%{?builddate}%{?gittag}%{?dist}
 Summary:    An Identity Provider Server
 
@@ -18,6 +18,7 @@ BuildRequires:  lasso-python >= 2.5.0
 BuildRequires:  python-openid, python-openid-cla, python-openid-teams
 BuildRequires:  m2crypto
 
+Requires:       python-setuptools
 Requires:       python-requests
 Requires:       %{name}-base = %{version}-%{release}
 BuildArch:      noarch
@@ -421,6 +422,9 @@ fi
 %{python2_sitelib}/ipsilon/info/infosssd.*
 
 %changelog
+* Mon Oct 31 2016 Patrick Uiterwijk <puiterwijk@redhat.com> - 2.0.2-1
+- Release 2.0.2
+
 * Mon Oct 31 2016 Patrick Uiterwijk <puiterwijk@redhat.com> - 2.0.1-1
 - Enabling allow authz on upgrade
 
