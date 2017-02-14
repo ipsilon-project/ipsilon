@@ -1,0 +1,6 @@
+FROM BASE
+VOLUME ["/code"]
+RUN useradd testuser \
+    && chown testuser:testuser /code
+WORKDIR /code
+ENTRYPOINT ["/usr/bin/make", "testdeps", "test"]
