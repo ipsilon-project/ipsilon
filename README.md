@@ -18,6 +18,23 @@ SAML is called a Service Provider.
 Ipsilon uses the [LASSO](http://lasso.entrouvert.org) libraries and Python
 bindings to implement SAML support.
 
+Quick test instance
+===================
+
+You can run a test instance of Ipsilson from a Git clone, using the
+`quickrun.py` script:
+
+    $ ./quickrun.py
+
+This will start an instance which you can access at <http://localhost:8080>.
+You can log with any username and password 'ipsilon'. Log in with the special
+username 'admin' to get access to the administration console; you can then
+visit http://localhost:8080/admin and configure the various identity providers
+and more.
+
+The local state is stored in the ./qrun subdirectory, and will be re-loaded
+from that directory the next time that the `quickrun.py` script is run.
+
 Ipsilon Server Installation
 ===========================
 
