@@ -51,7 +51,7 @@ Provides OpenID Connect authentication infrastructure. """
             pconfig.String(
                 'endpoint url',
                 'The Absolute URL of the OpenID Connect provider',
-                'http://localhost:8080/idp/openidc/'),
+                'http://localhost:8080/openidc/'),
             pconfig.String(
                 'documentation url',
                 'The Absolute URL of the OpenID Connect documentation',

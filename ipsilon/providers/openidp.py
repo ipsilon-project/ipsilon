@@ -41,11 +41,11 @@ Provides OpenID 2.0 authentication infrastructure. """
             pconfig.String(
                 'endpoint url',
                 'The Absolute URL of the OpenID provider',
-                'http://localhost:8080/idp/openid/'),
+                'http://localhost:8080/openid/'),
             pconfig.Template(
                 'identity url template',
                 'The templated URL where identities are exposed.',
-                'http://localhost:8080/idp/openid/id/%(username)s'),
+                'http://localhost:8080/openid/id/%(username)s'),
             pconfig.List(
                 'trusted roots',
                 'List of trusted relying parties.'),
