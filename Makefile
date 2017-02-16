@@ -177,5 +177,10 @@ containertest-fedora25: container-fedora25
 	sudo docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora25
 	echo "Fedora 25 passed"
 
-containertest: containertest-centos7 containertest-fedora24 containertest-fedora25
+containertest-lint: container-fedora25
+	echo "Starting code lint tests ..."
+	sudo docker run -v `pwd`:/code -t --rm -a stderr --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
+	echo "Code lint tests passed"
+
+containertest: containertest-lint containertest-centos7 containertest-fedora24 containertest-fedora25
 	echo "Container tests passed"
