@@ -289,6 +289,18 @@ class OpenIDCStore(Store):
 
         self.del_unique_data('token', token_id)
 
+    def revokeConsent(self, username, client_id):
+        data = self.get_unique_data('token', name='username', value=username)
+
+        removed_token = False
+        for uuid in data.keys():
+            token = self.get_unique_data('token', uuid)[uuid]
+            if token['client_id'] == client_id:
+                self.invalidateToken(uuid)
+                removed_token = True
+
+        return removed_token
+
     def storeUserInfo(self, userinfo):
         to_store = {}
         for key in userinfo:

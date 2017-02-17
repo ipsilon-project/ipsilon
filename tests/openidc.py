@@ -257,7 +257,7 @@ if __name__ == '__main__':
             'amr': json.dumps([]),
             'acr': '0'
         }
-        token = check_info_results(page.text, expect)
+        old_token = check_info_results(page.text, expect)
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -279,7 +279,7 @@ if __name__ == '__main__':
     try:
         page = sess.revoke_all_consent(idpname)
     except ValueError, e:
-        print >> sys.stderr, "" % repr(e)
+        print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
 
@@ -289,6 +289,17 @@ if __name__ == '__main__':
                                'https://127.0.0.11:45081/sp/redirect_uri?log'
                                'out=https%3A%2F%2F127.0.0.11%3A45081%2Fsp%2F',
                                require_consent=True)
+        h = hashlib.sha256()
+        h.update('127.0.0.11')
+        h.update(user)
+        h.update('testcase')
+        expect = {
+            'sub': h.hexdigest(),
+            'iss': 'https://127.0.0.10:45080/idp1/openidc/',
+            'amr': json.dumps([]),
+            'acr': '0'
+        }
+        new_token = check_info_results(page.text, expect)
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
@@ -309,13 +320,13 @@ if __name__ == '__main__':
     try:
         # Testing token without client auth
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
-                          data={'token': token['access_token']})
+                          data={'token': new_token['access_token']})
         if r.status_code != 401:
             raise Exception('No 401 provided')
 
         # Testing token where we removed part of token ID
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
-                          data={'token': token['access_token'][1:],
+                          data={'token': new_token['access_token'][1:],
                                 'client_id': reg_resp['client_id'],
                                 'client_secret': reg_resp['client_secret']})
         r.raise_for_status()
@@ -325,7 +336,7 @@ if __name__ == '__main__':
 
         # Testing token where we rempoved part of check string
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
-                          data={'token': token['access_token'][:-1],
+                          data={'token': new_token['access_token'][:-1],
                                 'client_id': reg_resp['client_id'],
                                 'client_secret': reg_resp['client_secret']})
         r.raise_for_status()
@@ -335,7 +346,7 @@ if __name__ == '__main__':
 
         # Testing valid token
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
-                          data={'token': token['access_token'],
+                          data={'token': new_token['access_token'],
                                 'client_id': reg_resp['client_id'],
                                 'client_secret': reg_resp['client_secret']})
         r.raise_for_status()
@@ -359,10 +370,25 @@ if __name__ == '__main__':
         if len(info['scope']) != 0:
             raise Exception('Unexpected scopes found: %s' % info['scope'])
 
+        # Testing previously revoked token
+        r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
+                          data={'token': old_token['access_token'],
+                                'client_id': reg_resp['client_id'],
+                                'client_secret': reg_resp['client_secret']})
+        r.raise_for_status()
+        info = r.json()
+        if 'error' in info:
+            raise Exception('Token introspection returned error: %s'
+                            % info['error'])
+        if info['active']:
+            raise Exception('Revoked token active')
+        if len(info) != 1:
+            raise Exception('Token contained more info then inactive')
+
         # Delete test client and then try to use it
         sess.delete_oidc_client(idpname, reg_resp['client_id'])
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
-                          data={'token': token['access_token'],
+                          data={'token': new_token['access_token'],
                                 'client_id': reg_resp['client_id'],
                                 'client_secret': reg_resp['client_secret']})
         if r.status_code != 400:
@@ -381,7 +407,7 @@ if __name__ == '__main__':
 
         # Testing valid token
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/UserInfo',
-                          data={'access_token': token['access_token']})
+                          data={'access_token': new_token['access_token']})
         r.raise_for_status()
         info = r.json()
         if 'sub' not in info:

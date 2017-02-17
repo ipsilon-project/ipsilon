@@ -223,6 +223,9 @@ Provides OpenID Connect authentication infrastructure. """
 
         return d
 
+    def revoke_consent(self, user, clientid):
+        return self.datastore.revokeConsent(user, clientid)
+
     def on_reconfigure(self):
         super(IdpProvider, self).on_reconfigure()
         self.init_idp()
