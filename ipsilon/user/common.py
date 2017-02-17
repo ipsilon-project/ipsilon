@@ -22,6 +22,13 @@ class UserPortalConsent(UserPortalPage):
     def revoke(self, provider, clientid):
         us = UserSession()
         user = us.get_user()
+
+        provname = provider
+        provmod = self._site['provider_config'].available.get(provname,
+                                                              None)
+        if provmod is not None:
+            if not provmod.revoke_consent(user.name, clientid):
+                raise Exception('Provider refused to revoke')
         user.revoke_consent(provider, clientid)
         raise cherrypy.HTTPRedirect(self._master.url)
     revoke.public_function = True

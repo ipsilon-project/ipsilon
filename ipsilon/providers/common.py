@@ -85,6 +85,9 @@ class ProviderBase(ConfigHelper, PluginObject):
     def consent_to_display(self, consentdata):
         raise NotImplementedError
 
+    def revoke_consent(self, user, clientid):
+        return True
+
 
 class ProviderPageBase(Page):
 
