@@ -243,6 +243,26 @@ if __name__ == '__main__':
         sys.exit(1)
     print " SUCCESS"
 
+    print "openidc: Registering test client with none auth ...",
+    try:
+        client_info = {
+            'redirect_uris': ['https://invalid/'],
+            'response_types': ['code'],
+            'grant_types': ['authorization_code'],
+            'application_type': 'web',
+            'client_name': 'Test suite client',
+            'client_uri': 'https://invalid/',
+            'token_endpoint_auth_method': 'none'
+        }
+        r = requests.post('https://127.0.0.10:45080/idp1/openidc/Registration',
+                          json=client_info)
+        r.raise_for_status()
+        reg_resp_none = r.json()
+    except Exception, e:  # pylint: disable=broad-except
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
     print "openidc: Access first SP Protected Area ...",
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/',
@@ -393,6 +413,68 @@ if __name__ == '__main__':
                                 'client_secret': reg_resp['client_secret']})
         if r.status_code != 400:
             raise Exception('Deleted client accepted')
+    except ValueError, e:
+        print >> sys.stderr, " ERROR: %s" % repr(e)
+        sys.exit(1)
+    print " SUCCESS"
+
+    print "openidc: Using none-authenticated client ...",
+    try:
+        # Test that none-authed clients don't have access to token info
+        r = requests.post(
+            'https://127.0.0.10:45080/idp1/openidc/TokenInfo',
+            data={'token': new_token['access_token'],
+                  'client_id': reg_resp_none['client_id'],
+                  'client_secret': reg_resp_none['client_secret']})
+        if r.status_code != 400:
+            raise Exception('None-authed client accepted')
+
+        # Try the authorization flow
+        page = sess.fetch_page(idpname,
+                               'https://127.0.0.10:45080/idp1/openidc/'
+                               'Authorization?scope=openid&response_type=code&'
+                               'response_mode=query&redirect_uri='
+                               'https://invalid/&client_id=' +
+                               reg_resp_none['client_id'],
+                               return_prefix='https://invalid/')
+        target = page.result.headers['Location']
+        code = target.replace('https://invalid/?code=', '')
+        token_resp = requests.post(
+            'https://127.0.0.10:45080/idp1/openidc/Token',
+            data={'client_id': reg_resp_none['client_id'],
+                  'grant_type': 'authorization_code',
+                  'redirect_uri': 'https://invalid/',
+                  'code': code})
+        if token_resp.status_code != 200:
+            raise Exception('Unable to get token from code')
+        anon_token = token_resp.json()
+        if not anon_token.get('token_type') == 'Bearer':
+            raise Exception('Invalid token type returned')
+        if 'access_token' not in anon_token:
+            raise Exception('Did not get access token')
+
+        # Test that none-authed clients also can't get their own token info
+        r = requests.post(
+            'https://127.0.0.10:45080/idp1/openidc/TokenInfo',
+            data={'token': anon_token['access_token'],
+                  'client_id': reg_resp_none['client_id'],
+                  'client_secret': reg_resp_none['client_secret']})
+        if r.status_code != 400:
+            raise Exception('None-authed client accepted')
+
+        # Test it does have tokeninfo access after setting to authed
+        sess.update_options(
+            idpname,
+            'providers/openidc/admin/client/%s' % reg_resp_none['client_id'],
+            {'Token Endpoint Auth Method': 'client_secret_post'})
+
+        r = requests.post(
+            'https://127.0.0.10:45080/idp1/openidc/TokenInfo',
+            data={'token': anon_token['access_token'],
+                  'client_id': reg_resp_none['client_id'],
+                  'client_secret': reg_resp_none['client_secret']})
+        if r.status_code != 200:
+            raise Exception('Authed client not accepted')
     except ValueError, e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)

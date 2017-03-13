@@ -34,6 +34,7 @@ class APIRequest(ProviderPageBase):
     authenticate_client = False
     authenticate_token = False
     requires_client_auth = False
+    allow_none_client_auth = False
     requires_valid_token = False
     required_scope = None
 
@@ -44,6 +45,7 @@ class APIRequest(ProviderPageBase):
         self.api_username = None
         self.api_scopes = []
         self.api_client_authenticated = False
+        self.api_client_authenticated_no_secret = False
         self.api_client_id = None
         self.api_token = None
         self.api_client = None
@@ -113,8 +115,11 @@ class APIRequest(ProviderPageBase):
             raise APIError(400, 'invalid_client',
                            'client authentication error')
 
-        if not constant_time_string_comparison(client['client_secret'],
-                                               client_secret):
+        if auth_method == 'none':
+            self.api_client_authenticated_no_secret = True
+
+        elif not constant_time_string_comparison(client['client_secret'],
+                                                 client_secret):
             self.error('Client authentication with invalid secret: %s'
                        % client_secret)
             raise APIError(400, 'invalid_client',
@@ -152,10 +157,15 @@ class APIRequest(ProviderPageBase):
         elif 'client_id' in post_args:
             self.debug('Client id found in post args: %s'
                        % post_args['client_id'])
-            self._handle_client_authentication('client_secret_post',
-                                               post_args['client_id'],
-                                               post_args.get('client_secret',
-                                                             ''))
+            authmethod = 'client_secret_post'
+            clientid = post_args['client_id']
+            clientsecret = post_args.get('client_secret')
+            if clientsecret is None and self.allow_none_client_auth:
+                authmethod = 'none'
+
+            self._handle_client_authentication(authmethod,
+                                               clientid,
+                                               clientsecret)
         else:
             self.error('No authorization presented')
             response = cherrypy.serving.response
@@ -218,6 +228,7 @@ class APIRequest(ProviderPageBase):
 
 class Token(APIRequest):
     authenticate_client = True
+    allow_none_client_auth = True
 
     def POST(self, *args, **kwargs):
         grant_type = kwargs.get('grant_type', None)
