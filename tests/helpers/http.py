@@ -269,7 +269,7 @@ class HttpSessions(object):
         return ['post', url, {'data': params}]
 
     def fetch_page(self, idp, target_url, follow_redirect=True, krb=False,
-                   require_consent=None):
+                   require_consent=None, return_prefix=None):
         """
         Fetch a page and parse the response code to determine what to do
         next.
@@ -281,13 +281,22 @@ class HttpSessions(object):
         require_consent indicates whether consent should or should not be asked
         or if that's not in this test. None means not tested, False means must
         not be asked, True means must be asked.
+
+        If the url we would be requesting starts with return_prefix, instead of
+        requesting the next page, we return the previous page.
         """
         url = target_url
         action = 'get'
         args = {}
         seen_consent = False
+        r = None
 
         while True:
+            if return_prefix and url.startswith(return_prefix):
+                if r:
+                    return PageTree(r)
+                else:
+                    return None
             r = self.access(action, url, krb=krb, **args)
             if r.status_code == 303 or r.status_code == 302:
                 if not follow_redirect:
