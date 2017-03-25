@@ -52,7 +52,7 @@ class SqlStore(BaseStore):
     __instances = {}
 
     @classmethod
-    def get_connection(cls, name):
+    def get_instance(cls, name):
         if name not in cls.__instances:
             if cherrypy.config.get('db.conn.log', False):
                 logging.debug('SqlStore new: %s', name)
@@ -633,7 +633,7 @@ class Store(Log):
             self._db = EtcdStore(name)
             self._query = EtcdQuery
         else:
-            self._db = SqlStore.get_connection(name)
+            self._db = SqlStore.get_instance(name)
             self._query = SqlQuery
 
         if not self._is_upgrade:
