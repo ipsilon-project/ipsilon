@@ -74,33 +74,30 @@ class SqlSession(Session):
 
     def _exists(self):
         q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
-        result = q.select({'id': self.id})
-        return True if result.fetchone() else False
+        with q:
+            result = q.select({'id': self.id})
+            return True if result.fetchone() else False
 
     def _load(self):
         q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
-        result = q.select({'id': self.id})
-        r = result.fetchone()
-        if r:
-            data = str(base64.b64decode(r[1]))
-            return pickle.loads(data)
+        with q:
+            result = q.select({'id': self.id})
+            r = result.fetchone()
+            if r:
+                data = str(base64.b64decode(r[1]))
+                return pickle.loads(data)
 
     def _save(self, expiration_time):
-        q = None
-        try:
-            q = SqlQuery(self._db, 'sessions', SESSION_TABLE, trans=True)
+        q = SqlQuery(self._db, 'sessions', SESSION_TABLE, trans=True)
+        with q:
             q.delete({'id': self.id})
             data = pickle.dumps((self._data, expiration_time), self._proto)
             q.insert((self.id, base64.b64encode(data), expiration_time))
-            q.commit()
-        except Exception:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            raise
 
     def _delete(self):
         q = SqlQuery(self._db, 'sessions', SESSION_TABLE)
-        q.delete({'id': self.id})
+        with q:
+            q.delete({'id': self.id})
 
     # copy what RamSession does for now
     def acquire_lock(self):
