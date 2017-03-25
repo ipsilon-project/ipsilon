@@ -21,7 +21,6 @@ class OpenIDCStaticStore(Store):
         q = self._query(self._db, 'client', OPTIONS_TABLE,
                         trans=False)
         q.create()
-        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         raise NotImplementedError()
@@ -404,15 +403,12 @@ class OpenIDCStore(Store):
         q = self._query(self._db, 'client', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
-        q._con.close()  # pylint: disable=protected-access
         q = self._query(self._db, 'token', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
-        q._con.close()  # pylint: disable=protected-access
         q = self._query(self._db, 'userinfo', UNIQUE_DATA_TABLE,
                         trans=False)
         q.create()
-        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         raise NotImplementedError()

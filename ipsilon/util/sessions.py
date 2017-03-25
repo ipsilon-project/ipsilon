@@ -27,7 +27,6 @@ class SessionStore(Store):
         q = self._query(self._db, 'sessions', SESSION_TABLE,
                         trans=False)
         q.create()
-        q._con.close()  # pylint: disable=protected-access
 
     def _upgrade_schema(self, old_version):
         if old_version == 1:
