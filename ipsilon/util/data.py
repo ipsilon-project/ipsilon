@@ -170,6 +170,9 @@ class SqlQuery(BaseQuery):
         self._table = self._get_table(table, table_def)
 
     def _setup_connection(self):
+        if self.__con is not None:
+            self.debug('Multiple setup_connection calls without teardown')
+            return
         self.__con = self._db.connection(True)
         self._trans = self._con.begin() if self._use_trans else None
 
@@ -774,7 +777,8 @@ class Store(Log):
         for table in self._auto_cleanup_tables:
             self.debug('Auto-cleaning %s' % table)
             q = self._query(self._db, table, UNIQUE_DATA_TABLE)
-            cleaned_table = q.perform_auto_cleanup()
+            with q:
+                cleaned_table = q.perform_auto_cleanup()
             self.debug('Cleaned up %i entries' % cleaned_table)
             cleaned += cleaned_table
         return cleaned
@@ -914,12 +918,13 @@ class Store(Log):
 
     def _load_data(self, table, columns, kvfilter=None):
         rows = []
-        try:
-            q = self._query(self._db, table, columns, trans=False)
-            rows = q.select(kvfilter)
-        except Exception, e:  # pylint: disable=broad-except
-            self.error("Failed to load data for table %s for store %s: [%s]"
-                       % (table, self.__class__.__name__, e))
+        q = self._query(self._db, table, columns, trans=False)
+        with q:
+            try:
+                rows = q.select(kvfilter)
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to load data for table %s for store %s:[%s]"
+                           % (table, self.__class__.__name__, e))
         return self._rows_to_dict_tree(rows)
 
     def load_config(self):
@@ -938,47 +943,42 @@ class Store(Log):
     def save_options(self, table, name, options):
         curvals = dict()
         q = None
-        try:
-            q = self._query(self._db, table, OPTIONS_TABLE)
-            rows = q.select({'name': name}, ['option', 'value'])
-            for row in rows:
-                curvals[row[0]] = row[1]
+        q = self._query(self._db, table, OPTIONS_TABLE)
+        with q:
+            try:
+                rows = q.select({'name': name}, ['option', 'value'])
+                for row in rows:
+                    curvals[row[0]] = row[1]
 
-            for opt in options:
-                if opt in curvals:
-                    q.update({'value': options[opt]},
-                             {'name': name, 'option': opt})
-                else:
-                    q.insert((name, opt, options[opt]))
+                for opt in options:
+                    if opt in curvals:
+                        q.update({'value': options[opt]},
+                                 {'name': name, 'option': opt})
+                    else:
+                        q.insert((name, opt, options[opt]))
 
-            for opt in curvals:
-                if opt not in options:
-                    q.delete({'name': name, 'option': opt})
+                for opt in curvals:
+                    if opt not in options:
+                        q.delete({'name': name, 'option': opt})
 
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error("Failed to save options: [%s]" % e)
-            raise
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to save options: [%s]" % e)
+                raise
 
     def delete_options(self, table, name, options=None):
         kvfilter = {'name': name}
-        q = None
-        try:
-            q = self._query(self._db, table, OPTIONS_TABLE)
-            if options is None:
-                q.delete(kvfilter)
-            else:
-                for opt in options:
-                    kvfilter['option'] = opt
+        q = self._query(self._db, table, OPTIONS_TABLE)
+        with q:
+            try:
+                if options is None:
                     q.delete(kvfilter)
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error("Failed to delete from %s: [%s]" % (table, e))
-            raise
+                else:
+                    for opt in options:
+                        kvfilter['option'] = opt
+                        q.delete(kvfilter)
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to delete from %s: [%s]" % (table, e))
+                raise
 
     def new_unique_data(self, table, data, ttl=None, expiration_time=None):
         if expiration_time:
@@ -989,19 +989,16 @@ class Store(Log):
             raise ValueError('Negative TTL specified: %s' % ttl)
 
         newid = str(uuid.uuid4())
-        q = None
-        try:
-            q = self._query(self._db, table, UNIQUE_DATA_TABLE)
-            for name in data:
-                q.insert((newid, name, data[name]), ttl)
-            if expiration_time:
-                q.insert((newid, 'expiration_time', expiration_time), ttl)
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error("Failed to store %s data: [%s]" % (table, e))
-            raise
+        q = self._query(self._db, table, UNIQUE_DATA_TABLE)
+        with q:
+            try:
+                for name in data:
+                    q.insert((newid, name, data[name]), ttl)
+                if expiration_time:
+                    q.insert((newid, 'expiration_time', expiration_time), ttl)
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to store %s data: [%s]" % (table, e))
+                raise
         return newid
 
     def get_unique_data(self, table, uuidval=None, name=None, value=None):
@@ -1022,55 +1019,53 @@ class Store(Log):
         if ttl and ttl < 0:
             raise ValueError('Negative TTL specified: %s' % ttl)
 
-        q = None
-        try:
-            q = self._query(self._db, table, UNIQUE_DATA_TABLE)
-            for uid in data:
-                curvals = dict()
-                rows = q.select({'uuid': uid}, ['name', 'value'])
-                for r in rows:
-                    curvals[r[0]] = r[1]
+        q = self._query(self._db, table, UNIQUE_DATA_TABLE)
+        with q:
+            try:
+                for uid in data:
+                    curvals = dict()
+                    rows = q.select({'uuid': uid}, ['name', 'value'])
+                    for r in rows:
+                        curvals[r[0]] = r[1]
 
-                datum = data[uid]
-                if expiration_time:
-                    datum['expiration_time'] = expiration_time
-                for name in datum:
-                    if name in curvals:
-                        if datum[name] is None:
-                            q.delete({'uuid': uid, 'name': name})
+                    datum = data[uid]
+                    if expiration_time:
+                        datum['expiration_time'] = expiration_time
+                    for name in datum:
+                        if name in curvals:
+                            if datum[name] is None:
+                                q.delete({'uuid': uid, 'name': name})
+                            else:
+                                q.update({'value': datum[name]},
+                                         {'uuid': uid, 'name': name})
                         else:
-                            q.update({'value': datum[name]},
-                                     {'uuid': uid, 'name': name})
-                    else:
-                        if datum[name] is not None:
-                            q.insert((uid, name, datum[name]), ttl)
+                            if datum[name] is not None:
+                                q.insert((uid, name, datum[name]), ttl)
 
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error("Failed to store data in %s: [%s]" % (table, e))
-            raise
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to store data in %s: [%s]" % (table, e))
+                raise
 
     def del_unique_data(self, table, uuidval):
         kvfilter = {'uuid': uuidval}
-        try:
-            q = self._query(self._db, table, UNIQUE_DATA_TABLE, trans=False)
-            q.delete(kvfilter)
-        except Exception, e:  # pylint: disable=broad-except
-            self.error("Failed to delete data from %s: [%s]" % (table, e))
+        q = self._query(self._db, table, UNIQUE_DATA_TABLE, trans=False)
+        with q:
+            try:
+                q.delete(kvfilter)
+            except Exception, e:  # pylint: disable=broad-except
+                self.error("Failed to delete data from %s: [%s]" % (table, e))
 
     def _reset_data(self, table):
-        q = None
-        try:
-            q = self._query(self._db, table, UNIQUE_DATA_TABLE)
-            q.drop()
-            q.create()
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error("Failed to erase all data from %s: [%s]" % (table, e))
+        q = self._query(self._db, table, UNIQUE_DATA_TABLE)
+        with q:
+            try:
+                q.drop()
+                q.create()
+            except Exception, e:  # pylint: disable=broad-except
+                if q:
+                    q.rollback()
+                self.error("Failed to erase all data from %s: [%s]"
+                           % (table, e))
 
 
 class AdminStore(Store):
@@ -1164,59 +1159,58 @@ class UserStore(Store):
 
     def store_consent(self, user, provider, clientid, parameters):
         q = None
-        try:
-            key = self._cons_key(provider, clientid)
-            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
-            rows = q.select({'name': user, 'option': key}, ['value'])
-            if len(list(rows)) > 0:
-                q.update({'value': parameters}, {'name': user, 'option': key})
-            else:
-                q.insert((user, key, parameters))
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error('Failed to store consent: [%s]' % e)
-            raise
+        q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+        with q:
+            try:
+                key = self._cons_key(provider, clientid)
+                rows = q.select({'name': user, 'option': key}, ['value'])
+                if len(list(rows)) > 0:
+                    q.update({'value': parameters}, {'name': user,
+                                                     'option': key})
+                else:
+                    q.insert((user, key, parameters))
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to store consent: [%s]' % e)
+                raise
 
     def delete_consent(self, user, provider, clientid):
-        q = None
-        try:
-            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
-            q.delete({'name': user,
-                      'option': self._cons_key(provider, clientid)})
-            q.commit()
-        except Exception, e:  # pylint: disable=broad-except
-            if q:
-                q.rollback()
-            self.error('Failed to delete consent: [%s]' % e)
-            raise
+        q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+        with q:
+            try:
+                q.delete({'name': user,
+                          'option': self._cons_key(provider, clientid)})
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to delete consent: [%s]' % e)
+                raise
 
     def get_consent(self, user, provider, clientid):
-        try:
-            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
-            rows = q.select({'name': user,
-                             'option': self._cons_key(provider, clientid)},
-                            ['value'])
-            data = list(rows)
-            if len(data) > 0:
-                return data[0][0]
-            else:
-                return None
-        except Exception, e:  # pylint: disable=broad-except
-            self.error('Failed to get consent: [%s]' % e)
-            return None
+        q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+        with q:
+            try:
+                rows = q.select({'name': user,
+                                 'option': self._cons_key(provider, clientid)},
+                                ['value'])
+                data = list(rows)
+                if len(data) > 0:
+                    return data[0][0]
+                else:
+                    return None
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to get consent: [%s]' % e)
+                raise
 
     def get_all_consents(self, user):
         d = []
-        try:
-            q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
-            rows = q.select({'name': user}, ['option', 'value'])
-            for r in rows:
-                prov, clientid = self._split_cons_key(r[0])
-                d.append((prov, clientid, r[1]))
-        except Exception, e:  # pylint: disable=broad-except
-            self.error('Failed to get consents: [%s]' % e)
+        q = self._query(self._db, 'user_consent', OPTIONS_TABLE)
+        with q:
+            try:
+                rows = q.select({'name': user}, ['option', 'value'])
+                for r in rows:
+                    prov, clientid = self._split_cons_key(r[0])
+                    d.append((prov, clientid, r[1]))
+            except Exception, e:  # pylint: disable=broad-except
+                self.error('Failed to get consents: [%s]' % e)
+                raise
         return d
 
     def _initialize_table(self, tablename):
