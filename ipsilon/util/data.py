@@ -102,24 +102,95 @@ class SqlStore(BaseStore):
     def engine(self):
         return self._dbengine
 
-    def connection(self):
+    def connection(self, will_close=False):
+        """Function that makes a connection to the database.
+
+        will_close indicates whether the client will take responsibility of
+        closing the connection after it's done with it."""
         self.debug('SqlStore connect: %s' % self.name)
         conn = self._dbengine.connect()
 
         def cleanup_connection():
             self.debug('SqlStore cleanup: %s' % self.name)
             conn.close()
-        cherrypy.request.hooks.attach('on_end_request', cleanup_connection)
+        if not will_close:
+            cherrypy.request.hooks.attach('on_end_request', cleanup_connection)
         return conn
 
 
-class SqlQuery(Log):
+class BaseQuery(Log):
+
+    def commit(self):
+        """Function to override to commit the transaction."""
+        pass
+
+    def rollback(self):
+        """Function to override to roll the transaction back."""
+        pass
+
+    def _setup_connection(self):
+        """Function to override to get a transaction and connection."""
+        pass
+
+    def _teardown_connection(self):
+        """Function to override to close transactions and connections."""
+        pass
+
+    def __enter__(self):
+        """Context Manager enter method.
+
+        This calls the setup connections method.
+        """
+        self._setup_connection()
+        return self
+
+    def __exit__(self, exc_class, exc, tb):
+        """ Context Manager exit method.
+
+        This automatically rolls back the transaction if an error occured and
+        the engine supports it, and otherwise runs the database commit method.
+        After this, it will run the teardown method.
+
+        All the arguments are defined by PEP#343.
+        """
+        if exc is None:
+            self.commit()
+        else:
+            self.rollback()
+        self._teardown_connection()
+
+
+class SqlQuery(BaseQuery):
 
     def __init__(self, db_obj, table, table_def, trans=True):
         self._db = db_obj
-        self._con = self._db.connection()
-        self._trans = self._con.begin() if trans else None
+        self.__con = None
+        self._trans = None
+        self._use_trans = trans
         self._table = self._get_table(table, table_def)
+
+    def _setup_connection(self):
+        self.__con = self._db.connection(True)
+        self._trans = self._con.begin() if self._use_trans else None
+
+    def _teardown_connection(self):
+        self.__con.close()
+        self.__con = None
+        self._trans = None
+
+    @property
+    def _con(self):
+        """Function that makes sure there is an active connection.
+
+        This is for backwards compatibility if other classes use SqlQuery
+        without the context manager handling."""
+        if not self.__con:
+            self.error('DEPRECATED: SqlQuery used without context manager!')
+            # Since we will not get notified when the user is done, we will
+            # need to get the conn closed after the request.
+            self.__con = self._db.connection(will_close=False)
+            self._trans = self._con.begin() if self._use_trans else None
+        return self.__con
 
     def _get_table(self, name, table_def):
         if isinstance(table_def, list):
@@ -163,9 +234,13 @@ class SqlQuery(Log):
         return cols
 
     def rollback(self):
+        if not self._trans:
+            return
         self._trans.rollback()
 
     def commit(self):
+        if not self._trans:
+            return
         self._trans.commit()
 
     def create(self):
@@ -227,7 +302,7 @@ class FileStore(BaseStore):
         raise NotImplementedError()
 
 
-class FileQuery(Log):
+class FileQuery(BaseQuery):
 
     def __init__(self, fstore, table, table_def, trans=True):
         # We don't need indexes in a FileQuery, so drop that info
@@ -365,7 +440,7 @@ class EtcdStore(BaseStore):
         return
 
 
-class EtcdQuery(Log):
+class EtcdQuery(BaseQuery):
     """
     Class to store stuff in Etcd key-value stores.
 
