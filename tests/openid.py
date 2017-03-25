@@ -127,7 +127,7 @@ if __name__ == '__main__':
     try:
         page = sess.revoke_all_consent(idpname)
     except ValueError, e:
-        print >> sys.stderr, "" % repr(e)
+        print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
 
