@@ -157,17 +157,17 @@ quickrun: container-quickrun
 # Testing within containers
 container-centos7:
 	echo "Building CentOS 7 container ..."
-	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-centos tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/centos:7/' | sudo docker build -f - -q -t ipsilon-centos7 -
+	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-centos tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/centos:7/' | docker build -f - -q -t ipsilon-centos7 -
 	echo "CentOS 7 container built"
 
 container-fedora24:
 	echo "Building Fedora 24 container ..."
-	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:24/' | sudo docker build -f - -q -t ipsilon-fedora24 -
+	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:24/' | docker build -f - -q -t ipsilon-fedora24 -
 	echo "Fedora 24 container built"
 
 container-fedora25:
 	echo "Building Fedora 25 container ..."
-	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:25/' | sudo docker build -f - -q -t ipsilon-fedora25 -
+	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:25/' | docker build -f - -q -t ipsilon-fedora25 -
 	echo "Fedora 25 container built"
 
 containers: container-fedora24 container-fedora25
@@ -175,22 +175,22 @@ containers: container-fedora24 container-fedora25
 
 containertest-centos7: container-centos7
 	echo "Starting CentOS 7 tests ..."
-	sudo docker run -v `pwd`:/code -t --rm -a stderr ipsilon-centos7
+	docker run -v `pwd`:/code -t --rm -a stderr ipsilon-centos7
 	echo "CentOS 7 passed"
 
 containertest-fedora24: container-fedora24
 	echo "Starting Fedora 24 tests ..."
-	sudo docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora24
+	docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora24
 	echo "Fedora 24 passed"
 
 containertest-fedora25: container-fedora25
 	echo "Starting Fedora 25 tests ..."
-	sudo docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora25
+	docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora25
 	echo "Fedora 25 passed"
 
 containertest-lint: container-fedora25
 	echo "Starting code lint tests ..."
-	sudo docker run -v `pwd`:/code -t --rm -a stderr --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
+	docker run -v `pwd`:/code -t --rm -a stderr --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
 	echo "Code lint tests passed"
 
 containertest: containertest-lint containertest-centos7 containertest-fedora24 containertest-fedora25
