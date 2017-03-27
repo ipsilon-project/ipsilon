@@ -144,6 +144,16 @@ releaserpms: rpmroot rpmdistdir sdist
 	mv $(RPMBUILD)/SRPMS/ipsilon-*.src.rpm dist/srpms/
 	rm -rf $(RPMBUILD)
 
+# Running within containers
+container-quickrun:
+	echo "Building quickrun container ..."
+	(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-dev tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:latest/' | docker build -f - -t ipsilon-quickrun -
+	echo "quickrun container built"
+
+quickrun: container-quickrun
+	echo "Starting Quickrun ..."
+	docker run -v `pwd`:/code -t --rm -it ipsilon-quickrun
+
 # Testing within containers
 container-centos7:
 	echo "Building CentOS 7 container ..."

@@ -1,0 +1,3 @@
+RUN mkdir /tmp/workdir \
+    && chown testuser:testuser /tmp/workdir
+ENTRYPOINT ["./quickrun.py", "--workdir", "/tmp/workdir", "--cleanup"]
