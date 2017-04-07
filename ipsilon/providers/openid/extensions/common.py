@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-from ipsilon.providers.common import FACILITY
 from ipsilon.util.plugin import PluginLoader
 from ipsilon.util.log import Log
 

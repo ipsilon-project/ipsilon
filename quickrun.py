@@ -19,8 +19,8 @@ logger = None
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description=\
-        'Run a test Ipsilon instance from the checkout directory')
+    parser = argparse.ArgumentParser(description='Run a test Ipsilon instance '
+                                                 'from the checkout directory')
     parser.add_argument('--workdir', default=os.path.join(os.getcwd(), 'qrun'),
                         help="Directory in which db/session files are stored")
     parser.add_argument('--cleanup', '-c', action='store_true', default=False,
@@ -28,9 +28,9 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-CONF_TEMPLATE="templates/install/ipsilon.conf"
+CONF_TEMPLATE = "templates/install/ipsilon.conf"
 
-ADMIN_TEMPLATE='''
+ADMIN_TEMPLATE = '''
 CREATE TABLE login_config (name TEXT,option TEXT,value TEXT);
 INSERT INTO login_config VALUES('global', 'enabled', 'testauth');
 CREATE TABLE provider_config (name TEXT,option TEXT,value TEXT);
@@ -45,11 +45,12 @@ CREATE TABLE authz_config (name TEXT,option TEXT,value TEXT);
 INSERT INTO authz_config VALUES('global', 'enabled', 'allow');
 '''
 
-USERS_TEMPLATE='''
+USERS_TEMPLATE = '''
 CREATE TABLE users(name TEXT, option TEXT, value TEXT);
 INSERT INTO users VALUES('admin', 'is_admin', '1');
 CREATE TABLE user_consent(name TEXT, option TEXT, value TEXT);
 '''
+
 
 def config(workdir):
     os.makedirs(workdir)
@@ -94,7 +95,7 @@ def config(workdir):
                          'secure': 'False',
                          'cleanup_interval': 1,
                          'session_timeout': 30,
-                        })
+                         })
     conf = os.path.join(workdir, 'ipsilon.conf')
     with open(conf, 'w+') as f:
         f.write(text)
@@ -118,7 +119,7 @@ def init(workdir):
     rsasig = JWK(generate='RSA', size=2048, use='sig', kid='quickstart')
     keyset.add(rsasig)
     with open(keyfile, 'w') as m:
-	m.write(keyset.export())
+        m.write(keyset.export())
 
 
 if __name__ == '__main__':
@@ -129,7 +130,8 @@ if __name__ == '__main__':
     penv.update(os.environ)
     penv['PYTHONPATH'] = os.getcwd()
 
-    schema_init = os.path.join(os.getcwd(), 'ipsilon/install/ipsilon-upgrade-database')
+    schema_init = os.path.join(os.getcwd(),
+                               'ipsilon/install/ipsilon-upgrade-database')
     exe = os.path.join(os.getcwd(), 'ipsilon/ipsilon')
 
     if args['cleanup']:

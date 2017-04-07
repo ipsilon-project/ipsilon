@@ -282,6 +282,7 @@ class SAMLSessionFactory(Log):
             self.debug('session %d: %s' % (count, samlsession.convert()))
             count += 1
 
+
 if __name__ == '__main__':
     provider1 = "http://127.0.0.10/saml2"
     provider2 = "http://127.0.0.11/saml2"
