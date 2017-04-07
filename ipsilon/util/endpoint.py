@@ -14,14 +14,14 @@ except ImportError:
 
 def allow_iframe(func):
     """
-    Remove the X-Frame-Options and CSP frame-options deny headers.
+    Remove the X-Frame-Options and CSP frame-ancestors deny headers.
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
         for (header, value) in [
                 ('X-Frame-Options', 'deny'),
-                ('Content-Security-Policy', 'frame-options \'deny\'')]:
+                ('Content-Security-Policy', 'frame-ancestors \'none\'')]:
             if cherrypy.response.headers.get(header, None) == value:
                 cherrypy.response.headers.pop(header, None)
         return result
@@ -37,7 +37,7 @@ class Endpoint(Log):
         self.default_headers = {
             'Cache-Control': 'no-cache, no-store, must-revalidate, private',
             'Pragma': 'no-cache',
-            'Content-Security-Policy': 'frame-options \'deny\'',
+            'Content-Security-Policy': 'frame-ancestors \'none\'',
             'X-Frame-Options': 'deny',
         }
         self.auth_protect = False
