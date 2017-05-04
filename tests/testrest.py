@@ -160,7 +160,7 @@ if __name__ == '__main__':
     print "testrest: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -172,7 +172,7 @@ if __name__ == '__main__':
             raise ValueError(
                 'Expected no SP and got %d' % len(result['result'])
             )
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     print "testrest: Add SP Metadata to IDP via admin ...",
     try:
         sess.add_sp_metadata(idpname, spname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -197,7 +197,7 @@ if __name__ == '__main__':
                 'Expected %s and got %s' %
                 (spname, result['result'][0].get('provider'))
             )
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     print "testrest: Add Service Provider via REST ...",
     try:
         sess.add_sp_metadata(idpname, sp2name, rest=True)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -217,7 +217,7 @@ if __name__ == '__main__':
             raise ValueError(
                 'Expected 2 SPs and got %d' % len(result['result'])
             )
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -246,7 +246,7 @@ if __name__ == '__main__':
                 'Expected %s and got %s' %
                 (spname, result['result'][0].get('provider'))
             )
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -256,7 +256,7 @@ if __name__ == '__main__':
     print "testrest: Add illegally named Service Provider via REST ...",
     try:
         sess.add_sp_metadata(idpname, sp3name, rest=True)
-    except ValueError, e:
+    except ValueError as e:
         print " SUCCESS"
     else:
         print >> sys.stderr, "ERROR: " \
@@ -269,7 +269,7 @@ if __name__ == '__main__':
             idpname,
             '/%s/rest/providers/saml2/notfound' % idpname
         )
-    except ValueError, e:
+    except ValueError as e:
         if '(501)' not in e.message:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     print "testrest: Fetch non-existent SP via REST ...",
     try:
         result = sess.get_rest_sp(idpname, 'foo')
-    except ValueError, e:
+    except ValueError as e:
         if '(404)' not in e.message:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     print "testrest: Re-add Service Provider via REST ...",
     try:
         sess.add_sp_metadata(idpname, sp2name, rest=True)
-    except ValueError, e:
+    except ValueError as e:
         print " SUCCESS"
     else:
         print >> sys.stderr, "ERROR: " \

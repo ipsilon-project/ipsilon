@@ -115,7 +115,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     print "testcleanup: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     print "testcleanup: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, sp1name)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//div[@id="content"]/p/a/text()', None)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         if len(cur.fetchall()) == 0:
             raise ValueError('SAML2 sessions not created')
         conn.close()
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -193,7 +193,7 @@ if __name__ == '__main__':
         cur.execute('SELECT * FROM saml2_sessions;')
         if len(cur.fetchall()) != 0:
             raise ValueError('SAML2 sessions left behind: %s' % cur.fetchall())
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

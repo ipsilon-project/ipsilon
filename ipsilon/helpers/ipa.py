@@ -62,7 +62,7 @@ class Installer(EnvHelpersInstaller):
             self.domain = ipaconfig.config.get_domain()
             self.server = ipaconfig.config.get_server()
 
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.info('IPA tools installation found: [%s]', e)
             if opts['ipa'] == 'yes':
                 raise Exception('No IPA installation found!')

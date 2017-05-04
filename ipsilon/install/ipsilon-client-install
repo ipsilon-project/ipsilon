@@ -67,7 +67,7 @@ def saml2():
             r = requests.get(args['saml_idp_metadata'])
             r.raise_for_status()
             idpmeta = r.content
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Failed to retrieve IDP Metadata file!\n" +
                      "Error: [%s]" % repr(e))
         raise
@@ -270,13 +270,13 @@ def saml2_uninstall():
     if os.path.exists(path):
         try:
             shutil.rmtree(path)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             log_exception(e)
 
     if os.path.exists(CONFFILE % 'saml'):
         try:
             os.remove(CONFFILE % 'saml')
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             log_exception(e)
 
 
@@ -383,7 +383,7 @@ def openidc():
         r = requests.get(discovery_url, **requests_args)
         r.raise_for_status()
         discovered_info = r.json()
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Failed to retrieve IdP configuration!\n" +
                      "Error: [%s]" % repr(e))
         raise
@@ -417,7 +417,7 @@ def openidc():
                           json=client_info, **requests_args)
         r.raise_for_status()
         registration_response = r.json()
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Failed to register with the IdP!\n" +
                      "Error: [%s]" % repr(e))
         raise
@@ -589,7 +589,7 @@ if __name__ == '__main__':
                 saml2()
             elif service_type == 'openidc':
                 openidc()
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         log_exception(e)
         if 'uninstall' in args and args['uninstall'] is True:
             logging.info('Uninstallation aborted.')

@@ -179,7 +179,7 @@ class AdminPluginsOrder(AdminPage):
                         if cur_enabled[i] != new_order[i]:
                             changed[cur_enabled[i]] = 'reordered'
 
-                except ValueError, e:
+                except ValueError as e:
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
 
@@ -260,7 +260,7 @@ class AdminPlugins(AdminPage):
         msg = None
         try:
             obj = self._get_plugin_obj(plugin)
-        except AdminError, e:
+        except AdminError as e:
             return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if not obj.is_enabled:
             try:
@@ -278,7 +278,7 @@ class AdminPlugins(AdminPage):
         msg = None
         try:
             obj = self._get_plugin_obj(plugin)
-        except AdminError, e:
+        except AdminError as e:
             return self.root_with_msg(str(e), ADMIN_STATUS_WARN)
         if obj.is_enabled:
             try:

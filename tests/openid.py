@@ -126,7 +126,7 @@ if __name__ == '__main__':
     print "openid: Revoking SP consent ...",
     try:
         page = sess.revoke_all_consent(idpname)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     try:
         sess.disable_plugin(idpname, 'authz', 'allow')
         sess.enable_plugin(idpname, 'authz', 'deny')
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

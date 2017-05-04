@@ -286,7 +286,7 @@ class FileStore(BaseStore):
     def get_config(self):
         try:
             stat = os.stat(self._filename)
-        except OSError, e:
+        except OSError as e:
             self.error("Unable to check config file %s: [%s]" % (
                 self._filename, e))
             self._config = None
@@ -928,7 +928,7 @@ class Store(Log):
         with q:
             try:
                 rows = q.select(kvfilter)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to load data for table %s for store %s:[%s]"
                            % (table, self.__class__.__name__, e))
         return self._rows_to_dict_tree(rows)
@@ -967,7 +967,7 @@ class Store(Log):
                     if opt not in options:
                         q.delete({'name': name, 'option': opt})
 
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to save options: [%s]" % e)
                 raise
 
@@ -982,7 +982,7 @@ class Store(Log):
                     for opt in options:
                         kvfilter['option'] = opt
                         q.delete(kvfilter)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to delete from %s: [%s]" % (table, e))
                 raise
 
@@ -1002,7 +1002,7 @@ class Store(Log):
                     q.insert((newid, name, data[name]), ttl)
                 if expiration_time:
                     q.insert((newid, 'expiration_time', expiration_time), ttl)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to store %s data: [%s]" % (table, e))
                 raise
         return newid
@@ -1048,7 +1048,7 @@ class Store(Log):
                             if datum[name] is not None:
                                 q.insert((uid, name, datum[name]), ttl)
 
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to store data in %s: [%s]" % (table, e))
                 raise
 
@@ -1058,7 +1058,7 @@ class Store(Log):
         with q:
             try:
                 q.delete(kvfilter)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error("Failed to delete data from %s: [%s]" % (table, e))
 
     def _reset_data(self, table):
@@ -1067,7 +1067,7 @@ class Store(Log):
             try:
                 q.drop()
                 q.create()
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 if q:
                     q.rollback()
                 self.error("Failed to erase all data from %s: [%s]"
@@ -1175,7 +1175,7 @@ class UserStore(Store):
                                                      'option': key})
                 else:
                     q.insert((user, key, parameters))
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to store consent: [%s]' % e)
                 raise
 
@@ -1185,7 +1185,7 @@ class UserStore(Store):
             try:
                 q.delete({'name': user,
                           'option': self._cons_key(provider, clientid)})
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to delete consent: [%s]' % e)
                 raise
 
@@ -1201,7 +1201,7 @@ class UserStore(Store):
                     return data[0][0]
                 else:
                     return None
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to get consent: [%s]' % e)
                 raise
 
@@ -1214,7 +1214,7 @@ class UserStore(Store):
                 for r in rows:
                     prov, clientid = self._split_cons_key(r[0])
                     d.append((prov, clientid, r[1]))
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to get consents: [%s]' % e)
                 raise
         return d

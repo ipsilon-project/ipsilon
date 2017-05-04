@@ -41,7 +41,7 @@ class AuthenticateRequest(ProviderPageBase):
                     self.trans.cookie.value != self.trans.provider):
                 self.debug('Invalid transaction, %s != %s' % (
                            self.trans.cookie.value, self.trans.provider))
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug('Transaction initialization failed: %s' % repr(e))
             raise cherrypy.HTTPError(400, 'Invalid transaction id')
 
@@ -319,7 +319,7 @@ class Authorization(AuthenticateRequest):
         # Build the "claims" values from scopes
         try:
             request_data['claims'] = json.loads(request_data['claims'])
-        except Exception, ex:  # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
             return self._respond_error(request_data,
                                        'invalid_request',
                                        'claims malformed: %s' % ex)

@@ -211,7 +211,7 @@ if __name__ == '__main__':
         print "testnameid: Authenticate to IDP ...",
         try:
             sess.auth_to_idp(idpname, krb=krb)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         print " SUCCESS"
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         print "testnameid: Add SP Metadata to IDP ...",
         try:
             sess.add_sp_metadata(idpname, spname)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         print " SUCCESS"
@@ -227,7 +227,7 @@ if __name__ == '__main__':
         print "testnameid: Set supported Name ID formats ...",
         try:
             sess.set_sp_default_nameids(idpname, spname, [spname])
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         print " SUCCESS"
@@ -240,7 +240,7 @@ if __name__ == '__main__':
                     'page did not contain expression %s' %
                     expected_re[spname]
                 )
-        except ValueError, e:
+        except ValueError as e:
             if expected[spname]:
                 print >> sys.stderr, " ERROR: %s" % repr(e)
                 sys.exit(1)
@@ -256,7 +256,7 @@ if __name__ == '__main__':
             newsess.auth_to_idp(idpname)
             print >> sys.stderr, " ERROR: Authentication should have failed"
             sys.exit(1)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print " SUCCESS"
 
     # Ensure that transient names change with each authentication
@@ -276,7 +276,7 @@ if __name__ == '__main__':
         print "testnameid: Authenticate to IDP ...",
         try:
             sess.auth_to_idp(idpname)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:
@@ -286,7 +286,7 @@ if __name__ == '__main__':
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t1 = page.text
-        except ValueError, e:
+        except ValueError as e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t2 = page.text
-        except ValueError, e:
+        except ValueError as e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:
@@ -334,7 +334,7 @@ if __name__ == '__main__':
         print "testnameid: Authenticate to IDP ...",
         try:
             sess.auth_to_idp(idpname)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:
@@ -344,7 +344,7 @@ if __name__ == '__main__':
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t1 = page.text
-        except ValueError, e:
+        except ValueError as e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:
@@ -354,7 +354,7 @@ if __name__ == '__main__':
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t2 = page.text
-        except ValueError, e:
+        except ValueError as e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         else:

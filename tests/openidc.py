@@ -218,7 +218,7 @@ if __name__ == '__main__':
     print "openidc: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -238,7 +238,7 @@ if __name__ == '__main__':
                           json=client_info)
         r.raise_for_status()
         reg_resp = r.json()
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -258,7 +258,7 @@ if __name__ == '__main__':
                           json=client_info)
         r.raise_for_status()
         reg_resp_none = r.json()
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             'acr': '0'
         }
         old_token = check_info_results(page.text, expect)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                                'https://127.0.0.11:45081/sp/redirect_uri?log'
                                'out=https%3A%2F%2F127.0.0.11%3A45081%2Fsp%2F',
                                require_consent=False)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -298,7 +298,7 @@ if __name__ == '__main__':
     print "openidc: Revoking SP consent ...",
     try:
         page = sess.revoke_all_consent(idpname)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -320,7 +320,7 @@ if __name__ == '__main__':
             'acr': '0'
         }
         new_token = check_info_results(page.text, expect)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -331,7 +331,7 @@ if __name__ == '__main__':
             idpname,
             'providers/openidc/admin/client/%s' % reg_resp['client_id'],
             {'Client Name': 'Test suite client updated'})
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -413,7 +413,7 @@ if __name__ == '__main__':
                                 'client_secret': reg_resp['client_secret']})
         if r.status_code != 400:
             raise Exception('Deleted client accepted')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -475,7 +475,7 @@ if __name__ == '__main__':
                   'client_secret': reg_resp_none['client_secret']})
         if r.status_code != 200:
             raise Exception('Authed client not accepted')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -500,7 +500,7 @@ if __name__ == '__main__':
         h.update('testcase')
         if info['sub'] != h.hexdigest():
             raise Exception('Sub claim invalid')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -515,7 +515,7 @@ if __name__ == '__main__':
             'acr': '0'
         }
         check_info_results(page.text, expect)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -534,7 +534,7 @@ if __name__ == '__main__':
             'acr': '0'
         }
         check_info_results(page.text, expect)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -543,7 +543,7 @@ if __name__ == '__main__':
     try:
         sess.disable_plugin(idpname, 'authz', 'allow')
         sess.enable_plugin(idpname, 'authz', 'deny')
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -559,7 +559,7 @@ if __name__ == '__main__':
         page = sess2.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         check_text_results(page.text,
                            'OpenID Connect Provider error: access_denied')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -574,7 +574,7 @@ if __name__ == '__main__':
         page = sess3.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         check_text_results(page.text,
                            'OpenID Connect Provider error: access_denied')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

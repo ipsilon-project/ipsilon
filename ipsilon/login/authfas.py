@@ -26,10 +26,10 @@ class FAS(LoginFormBase):
             data = None
             try:
                 _, data = self.lm.fpc.login(username, password)
-            except AuthError, e:
+            except AuthError as e:
                 cherrypy.log.error("Authentication error [%s]" % str(e),
                                    severity=logging.ERROR)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 cherrypy.log.error("Unknown Error [%s]" % str(e),
                                    severity=logging.ERROR)
 

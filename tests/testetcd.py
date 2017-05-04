@@ -193,7 +193,7 @@ if __name__ == '__main__':
     print "etcd: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     print "etcd: Add first SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, sp1name)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -231,7 +231,7 @@ if __name__ == '__main__':
         sess.set_attributes_and_mapping(idpname, [],
                                         ['namefull', 'givenname', 'surname'],
                                         spname=sp2name)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -244,7 +244,7 @@ if __name__ == '__main__':
         newsess.auth_to_idp(idpname)
         print >> sys.stderr, " ERROR: Authentication should have failed"
         sys.exit(1)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print " SUCCESS"
 
     print "etcd: Add keyless SP Metadata to IDP ...",
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         page.expected_value('//div[@id="row_provider_http://keyless-sp"]/'
                             '@title',
                             'WARNING: SP does not have signing keys!')
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

@@ -101,7 +101,7 @@ class NewSPAdminPage(AdminPage):
                             r = requests.get(value)
                             r.raise_for_status()
                             meta = r.content
-                        except Exception, e:  # pylint: disable=broad-except
+                        except Exception as e:  # pylint: disable=broad-except
                             self.debug("Failed to fetch metadata: " + repr(e))
                             message = "Failed to fetch metadata: " + repr(e)
                             message_type = ADMIN_STATUS_ERROR
@@ -116,10 +116,10 @@ class NewSPAdminPage(AdminPage):
                     message = "SP Successfully added"
                     message_type = ADMIN_STATUS_OK
                     return sp_page.root_with_msg(message, message_type)
-                except InvalidProviderId, e:
+                except InvalidProviderId as e:
                     message = str(e)
                     message_type = ADMIN_STATUS_ERROR
-                except Exception, e:  # pylint: disable=broad-except
+                except Exception as e:  # pylint: disable=broad-except
                     self.debug(repr(e))
                     message = "Failed to create Service Provider!"
                     message_type = ADMIN_STATUS_ERROR
@@ -284,15 +284,15 @@ class SPAdminPage(AdminPage):
                         validate_sp_metadata(value)
                         self.sp.metadata = value
 
-            except InvalidProviderMetadata, e:
+            except InvalidProviderMetadata as e:
                 message = str(e)
                 message_type = ADMIN_STATUS_WARN
                 return self.root_with_msg(message, message_type)
-            except InvalidValueFormat, e:
+            except InvalidValueFormat as e:
                 message = str(e)
                 message_type = ADMIN_STATUS_WARN
                 return self.root_with_msg(message, message_type)
-            except UnauthorizedUser, e:
+            except UnauthorizedUser as e:
                 message = str(e)
                 message_type = ADMIN_STATUS_ERROR
                 return self.root_with_msg(message, message_type)
@@ -352,7 +352,7 @@ class Saml2AdminPage(AdminPage):
             page = getattr(self.sp, name)
             self.providers.remove(page.sp)
             self.sp.del_subtree(name)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug("Failed to remove provider %s: %s" % (name, str(e)))
 
     def add_sps(self):
@@ -362,7 +362,7 @@ class Saml2AdminPage(AdminPage):
                     sp = ServiceProvider(self.cfg, p)
                     self.del_sp(sp.name)
                     self.add_sp(sp.name, sp)
-                except Exception, e:  # pylint: disable=broad-except
+                except Exception as e:  # pylint: disable=broad-except
                     self.debug("Failed to find provider %s: %s" % (p, str(e)))
 
     def mount(self, page):

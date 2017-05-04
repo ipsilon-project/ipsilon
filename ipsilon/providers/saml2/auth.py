@@ -53,7 +53,7 @@ class AuthenticateRequest(ProviderPageBase):
                 if self.trans.cookie.value != self.trans.provider:
                     self.debug('Invalid transaction, %s != %s' % (
                         self.trans.cookie.value, self.trans.provider))
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug('Transaction initialization failed: %s' % repr(e))
             raise cherrypy.HTTPError(400, 'Invalid transaction id')
 
@@ -66,7 +66,7 @@ class AuthenticateRequest(ProviderPageBase):
     def auth(self, login):
         try:
             self.saml2checks(login)
-        except AuthenticationError, e:
+        except AuthenticationError as e:
             self.saml2error(login, e.code, e.message)
         return self.reply(login)
 
@@ -93,20 +93,20 @@ class AuthenticateRequest(ProviderPageBase):
             )
             raise InvalidRequest(msg)
         except (lasso.ProfileInvalidMsgError,
-                lasso.ProfileMissingIssuerError), e:
+                lasso.ProfileMissingIssuerError) as e:
 
             msg = 'Malformed Request %r [%r]' % (e, message)
             raise InvalidRequest(msg)
 
         except (lasso.ProfileInvalidProtocolprofileError,
-                lasso.DsError), e:
+                lasso.DsError) as e:
 
             msg = 'Invalid SAML Request: %r (%r [%r])' % (login.request,
                                                           e, message)
             raise InvalidRequest(msg)
 
         except (lasso.ServerProviderNotFoundError,
-                lasso.ProfileUnknownProviderError), e:
+                lasso.ProfileUnknownProviderError) as e:
 
             msg = 'Invalid SP [%s] (%r [%r])' % (login.remoteProviderId,
                                                  e, message)
@@ -160,19 +160,19 @@ class AuthenticateRequest(ProviderPageBase):
                 login = self._idp_initiated_login(spidentifier, relaystate)
             except lasso.ServerProviderNotFoundError:
                 raise cherrypy.HTTPError(400, 'Unknown Service Provider')
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.debug(str(e))
                 raise cherrypy.HTTPError(500)
         else:
             try:
                 login = self._parse_request(request)
-            except InvalidRequest, e:
+            except InvalidRequest as e:
                 self.debug(str(e))
                 raise cherrypy.HTTPError(400, 'Invalid SAML request token')
-            except UnknownProvider, e:
+            except UnknownProvider as e:
                 self.debug(str(e))
                 raise cherrypy.HTTPError(400, 'Unknown Service Provider')
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.debug(str(e))
                 raise cherrypy.HTTPError(500)
 
@@ -213,10 +213,10 @@ class AuthenticateRequest(ProviderPageBase):
         try:
             provider = ServiceProvider(self.cfg, login.remoteProviderId)
             nameidfmt = provider.get_valid_nameid(login.request.nameIdPolicy)
-        except NameIdNotAllowed, e:
+        except NameIdNotAllowed as e:
             raise AuthenticationError(
                 str(e), lasso.SAML2_STATUS_CODE_INVALID_NAME_ID_POLICY)
-        except InvalidProviderId, e:
+        except InvalidProviderId as e:
             raise AuthenticationError(
                 str(e), lasso.SAML2_STATUS_CODE_AUTHN_FAILED)
 

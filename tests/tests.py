@@ -106,7 +106,7 @@ if __name__ == '__main__':
         code = test.run(env)
         if code:
             sys.exit(code)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, "Error: %s" % repr(e)
         traceback.print_exc(None, sys.stderr)
         sys.exit(1)

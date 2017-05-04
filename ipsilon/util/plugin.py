@@ -25,7 +25,7 @@ class Plugins(object):
             #    mod = imp.load_compiled(name, file_name)
             else:
                 return
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             cherrypy.log.error('Failed to load "%s" module: [%s]' % (name, e),
                                severity=logging.ERROR)
             return
@@ -41,7 +41,7 @@ class Plugins(object):
         files = None
         try:
             files = os.listdir(path)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             cherrypy.log.error('No modules in %s: [%s]' % (path, e),
                                severity=logging.ERROR)
             return
@@ -192,7 +192,7 @@ class PluginObject(Log):
         if config:
             try:
                 self.import_config(config)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to refresh config for %s (%s)' %
                            (self.name, e))
         self.on_reconfigure()

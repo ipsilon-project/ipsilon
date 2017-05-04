@@ -183,7 +183,7 @@ if __name__ == '__main__':
     print "testmapping: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     print "testmapping: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -207,7 +207,7 @@ if __name__ == '__main__':
             'groups': user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -218,7 +218,7 @@ if __name__ == '__main__':
             idpname,
             [['*', '*'],
              ['fullname', 'namefull']])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -235,7 +235,7 @@ if __name__ == '__main__':
             'groups': user
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -247,7 +247,7 @@ if __name__ == '__main__':
             idpname,
             [],
             ['namefull', 'givenname', 'surname'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -261,7 +261,7 @@ if __name__ == '__main__':
             'givenname': u'Test User 一',
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -273,7 +273,7 @@ if __name__ == '__main__':
             idpname, [['*', '*']],
             ['wholename', 'givenname', 'surname',
              'email', 'fullname'], sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -288,7 +288,7 @@ if __name__ == '__main__':
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -304,7 +304,7 @@ if __name__ == '__main__':
              'surname',
              'email', 'fullname'],
             sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -320,7 +320,7 @@ if __name__ == '__main__':
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -340,7 +340,7 @@ if __name__ == '__main__':
              'email',
              'fullname'],
             sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -357,7 +357,7 @@ if __name__ == '__main__':
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -371,7 +371,7 @@ if __name__ == '__main__':
              ['email', 'email']],
             ['wholename', 'email'],
             sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -385,7 +385,7 @@ if __name__ == '__main__':
             'NAME_ID': user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -402,7 +402,7 @@ if __name__ == '__main__':
              'surname',
              'email', 'fullname'],
             sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -419,7 +419,7 @@ if __name__ == '__main__':
             'NAME_ID': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -431,7 +431,7 @@ if __name__ == '__main__':
             idpname, [],
             ['givenname', 'surname', 'email',
              'fullname'], sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -446,7 +446,7 @@ if __name__ == '__main__':
             'email': '%s@example.com' % user,
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     print "testmapping: Drop SP allowed attributes ...",
     try:
         sess.set_attributes_and_mapping(idpname, [], [], sp['name'])
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:
@@ -469,7 +469,7 @@ if __name__ == '__main__':
             'givenname': u'Test User 一',
         }
         check_info_plugin(sess, idpname, spurl, expect)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     else:

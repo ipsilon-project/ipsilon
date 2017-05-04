@@ -111,7 +111,7 @@ if __name__ == '__main__':
         sess.add_server(spname, 'https://127.0.0.11:45081')
         sess.auth_to_idp(idpname)
         sess.add_sp_metadata(idpname, spname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         sess.add_server(spname, 'https://127.0.0.11:45081')
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

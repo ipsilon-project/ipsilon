@@ -178,7 +178,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//title/text()', 'Ipsilon')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

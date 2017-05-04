@@ -127,7 +127,7 @@ class Continue(AuthenticateRequest):
 
         try:
             login = self.cfg.idp.get_login_handler(dump)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.error('Failed to load login status from dump: %r' % e)
 
         if not login:
@@ -366,7 +366,7 @@ Provides SAML 2.0 authentication infrastructure. """
         try:
             idp = IdentityProvider(self,
                                    sessionfactory=self.sessionfactory)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.error('Failed to init SAML2 provider: %r' % e)
             return None
 
@@ -382,7 +382,7 @@ Provides SAML 2.0 authentication infrastructure. """
                 continue
             try:
                 idp.add_provider(sp)
-            except Exception, e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 self.error('Failed to add SP %s: %r' % (sp['name'], e))
 
         return idp
@@ -433,7 +433,7 @@ Provides SAML 2.0 authentication infrastructure. """
             return self.idp_initiated_logout()
         try:
             logout.buildRequestMsg()
-        except lasso.Error, e:
+        except lasso.Error as e:
             self.error('failure to build logout request msg: %s' % e)
             raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                         % e)

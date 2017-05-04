@@ -144,7 +144,7 @@ if __name__ == '__main__':
             sess.auth_to_idp(idpname)
             sess.logout_from_idp(idpname)
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     print "pgdb: Add SP Metadata to IDP ...",
     try:
         sess.add_sp_metadata(idpname, spname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -172,7 +172,7 @@ if __name__ == '__main__':
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

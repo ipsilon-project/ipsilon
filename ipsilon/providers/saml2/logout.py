@@ -79,7 +79,7 @@ class LogoutRequest(ProviderPageBase):
 
         try:
             logout.validateRequest()
-        except lasso.ProfileSessionNotFoundError, e:
+        except lasso.ProfileSessionNotFoundError as e:
             self.error('Logout failed. No sessions for %s' %
                        logout.remoteProviderId)
             return self._not_logged_in(logout, message)
@@ -87,7 +87,7 @@ class LogoutRequest(ProviderPageBase):
             self.error('Logout failed. Unsupported profile %s' %
                        logout.remoteProviderId)
             raise cherrypy.HTTPError(400, 'Profile does not support logout')
-        except lasso.Error, e:
+        except lasso.Error as e:
             self.error('SLO validation failed: %s' % e)
             raise cherrypy.HTTPError(400, 'Failed to validate logout request')
 
@@ -96,7 +96,7 @@ class LogoutRequest(ProviderPageBase):
         except lasso.ProfileUnsupportedProfileError:
             self.error('Unsupported profile for %s' % logout.remoteProviderId)
             raise cherrypy.HTTPError(400, 'Profile does not support logout')
-        except lasso.Error, e:
+        except lasso.Error as e:
             self.error('SLO failed to build logout response: %s' % e)
 
         for ind in session_indexes:
@@ -184,12 +184,12 @@ class LogoutRequest(ProviderPageBase):
             self.error(msg)
             raise UnknownProvider(msg)
         except (lasso.ProfileInvalidProtocolprofileError,
-                lasso.DsError), e:
+                lasso.DsError) as e:
             msg = 'Invalid SAML Request: %r (%r [%r])' % (logout.request,
                                                           e, message)
             self.error(msg)
             raise InvalidRequest(msg)
-        except lasso.Error, e:
+        except lasso.Error as e:
             self.error('SLO unknown error: %s' % message)
             raise cherrypy.HTTPError(400, 'Invalid logout request')
 
@@ -307,7 +307,7 @@ class LogoutRequest(ProviderPageBase):
 
             try:
                 logout.buildRequestMsg()
-            except lasso.Error, e:
+            except lasso.Error as e:
                 self.error('failure to build logout request msg: %s' % e)
                 raise cherrypy.HTTPRedirect(400, 'Failed to log out user: %s '
                                             % e)

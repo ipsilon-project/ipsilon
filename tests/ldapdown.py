@@ -138,7 +138,7 @@ if __name__ == '__main__':
             rule='//div[@class="alert alert-danger"]/p/text()',
             expected="Internal system error"
         )
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

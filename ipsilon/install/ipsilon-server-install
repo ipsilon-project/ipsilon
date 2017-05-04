@@ -60,7 +60,7 @@ def openlogs():
     logger = logging.getLogger()
     try:
         lh = logging.FileHandler(LOGFILE)
-    except IOError, e:
+    except IOError as e:
         sys.exit('Unable to open %s (%s)' % (LOGFILE, str(e)))
     formatter = logging.Formatter('[%(asctime)s] %(message)s')
     lh.setFormatter(formatter)
@@ -524,7 +524,7 @@ if __name__ == '__main__':
             uninstall(fplugins, opts)
         else:
             install(fplugins, opts)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         logger.info(str(e))         # emit message to console
         logger.debug(e, exc_info=1) # add backtrace information to logfile
 

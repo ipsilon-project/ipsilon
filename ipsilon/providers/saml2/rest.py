@@ -106,7 +106,7 @@ class SPS(RestProviderBase):
         except (InvalidProviderId, ServerAddProviderFailedError) as e:
             self.debug(repr(e))
             return rest_error(400, str(e))
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug(repr(e))
             return rest_error(500, "Failed to create Service Provider")
 

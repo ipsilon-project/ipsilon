@@ -149,7 +149,7 @@ Info plugin that uses LDAP to retrieve user data. """
             reply = userattrs
             reply['_groups'] = groups
             reply['_extras'] = {'ldap': extras}
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.error('Error fetching/mapping LDAP user data: %s' % e)
 
         return reply

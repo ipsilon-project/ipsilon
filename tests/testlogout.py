@@ -190,7 +190,7 @@ if __name__ == '__main__':
     print "testlogout: Authenticate to IDP ...",
     try:
         sess.auth_to_idp(idpname)
-    except Exception, e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -200,7 +200,7 @@ if __name__ == '__main__':
         print "testlogout: Add SP Metadata for %s to IDP ..." % spname,
         try:
             sess.add_sp_metadata(idpname, spname)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         print " SUCCESS"
@@ -211,7 +211,7 @@ if __name__ == '__main__':
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -231,7 +231,7 @@ if __name__ == '__main__':
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -242,7 +242,7 @@ if __name__ == '__main__':
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     print "testlogout: Ensure logout ...",
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -265,7 +265,7 @@ if __name__ == '__main__':
             try:
                 page = sess.fetch_page(idpname, spurl)
                 page.expected_value('text()', 'WORKS!')
-            except ValueError, e:
+            except ValueError as e:
                 print >> sys.stderr, " ERROR: %s" % repr(e)
                 sys.exit(1)
         print " SUCCESS"
@@ -277,7 +277,7 @@ if __name__ == '__main__':
                 logouturl, 'saml2/logout',
                 'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
             page.expected_value('text()', 'Logged out')
-        except ValueError, e:
+        except ValueError as e:
             print >> sys.stderr, " ERROR: %s" % repr(e)
             sys.exit(1)
         print " SUCCESS"
@@ -288,7 +288,7 @@ if __name__ == '__main__':
             spurl = 'https://%s:%s/sp/' % (sp['addr'], sp['port'])
             try:
                 ensure_logout(sess, idpname, spurl)
-            except ValueError, e:
+            except ValueError as e:
                 print >> sys.stderr, " ERROR: %s" % repr(e)
                 sys.exit(1)
         print " SUCCESS"
@@ -298,7 +298,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -318,7 +318,7 @@ if __name__ == '__main__':
                                'https://127.0.0.10:45080/%s' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -328,7 +328,7 @@ if __name__ == '__main__':
         page = sess.fetch_page(idpname,
                                'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -336,7 +336,7 @@ if __name__ == '__main__':
     print "testlogout: Ensure logout of SP1 ...",
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -344,7 +344,7 @@ if __name__ == '__main__':
     print "testlogout: Ensure logout of SP2 ...",
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45082/sp/')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -355,7 +355,7 @@ if __name__ == '__main__':
                                'https://127.0.0.10:45080/%s/login' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"
@@ -366,7 +366,7 @@ if __name__ == '__main__':
                                'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="logout"]/p//text()',
                             'Successfully logged out.')
-    except ValueError, e:
+    except ValueError as e:
         print >> sys.stderr, " ERROR: %s" % repr(e)
         sys.exit(1)
     print " SUCCESS"

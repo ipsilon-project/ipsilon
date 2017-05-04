@@ -30,7 +30,7 @@ class AuthenticateRequest(ProviderPageBase):
                     self.trans.cookie.value != self.trans.provider):
                 self.debug('Invalid transaction, %s != %s' % (
                            self.trans.cookie.value, self.trans.provider))
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug('Transaction initialization failed: %s' % repr(e))
             raise cherrypy.HTTPError(400, 'Invalid transaction id')
 
@@ -55,9 +55,9 @@ class AuthenticateRequest(ProviderPageBase):
         try:
             request = self._parse_request(**kwargs)
             return self._openid_checks(request, form, **kwargs)
-        except InvalidRequest, e:
+        except InvalidRequest as e:
             raise cherrypy.HTTPError(e.code, e.message)
-        except UnauthorizedRequest, e:
+        except UnauthorizedRequest as e:
             if request is None:
                 raise cherrypy.HTTPError(e.code, e.message)
             return self._respond(request.answer(False))
@@ -79,7 +79,7 @@ class AuthenticateRequest(ProviderPageBase):
         request = None
         try:
             request = self.cfg.server.decodeRequest(kwargs)
-        except ProtocolError, openid_error:
+        except ProtocolError as openid_error:
             self.debug('ProtocolError: %s' % openid_error)
             raise InvalidRequest('Invalid OpenID request')
 
@@ -241,7 +241,7 @@ class AuthenticateRequest(ProviderPageBase):
             cherrypy.response.headers.update(webresponse.headers)
             cherrypy.response.status = webresponse.code
             return webresponse.body
-        except EncodingError, encoding_error:
+        except EncodingError as encoding_error:
             self.debug('Unable to respond because: %s' % encoding_error)
             cherrypy.response.headers = {
                 'Content-Type': 'text/plain; charset=UTF-8'

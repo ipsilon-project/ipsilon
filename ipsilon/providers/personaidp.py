@@ -65,7 +65,7 @@ Provides Persona authentication infrastructure. """
         try:
             self.key = M2Crypto.RSA.load_key(self.idp_key_file,
                                              lambda *args: None)
-        except Exception, e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.debug('Failed to init Persona provider: %r' % e)
             return None
 
