@@ -77,10 +77,10 @@ Info plugin that uses DBus to retrieve user data from SSSd."""
                                        user_path)
 
         # Get GECOS, attributes, and groups
-        reply['gecos'] = str(user_obj.Get(
+        reply['gecos'] = user_obj.Get(
             'org.freedesktop.sssd.infopipe.Users.User',
             'gecos',
-            dbus_interface=dbus.PROPERTIES_IFACE))
+            dbus_interface=dbus.PROPERTIES_IFACE)
         user_attrs = user_obj.Get('org.freedesktop.sssd.infopipe.Users.User',
                                   'extraAttributes',
                                   dbus_interface=dbus.PROPERTIES_IFACE)
@@ -89,16 +89,16 @@ Info plugin that uses DBus to retrieve user data from SSSd."""
             dbus_interface='org.freedesktop.sssd.infopipe')
 
         for group in user_groups:
-            groups.append(str(group))
+            groups.append(group)
 
         for attr_name in user_attrs:
-            attr_name = str(attr_name)
+            attr_name = attr_name
             if len(user_attrs[attr_name]) == 1:
-                reply[attr_name] = str(user_attrs[attr_name][0])
+                reply[attr_name] = user_attrs[attr_name][0]
             else:
                 reply[attr_name] = []
                 for attr_val in user_attrs[attr_name]:
-                    reply[attr_name].append(str(attr_val))
+                    reply[attr_name].append(attr_val)
 
         return reply, groups
 
