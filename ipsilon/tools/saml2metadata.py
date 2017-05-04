@@ -169,9 +169,9 @@ if __name__ == '__main__':
         idp.output(md_file)
         with open(md_file) as fd:
             text = fd.read()
-        print '==================== IDP ===================='
-        print text
-        print '============================================='
+        print('==================== IDP ====================')
+        print(text)
+        print('=============================================')
 
         # Test SP generation
         sign_cert = Certificate(tmpdir)
@@ -188,9 +188,9 @@ if __name__ == '__main__':
         sp.output(md_file)
         with open(md_file) as fd:
             text = fd.read()
-        print '===================== SP ===================='
-        print text
-        print '============================================='
+        print('===================== SP ====================')
+        print(text)
+        print('=============================================')
 
     finally:
         shutil.rmtree(tmpdir)

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.common import WRAP_HOSTNAME  # pylint: disable=relative-import
 from helpers.common import TESTREALM  # pylint: disable=relative-import
@@ -118,23 +120,23 @@ class IpsilonTest(IpsilonTestBase):
     def setup_servers(self, env=None):
         os.mkdir("%s/ccaches" % self.testdir)
 
-        print "Installing KDC server"
+        print("Installing KDC server")
         kdcenv = self.setup_kdc(env)
 
-        print "Creating principals and keytabs"
+        print("Creating principals and keytabs")
         self.setup_keys(kdcenv)
 
-        print "Getting a TGT"
+        print("Getting a TGT")
         self.kinit_keytab(kdcenv)
 
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = WRAP_HOSTNAME
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         env.update(kdcenv)
         self.start_http_server(conf, env)
 
@@ -142,14 +144,14 @@ class IpsilonTest(IpsilonTestBase):
             nameid = spdata['nameid']
             addr = spdata['addr']
             port = spdata['port']
-            print "Installing SP server %s" % nameid
+            print("Installing SP server %s" % nameid)
             sp_prof = self.generate_profile(
                 sp_g, sp_a, nameid, addr, str(port), nameid
             )
             conf = self.setup_sp_server(sp_prof, nameid, addr, str(port), env)
             fixup_sp_httpd(os.path.dirname(conf))
 
-            print "Starting SP's httpd server"
+            print("Starting SP's httpd server")
             self.start_http_server(conf, env)
 
 
@@ -202,37 +204,37 @@ if __name__ == '__main__':
                         'ipsilon')
         sess.add_server(spname, spurl)
 
-        print ""
-        print "testnameid: Testing NameID format %s ..." % spname
+        print("")
+        print("testnameid: Testing NameID format %s ..." % spname)
 
         if spname == 'kerberos':
             krb = True
 
-        print "testnameid: Authenticate to IDP ...",
+        print("testnameid: Authenticate to IDP ...", end=' ')
         try:
             sess.auth_to_idp(idpname, krb=krb)
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-        print "testnameid: Add SP Metadata to IDP ...",
+        print("testnameid: Add SP Metadata to IDP ...", end=' ')
         try:
             sess.add_sp_metadata(idpname, spname)
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-        print "testnameid: Set supported Name ID formats ...",
+        print("testnameid: Set supported Name ID formats ...", end=' ')
         try:
             sess.set_sp_default_nameids(idpname, spname, [spname])
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-        print "testnameid: Access SP Protected Area ...",
+        print("testnameid: Access SP Protected Area ...", end=' ')
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             if not re.match(expected_re[spname], page.text):
@@ -242,30 +244,30 @@ if __name__ == '__main__':
                 )
         except ValueError as e:
             if expected[spname]:
-                print >> sys.stderr, " ERROR: %s" % repr(e)
+                print(" ERROR: %s" % repr(e), file=sys.stderr)
                 sys.exit(1)
-            print " OK, EXPECTED TO FAIL"
+            print(" OK, EXPECTED TO FAIL")
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Try authentication failure ...",
+        print("testnameid: Try authentication failure ...", end=' ')
         newsess = HttpSessions()
         newsess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                            user, 'wrong')
         try:
             newsess.auth_to_idp(idpname)
-            print >> sys.stderr, " ERROR: Authentication should have failed"
+            print(" ERROR: Authentication should have failed", file=sys.stderr)
             sys.exit(1)
         except Exception as e:  # pylint: disable=broad-except
-            print " SUCCESS"
+            print(" SUCCESS")
 
     # Ensure that transient names change with each authentication
     sp = get_sp_by_nameid(sp_list, 'transient')
     spname = sp['nameid']
     spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
 
-    print ""
-    print "testnameid: Testing NameID format %s ..." % spname
+    print("")
+    print("testnameid: Testing NameID format %s ..." % spname)
 
     ids = []
     for i in xrange(4):
@@ -273,57 +275,58 @@ if __name__ == '__main__':
         sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                         user, 'ipsilon')
         sess.add_server(spname, spurl)
-        print "testnameid: Authenticate to IDP ...",
+        print("testnameid: Authenticate to IDP ...", end=' ')
         try:
             sess.auth_to_idp(idpname)
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Access SP ...",
+        print("testnameid: Access SP ...", end=' ')
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t1 = page.text
         except ValueError as e:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Access SP again ...",
+        print("testnameid: Access SP again ...", end=' ')
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t2 = page.text
         except ValueError as e:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Ensure ID is consistent between requests ...",
+        print("testnameid: Ensure ID is consistent between requests ...",
+              end=' ')
         if t1 != t2:
-            print >> sys.stderr, " ERROR: New ID between reqeusts"
+            print(" ERROR: New ID between reqeusts", file=sys.stderr)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
         ids.append(t1)
 
-    print "testnameid: Ensure uniqueness across sessions ...",
+    print("testnameid: Ensure uniqueness across sessions ...", end=' ')
     if len(ids) != len(set(ids)):
-        print >> sys.stderr, " ERROR: IDs are not unique between sessions"
+        print(" ERROR: IDs are not unique between sessions", file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
     # Ensure that persistent names remain the same with each authentication
     sp = get_sp_by_nameid(sp_list, 'persistent')
     spname = sp['nameid']
     spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
 
-    print ""
-    print "testnameid: Testing NameID format %s ..." % spname
+    print("")
+    print("testnameid: Testing NameID format %s ..." % spname)
 
     ids = []
     for i in xrange(4):
@@ -331,46 +334,47 @@ if __name__ == '__main__':
         sess.add_server(idpname, 'https://%s:45080' % WRAP_HOSTNAME,
                         user, 'ipsilon')
         sess.add_server(spname, spurl)
-        print "testnameid: Authenticate to IDP ...",
+        print("testnameid: Authenticate to IDP ...", end=' ')
         try:
             sess.auth_to_idp(idpname)
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Access SP ...",
+        print("testnameid: Access SP ...", end=' ')
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t1 = page.text
         except ValueError as e:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Access SP again ...",
+        print("testnameid: Access SP again ...", end=' ')
         try:
             page = sess.fetch_page(idpname, '%s/sp/' % spurl)
             t2 = page.text
         except ValueError as e:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
-        print "testnameid: Ensure ID is consistent between requests ...",
+        print("testnameid: Ensure ID is consistent between requests ...",
+              end=' ')
         if t1 != t2:
-            print >> sys.stderr, " ERROR: New ID between reqeusts"
+            print(" ERROR: New ID between reqeusts", file=sys.stderr)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
 
         ids.append(t1)
 
-    print "testnameid: Ensure same ID across sessions ...",
+    print("testnameid: Ensure same ID across sessions ...", end=' ')
     if len(set(ids)) != 1:
-        print >> sys.stderr, " ERROR: IDs are not the same between sessions"
+        print(" ERROR: IDs are not the same between sessions", file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")

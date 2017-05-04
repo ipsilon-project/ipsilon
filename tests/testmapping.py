@@ -3,6 +3,8 @@
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -143,14 +145,14 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('testmapping', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
         for spdata in sp_list:
@@ -158,12 +160,12 @@ class IpsilonTest(IpsilonTestBase):
             port = spdata['port']
             name = spdata['name']
 
-            print "Installing SP server %s" % name
+            print("Installing SP server %s" % name)
             sp_prof = self.generate_profile(sp_g, sp_a, name, addr, str(port))
             conf = self.setup_sp_server(sp_prof, name, addr, str(port), env)
             fixup_sp_httpd(os.path.dirname(conf))
 
-            print "Starting SP's httpd server"
+            print("Starting SP's httpd server")
             self.start_http_server(conf, env)
 
 
@@ -180,24 +182,24 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(sp['name'], spurl)
 
-    print "testmapping: Authenticate to IDP ...",
+    print("testmapping: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testmapping: Add SP Metadata to IDP ...",
+    print("testmapping: Add SP Metadata to IDP ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     try:
-        print "testmapping: Test default mapping and attrs ...",
+        print("testmapping: Test default mapping and attrs ...", end=' ')
         expect = {
             'NAME_ID': user,
             'fullname': 'Test User %s' % user,
@@ -208,24 +210,24 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testmapping: Set default global mapping ...",
+    print("testmapping: Set default global mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
             [['*', '*'],
              ['fullname', 'namefull']])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
     try:
-        print "testmapping: Test global mapping ...",
+        print("testmapping: Test global mapping ...", end=' ')
         expect = {
             'fullname': 'Test User %s' % user,
             'namefull': 'Test User %s' % user,
@@ -236,25 +238,25 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set default allowed attributes ...",
+    print("testmapping: Set default allowed attributes ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
             [],
             ['namefull', 'givenname', 'surname'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
     try:
-        print "testmapping: Test global allowed attributes ...",
+        print("testmapping: Test global allowed attributes ...", end=' ')
         expect = {
             'namefull': 'Test User %s' % user,
             'surname': user,
@@ -262,24 +264,24 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set SP allowed attributes ...",
+    print("testmapping: Set SP allowed attributes ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname, [['*', '*']],
             ['wholename', 'givenname', 'surname',
              'email', 'fullname'], sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP allowed atributes ...",
+    print("testmapping: Test SP allowed atributes ...", end=' ')
     try:
         expect = {
             'fullname': 'Test User %s' % user,
@@ -289,12 +291,12 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set SP attribute mapping ...",
+    print("testmapping: Set SP attribute mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
@@ -305,12 +307,12 @@ if __name__ == '__main__':
              'email', 'fullname'],
             sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP attribute mapping ...",
+    print("testmapping: Test SP attribute mapping ...", end=' ')
     try:
         expect = {
             'wholename': 'Test User %s' % user,
@@ -321,12 +323,12 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set SP URL attribute mapping ...",
+    print("testmapping: Set SP URL attribute mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
@@ -341,12 +343,12 @@ if __name__ == '__main__':
              'fullname'],
             sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP URL attribute mapping ...",
+    print("testmapping: Test SP URL attribute mapping ...", end=' ')
     try:
         expect = {
             'http://localhost/SAML/Name': 'Test User %s' % user,
@@ -358,12 +360,12 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set SP explicit mapping ...",
+    print("testmapping: Set SP explicit mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
@@ -372,12 +374,12 @@ if __name__ == '__main__':
             ['wholename', 'email'],
             sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP explicit mapping ...",
+    print("testmapping: Test SP explicit mapping ...", end=' ')
     try:
         expect = {
             'wholename': 'Test User %s' % user,
@@ -386,12 +388,12 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Set SP username mapping ...",
+    print("testmapping: Set SP username mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname,
@@ -403,12 +405,12 @@ if __name__ == '__main__':
              'email', 'fullname'],
             sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP username mapping ...",
+    print("testmapping: Test SP username mapping ...", end=' ')
     try:
         expect = {
             'wholename': 'Test User %s' % user,
@@ -420,24 +422,24 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Drop SP attribute mapping ...",
+    print("testmapping: Drop SP attribute mapping ...", end=' ')
     try:
         sess.set_attributes_and_mapping(
             idpname, [],
             ['givenname', 'surname', 'email',
              'fullname'], sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test SP attr mapping with default allowed...",
+    print("testmapping: Test SP attr mapping with default allowed...", end=' ')
     try:
         expect = {
             'fullname': 'Test User %s' % user,
@@ -447,21 +449,21 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Drop SP allowed attributes ...",
+    print("testmapping: Drop SP allowed attributes ...", end=' ')
     try:
         sess.set_attributes_and_mapping(idpname, [], [], sp['name'])
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testmapping: Test mapping, should be back to global...",
+    print("testmapping: Test mapping, should be back to global...", end=' ')
     try:
         expect = {
             'namefull': 'Test User %s' % user,
@@ -470,7 +472,7 @@ if __name__ == '__main__':
         }
         check_info_plugin(sess, idpname, spurl, expect)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2016 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -157,17 +159,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('openidc', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing first SP server"
+        print("Installing first SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -175,10 +177,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting first SP's httpd server"
+        print("Starting first SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing second SP server"
+        print("Installing second SP server")
         name = 'sp2'
         addr = '127.0.0.12'
         port = '45082'
@@ -186,10 +188,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting second SP's httpd server"
+        print("Starting second SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing third SP server"
+        print("Installing third SP server")
         name = 'sp3'
         addr = '127.0.0.13'
         port = '45083'
@@ -197,7 +199,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting third SP's httpd server"
+        print("Starting third SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -215,15 +217,15 @@ if __name__ == '__main__':
     sess.add_server(sp2name, 'https://127.0.0.12:45082')
     sess.add_server(sp3name, 'https://127.0.0.13:45083')
 
-    print "openidc: Authenticate to IDP ...",
+    print("openidc: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Registering test client ...",
+    print("openidc: Registering test client ...", end=' ')
     try:
         client_info = {
             'redirect_uris': ['https://invalid/'],
@@ -239,11 +241,11 @@ if __name__ == '__main__':
         r.raise_for_status()
         reg_resp = r.json()
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Registering test client with none auth ...",
+    print("openidc: Registering test client with none auth ...", end=' ')
     try:
         client_info = {
             'redirect_uris': ['https://invalid/'],
@@ -259,11 +261,11 @@ if __name__ == '__main__':
         r.raise_for_status()
         reg_resp_none = r.json()
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Access first SP Protected Area ...",
+    print("openidc: Access first SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/',
                                require_consent=True)
@@ -279,31 +281,32 @@ if __name__ == '__main__':
         }
         old_token = check_info_results(page.text, expect)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Log back in to first SP Protected Area without consent" \
-        " ...",
+    print("openidc: Log back in to first SP Protected Area without consent"
+          " ...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/sp/redirect_uri?log'
                                'out=https%3A%2F%2F127.0.0.11%3A45081%2Fsp%2F',
                                require_consent=False)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Revoking SP consent ...",
+    print("openidc: Revoking SP consent ...", end=' ')
     try:
         page = sess.revoke_all_consent(idpname)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Log back in to first SP Protected Area with consent ...",
+    print("openidc: Log back in to first SP Protected Area with consent ...",
+          end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/sp/redirect_uri?log'
@@ -321,22 +324,22 @@ if __name__ == '__main__':
         }
         new_token = check_info_results(page.text, expect)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Update first SP client name ...",
+    print("openidc: Update first SP client name ...", end=' ')
     try:
         sess.update_options(
             idpname,
             'providers/openidc/admin/client/%s' % reg_resp['client_id'],
             {'Client Name': 'Test suite client updated'})
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Retrieving token info ...",
+    print("openidc: Retrieving token info ...", end=' ')
     try:
         # Testing token without client auth
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/TokenInfo',
@@ -414,11 +417,11 @@ if __name__ == '__main__':
         if r.status_code != 400:
             raise Exception('Deleted client accepted')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Using none-authenticated client ...",
+    print("openidc: Using none-authenticated client ...", end=' ')
     try:
         # Test that none-authed clients don't have access to token info
         r = requests.post(
@@ -476,11 +479,11 @@ if __name__ == '__main__':
         if r.status_code != 200:
             raise Exception('Authed client not accepted')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Checking user info ...",
+    print("openidc: Checking user info ...", end=' ')
     try:
         # Testing user info without token
         r = requests.post('https://127.0.0.10:45080/idp1/openidc/UserInfo')
@@ -501,11 +504,11 @@ if __name__ == '__main__':
         if info['sub'] != h.hexdigest():
             raise Exception('Sub claim invalid')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Access second SP Protected Area ...",
+    print("openidc: Access second SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.12:45082/sp/')
         expect = {
@@ -516,11 +519,11 @@ if __name__ == '__main__':
         }
         check_info_results(page.text, expect)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Access third SP Protected Area ...",
+    print("openidc: Access third SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.13:45083/sp/')
         h = hashlib.sha256()
@@ -535,46 +538,46 @@ if __name__ == '__main__':
         }
         check_info_results(page.text, expect)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "openidc: Set IDP authz stack to deny",
+    print("openidc: Set IDP authz stack to deny", end=' ')
     try:
         sess.disable_plugin(idpname, 'authz', 'allow')
         sess.enable_plugin(idpname, 'authz', 'deny')
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     sess2 = HttpSessions()
     sess2.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess2.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print "openidc: Access first SP Protected Area with IDP deny, with " \
-        "pre-auth ...",
+    print("openidc: Access first SP Protected Area with IDP deny, with "
+          "pre-auth ...", end=' ')
     try:
         sess2.auth_to_idp(idpname)
         page = sess2.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         check_text_results(page.text,
                            'OpenID Connect Provider error: access_denied')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     sess3 = HttpSessions()
     sess3.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess3.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print "openidc: Access first SP Protected Area with IDP deny, without " \
-        "pre-auth ...",
+    print("openidc: Access first SP Protected Area with IDP deny, without "
+          "pre-auth ...", end=' ')
     try:
         page = sess3.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         check_text_results(page.text,
                            'OpenID Connect Provider error: access_denied')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

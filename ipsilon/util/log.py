@@ -250,7 +250,7 @@ def log_request_response():
 
     string = f.getvalue()
     f.close()
-    print string
+    print(string)
 
 
 cherrypy.tools.log_request_response = cherrypy.Tool('on_end_resource',

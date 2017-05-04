@@ -392,21 +392,21 @@ if __name__ == '__main__':
     # test defaults first
     p = Policy()
 
-    print 'Default attribute mapping'
+    print('Default attribute mapping')
     m, n = p.map_attributes(t_attributes)
     if m == t_attributes and n is None:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'FAIL: Expected %s\nObtained %s' % (t_attributes, m)
+        print('FAIL: Expected %s\nObtained %s' % (t_attributes, m))
 
-    print 'Default attribute filtering'
+    print('Default attribute filtering')
     f = p.filter_attributes(t_attributes)
     if f == t_attributes:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'Expected %s\nObtained %s' % (t_attributes, f)
+        print('Expected %s\nObtained %s' % (t_attributes, f))
 
     # test custom mappings and filters
     t_mappings = [[['onenameone'], 'onemappedone'],
@@ -444,21 +444,21 @@ if __name__ == '__main__':
 
     p = Policy(t_mappings, t_allowed)
 
-    print 'Custom attribute mapping'
+    print('Custom attribute mapping')
     m, n = p.map_attributes(t_attributes)
     if m == m_result and n == n_result:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'Expected %s\nObtained %s' % (m_result, m)
+        print('Expected %s\nObtained %s' % (m_result, m))
 
-    print 'Custom attribute filtering'
+    print('Custom attribute filtering')
     f = p.filter_attributes(m)
     if f == f_result:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'Expected %s\nObtained %s' % (f_result, f)
+        print('Expected %s\nObtained %s' % (f_result, f))
 
     t2_allowed = ['onemappedone', 'twonametwo', 'threemappedone',
                   ['listfive', 'two']]
@@ -473,14 +473,14 @@ if __name__ == '__main__':
 
     p = Policy(t_mappings, t2_allowed)
 
-    print 'Custom attribute filtering 2'
+    print('Custom attribute filtering 2')
     m, _ = p.map_attributes(t_attributes)
     f = p.filter_attributes(m, whitelist=False)
     if f == f2_result:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'Expected %s\nObtained %s' % (f2_result, f)
+        print('Expected %s\nObtained %s' % (f2_result, f))
 
     # Case Insensitive matching
     tci_attributes = {'oneNameone': 'onevalueone',
@@ -518,13 +518,13 @@ if __name__ == '__main__':
                   'six': ['two', 'three']}
 
     p = Policy(tci_mappings)
-    print 'Case insensitive attribute mapping'
+    print('Case insensitive attribute mapping')
     m, n = p.map_attributes(tci_attributes, ignore_case=True)
     if m == mci_result and n == nci_result:
-        print 'SUCCESS'
+        print('SUCCESS')
     else:
         ret += 1
-        print 'FAIL: Expected %s // %s\nObtained %s // %s' % \
-            (mci_result, nci_result, m, n)
+        print('FAIL: Expected %s // %s\nObtained %s // %s' %
+              (mci_result, nci_result, m, n))
 
     sys.exit(ret)

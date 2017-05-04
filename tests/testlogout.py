@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -141,21 +143,21 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('testlogout', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
         for spdata in splist:
             nameid = spdata['nameid']
             addr = spdata['addr']
             port = spdata['port']
-            print "Installing SP server %s" % nameid
+            print("Installing SP server %s" % nameid)
 
             # Configure sp3 and sp4 for only HTTP Redirect to test
             # that a mix of SOAP and HTTP Redirect will play nice
@@ -171,7 +173,7 @@ class IpsilonTest(IpsilonTestBase):
             conf = self.setup_sp_server(sp_prof, nameid, addr, str(port), env)
             fixup_sp_httpd(os.path.dirname(conf))
 
-            print "Starting SP's httpd server"
+            print("Starting SP's httpd server")
             self.start_http_server(conf, env)
 
 
@@ -187,78 +189,79 @@ if __name__ == '__main__':
         spurl = 'https://%s:%s' % (sp['addr'], sp['port'])
         sess.add_server(spname, spurl)
 
-    print "testlogout: Authenticate to IDP ...",
+    print("testlogout: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     for sp in splist:
         spname = sp['nameid']
-        print "testlogout: Add SP Metadata for %s to IDP ..." % spname,
+        print("testlogout: Add SP Metadata for %s to IDP ..." % spname,
+              end=' ')
         try:
             sess.add_sp_metadata(idpname, spname)
         except Exception as e:  # pylint: disable=broad-except
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "testlogout: Logout without logging into SP ...",
+    print("testlogout: Logout without logging into SP ...", end=' ')
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Access SP Protected Area ...",
+    print("testlogout: Access SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Logout from SP ...",
+    print("testlogout: Logout from SP ...", end=' ')
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Try logout again ...",
+    print("testlogout: Try logout again ...", end=' ')
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Ensure logout ...",
+    print("testlogout: Ensure logout ...", end=' ')
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     # Test logout from each of the SP's in the list to ensure that the
     # order of logout doesn't matter.
     for sporder in splist:
-        print "testlogout: Access SP Protected Area of each SP ...",
+        print("testlogout: Access SP Protected Area of each SP ...", end=' ')
         for sp in splist:
             spname = sp['nameid']
             spurl = 'https://%s:%s/sp/' % (sp['addr'], sp['port'])
@@ -266,11 +269,12 @@ if __name__ == '__main__':
                 page = sess.fetch_page(idpname, spurl)
                 page.expected_value('text()', 'WORKS!')
             except ValueError as e:
-                print >> sys.stderr, " ERROR: %s" % repr(e)
+                print(" ERROR: %s" % repr(e), file=sys.stderr)
                 sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-        print "testlogout: Initiate logout from %s ..." % sporder['nameid'],
+        print("testlogout: Initiate logout from %s ..." % sporder['nameid'],
+              end=' ')
         try:
             logouturl = 'https://%s:%s' % (sp['addr'], sp['port'])
             page = sess.fetch_page(idpname, '%s/%s?%s' % (
@@ -278,95 +282,95 @@ if __name__ == '__main__':
                 'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
             page.expected_value('text()', 'Logged out')
         except ValueError as e:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
-        print "testlogout: Ensure logout of each SP ...",
+        print("testlogout: Ensure logout of each SP ...", end=' ')
         for sp in splist:
             spname = sp['nameid']
             spurl = 'https://%s:%s/sp/' % (sp['addr'], sp['port'])
             try:
                 ensure_logout(sess, idpname, spurl)
             except ValueError as e:
-                print >> sys.stderr, " ERROR: %s" % repr(e)
+                print(" ERROR: %s" % repr(e), file=sys.stderr)
                 sys.exit(1)
-        print " SUCCESS"
+        print(" SUCCESS")
 
     # Test IdP-initiated logout
-    print "testlogout: Access SP Protected Area of SP1...",
+    print("testlogout: Access SP Protected Area of SP1...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Access SP Protected Area of SP2...",
+    print("testlogout: Access SP Protected Area of SP2...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Access the IdP...",
+    print("testlogout: Access the IdP...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.10:45080/%s' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: IdP-initiated logout ...",
+    print("testlogout: IdP-initiated logout ...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="content"]/p/a/text()', 'Log In')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Ensure logout of SP1 ...",
+    print("testlogout: Ensure logout of SP1 ...", end=' ')
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45081/sp/')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Ensure logout of SP2 ...",
+    print("testlogout: Ensure logout of SP2 ...", end=' ')
     try:
         ensure_logout(sess, idpname, 'https://127.0.0.11:45082/sp/')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: Access the IdP...",
+    print("testlogout: Access the IdP...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.10:45080/%s/login' % idpname)
         page.expected_value('//div[@id="welcome"]/p/text()',
                             'Welcome %s!' % user)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testlogout: IdP-initiated logout with no SP sessions...",
+    print("testlogout: IdP-initiated logout with no SP sessions...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.10:45080/%s/logout' % idpname)
         page.expected_value('//div[@id="logout"]/p//text()',
                             'Successfully logged out.')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -99,17 +101,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('testrest', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing SP server"
+        print("Installing SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -117,10 +119,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf), name)
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing second SP server"
+        print("Installing second SP server")
         name = 'sp2-test.example.com'
         addr = '127.0.0.10'
         port = '45082'
@@ -128,10 +130,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp2, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf), name)
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing third SP server"
+        print("Installing third SP server")
         name = 'sp3_invalid'
         addr = '127.0.0.10'
         port = '45083'
@@ -139,7 +141,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp3, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf), name)
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -157,15 +159,15 @@ if __name__ == '__main__':
     sess.add_server(sp2name, 'https://127.0.0.10:45082')
     sess.add_server(sp3name, 'https://127.0.0.10:45083')
 
-    print "testrest: Authenticate to IDP ...",
+    print("testrest: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: List initial Service Providers via REST ...",
+    print("testrest: List initial Service Providers via REST ...", end=' ')
     try:
         result = sess.get_rest_sp(idpname)
         if len(result['result']) != 0:
@@ -173,19 +175,19 @@ if __name__ == '__main__':
                 'Expected no SP and got %d' % len(result['result'])
             )
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: Add SP Metadata to IDP via admin ...",
+    print("testrest: Add SP Metadata to IDP via admin ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, spname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: List Service Providers via REST ...",
+    print("testrest: List Service Providers via REST ...", end=' ')
     try:
         result = sess.get_rest_sp(idpname)
         if len(result['result']) != 1:
@@ -198,19 +200,19 @@ if __name__ == '__main__':
                 (spname, result['result'][0].get('provider'))
             )
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: Add Service Provider via REST ...",
+    print("testrest: Add Service Provider via REST ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, sp2name, rest=True)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: List Service Providers via REST ...",
+    print("testrest: List Service Providers via REST ...", end=' ')
     try:
         result = sess.get_rest_sp(idpname)
         if len(result['result']) != 2:
@@ -218,11 +220,11 @@ if __name__ == '__main__':
                 'Expected 2 SPs and got %d' % len(result['result'])
             )
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testrest: List Specific Service Providers via REST ...",
+    print("testrest: List Specific Service Providers via REST ...", end=' ')
     try:
         result = sess.get_rest_sp(idpname, spname)
         if len(result['result']) != 1:
@@ -247,23 +249,25 @@ if __name__ == '__main__':
                 (spname, result['result'][0].get('provider'))
             )
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
     # Now for some negative testing
 
-    print "testrest: Add illegally named Service Provider via REST ...",
+    print("testrest: Add illegally named Service Provider via REST ...",
+          end=' ')
     try:
         sess.add_sp_metadata(idpname, sp3name, rest=True)
     except ValueError as e:
-        print " SUCCESS"
+        print(" SUCCESS")
     else:
-        print >> sys.stderr, "ERROR: " \
-            "Adding SP with invalid name should have failed and it didn't"
+        print("ERROR: "
+              "Adding SP with invalid name should have failed and it didn't",
+              file=sys.stderr)
         sys.exit(1)
 
-    print "testrest: Fetch non-existent REST endpoint ...",
+    print("testrest: Fetch non-existent REST endpoint ...", end=' ')
     try:
         result = sess.fetch_rest_page(
             idpname,
@@ -271,33 +275,34 @@ if __name__ == '__main__':
         )
     except ValueError as e:
         if '(501)' not in e.message:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
     else:
-        print >> sys.stderr, "ERROR: should have returned a 404"
+        print("ERROR: should have returned a 404", file=sys.stderr)
         sys.exit(1)
 
-    print "testrest: Fetch non-existent SP via REST ...",
+    print("testrest: Fetch non-existent SP via REST ...", end=' ')
     try:
         result = sess.get_rest_sp(idpname, 'foo')
     except ValueError as e:
         if '(404)' not in e.message:
-            print >> sys.stderr, " ERROR: %s" % repr(e)
+            print(" ERROR: %s" % repr(e), file=sys.stderr)
             sys.exit(1)
         else:
-            print " SUCCESS"
+            print(" SUCCESS")
     else:
-        print >> sys.stderr, "ERROR: should have returned a 404"
+        print("ERROR: should have returned a 404", file=sys.stderr)
         sys.exit(1)
 
-    print "testrest: Re-add Service Provider via REST ...",
+    print("testrest: Re-add Service Provider via REST ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, sp2name, rest=True)
     except ValueError as e:
-        print " SUCCESS"
+        print(" SUCCESS")
     else:
-        print >> sys.stderr, "ERROR: " \
-            "Adding duplicate SP should have failed and it didn't"
+        print("ERROR: "
+              "Adding duplicate SP should have failed and it didn't",
+              file=sys.stderr)
         sys.exit(1)

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2017 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -116,25 +118,25 @@ class IpsilonTest(IpsilonTestBase):
                                  stdout=subprocess.PIPE)
             stdout, _ = p.communicate()
         except OSError:
-            print "No etcd installed"
+            print("No etcd installed")
             return False
         if not p.wait() == 0:
-            print 'No etcd installed'
+            print('No etcd installed')
             return False
         # Example line: etcd Version: 3.0.13
         if int(stdout.split('\n')[0].split(': ')[1][0]) < 3:
-            print 'Etcd version < 3.0'
+            print('Etcd version < 3.0')
             return False
         try:
             import etcd  # pylint: disable=unused-variable,import-error
         except ImportError:
-            print 'No python-etcd available'
+            print('No python-etcd available')
             return False
         return True
 
     def setup_servers(self, env=None):
 
-        print "Starting IDP's etcd server"
+        print("Starting IDP's etcd server")
         datadir = os.path.join(self.testdir, 'etcd')
         os.mkdir(datadir)
         addr = '127.0.0.10'
@@ -142,17 +144,17 @@ class IpsilonTest(IpsilonTestBase):
         srvport = '42380'
         self.start_etcd_server(datadir, addr, clientport, srvport, env)
 
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing first SP server"
+        print("Installing first SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -160,10 +162,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting first SP's httpd server"
+        print("Starting first SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing second SP server"
+        print("Installing second SP server")
         name = 'sp2-test.example.com'
         addr = '127.0.0.11'
         port = '45082'
@@ -174,7 +176,7 @@ class IpsilonTest(IpsilonTestBase):
         os.remove(os.path.dirname(sp) + '/pw.txt')
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting second SP's httpd server"
+        print("Starting second SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -190,41 +192,41 @@ if __name__ == '__main__':
     sess.add_server(sp1name, 'https://127.0.0.11:45081')
     sess.add_server(sp2name, 'https://127.0.0.11:45082')
 
-    print "etcd: Authenticate to IDP ...",
+    print("etcd: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "etcd: Add first SP Metadata to IDP ...",
+    print("etcd: Add first SP Metadata to IDP ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, sp1name)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "etcd: Access first SP Protected Area ...",
+    print("etcd: Access first SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "etcd: Access second SP Protected Area ...",
+    print("etcd: Access second SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "etcd: Update second SP ...",
+    print("etcd: Update second SP ...", end=' ')
     try:
         # This is a test to see whether we can update SAML SPs where the name
         # is an FQDN (includes hyphens and dots). See bug #196
@@ -232,22 +234,22 @@ if __name__ == '__main__':
                                         ['namefull', 'givenname', 'surname'],
                                         spname=sp2name)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
     else:
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "etcd: Try authentication failure ...",
+    print("etcd: Try authentication failure ...", end=' ')
     newsess = HttpSessions()
     newsess.add_server(idpname, 'https://127.0.0.10:45080', user, 'wrong')
     try:
         newsess.auth_to_idp(idpname)
-        print >> sys.stderr, " ERROR: Authentication should have failed"
+        print(" ERROR: Authentication should have failed", file=sys.stderr)
         sys.exit(1)
     except Exception as e:  # pylint: disable=broad-except
-        print " SUCCESS"
+        print(" SUCCESS")
 
-    print "etcd: Add keyless SP Metadata to IDP ...",
+    print("etcd: Add keyless SP Metadata to IDP ...", end=' ')
     try:
         sess.add_metadata(idpname, 'keyless', keyless_metadata)
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/admin/'
@@ -256,6 +258,6 @@ if __name__ == '__main__':
                             '@title',
                             'WARNING: SP does not have signing keys!')
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

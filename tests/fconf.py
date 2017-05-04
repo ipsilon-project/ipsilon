@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import ConfigParser
@@ -139,18 +141,18 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('fconf', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         idp = self.generate_profile(idp_g, idp_a, idpname, idpaddr, idpport)
         idpconf = self.setup_idp_server(idp, idpname, idpaddr, idpport, env)
 
-        print "Installing SP server"
+        print("Installing SP server")
         sp = self.generate_profile(sp_g, sp_a, spname, spaddr, spport)
         spconf = self.setup_sp_server(sp, spname, spaddr, spport, env)
         fixup_sp_httpd(os.path.dirname(spconf))
 
         fixup_idp_conf(self.testdir)
 
-        print "Testing database upgrade"
+        print("Testing database upgrade")
         cfgfile = os.path.join(self.testdir, 'etc', idpname, 'ipsilon.conf')
         cmd = [os.path.join(self.rootdir,
                             'ipsilon/install/ipsilon-upgrade-database'),
@@ -159,10 +161,10 @@ class IpsilonTest(IpsilonTestBase):
                               cwd=os.path.join(self.testdir, 'lib', idpname),
                               env=env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(idpconf, env)
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(spconf, env)
 
 
@@ -174,20 +176,20 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print "fconf: Access IdP Homepage ... ",
+    print("fconf: Access IdP Homepage ... ", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//title/text()', 'Ipsilon')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "fconf: Access SP Protected Area ...",
+    print("fconf: Access SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

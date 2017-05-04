@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -92,7 +94,7 @@ class IpsilonTest(IpsilonTestBase):
 
     def setup_servers(self, env=None):
 
-        print "Installing IDP's database server"
+        print("Installing IDP's database server")
         datadir = os.path.join(self.testdir, 'pgdata')
         rundir = self.testdir
         log = os.path.join(self.testdir, 'log/pgdb.log')
@@ -100,20 +102,20 @@ class IpsilonTest(IpsilonTestBase):
         port = '45432'
         self.setup_pgdb(datadir, env)
 
-        print "Starting IDP's database server"
+        print("Starting IDP's database server")
         self.start_pgdb_server(datadir, rundir, log, addr, port, env)
 
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing SP server"
+        print("Installing SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -121,7 +123,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -135,44 +137,44 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print "pgdb: Authenticate to IDP ...",
+    print("pgdb: Authenticate to IDP ...", end=' ')
     sys.stdout.flush()
     try:
-        print 'Stress-testing the database connections...',
+        print('Stress-testing the database connections...', end=' ')
         sys.stdout.flush()
         for i in xrange(50):
             sess.auth_to_idp(idpname)
             sess.logout_from_idp(idpname)
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "pgdb: Add SP Metadata to IDP ...",
+    print("pgdb: Add SP Metadata to IDP ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, spname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "pgdb: Access SP Protected Area ...",
+    print("pgdb: Access SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "pgdb: Logout from SP ...",
+    print("pgdb: Logout from SP ...", end=' ')
     try:
         page = sess.fetch_page(idpname, '%s/%s?%s' % (
             'https://127.0.0.11:45081', 'saml2/logout',
             'ReturnTo=https://127.0.0.11:45081/open/logged_out.html'))
         page.expected_value('text()', 'Logged out')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -103,17 +105,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('testroot', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'root'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing first SP server"
+        print("Installing first SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -121,10 +123,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting first SP's httpd server"
+        print("Starting first SP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing second SP server"
+        print("Installing second SP server")
         name = 'sp2-test.example.com'
         addr = '127.0.0.11'
         port = '45082'
@@ -135,7 +137,7 @@ class IpsilonTest(IpsilonTestBase):
         os.remove(os.path.dirname(sp) + '/pw.txt')
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting second SP's httpd server"
+        print("Starting second SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -151,46 +153,46 @@ if __name__ == '__main__':
     sess.add_server(sp1name, 'https://127.0.0.11:45081')
     sess.add_server(sp2name, 'https://127.0.0.11:45082')
 
-    print "testroot: Authenticate to IDP ...",
+    print("testroot: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testroot: Add first SP Metadata to IDP ...",
+    print("testroot: Add first SP Metadata to IDP ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, sp1name)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testroot: Access first SP Protected Area ...",
+    print("testroot: Access first SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testroot: Access second SP Protected Area ...",
+    print("testroot: Access second SP Protected Area ...", end=' ')
     try:
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45082/sp/')
         page.expected_value('text()', 'WORKS!')
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "testroot: Try authentication failure ...",
+    print("testroot: Try authentication failure ...", end=' ')
     newsess = HttpSessions()
     newsess.add_server(idpname, 'https://127.0.0.10:45080', user, 'wrong')
     try:
         newsess.auth_to_idp(idpname)
-        print >> sys.stderr, " ERROR: Authentication should have failed"
+        print(" ERROR: Authentication should have failed", file=sys.stderr)
         sys.exit(1)
     except Exception as e:  # pylint: disable=broad-except
-        print " SUCCESS"
+        print(" SUCCESS")

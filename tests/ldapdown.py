@@ -4,6 +4,8 @@
 
 # Test that we get a reasonable error back when the LDAP backend is down
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -92,24 +94,24 @@ class IpsilonTest(IpsilonTestBase):
 
     def setup_servers(self, env=None):
 
-        print "Installing IDP's ldap server"
+        print("Installing IDP's ldap server")
         addr = '127.0.0.10'
         port = '45389'
         conf = self.setup_ldap(env)
 
-        print "Not starting IDP's ldap server"
+        print("Not starting IDP's ldap server")
 
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing SP server"
+        print("Installing SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -117,7 +119,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -131,7 +133,7 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'tuser')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print "ldapdown: Authenticate to IDP with no LDAP backend...",
+    print("ldapdown: Authenticate to IDP with no LDAP backend...", end=' ')
     try:
         sess.auth_to_idp(
             idpname,
@@ -139,6 +141,6 @@ if __name__ == '__main__':
             expected="Internal system error"
         )
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

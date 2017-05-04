@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 __requires__ = ['sqlalchemy >= 0.8']
 import pkg_resources  # pylint: disable=unused-import
 
@@ -83,12 +85,13 @@ if __name__ == '__main__':
 
     tests = Tests()
     if args['test'] not in tests.plugins:
-        print >> sys.stderr, "Unknown test [%s]" % args['test']
+        print("Unknown test [%s]" % args['test'], file=sys.stderr)
         sys.exit(1)
     test = tests.plugins[args['test']]
 
     if not test.platform_supported():
-        print >> sys.stderr, "Test %s not supported on platform" % args['test']
+        print("Test %s not supported on platform" % args['test'],
+              file=sys.stderr)
         sys.exit(0)
 
     if not os.path.exists(args['path']):
@@ -107,7 +110,7 @@ if __name__ == '__main__':
         if code:
             sys.exit(code)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, "Error: %s" % repr(e)
+        print("Error: %s" % repr(e), file=sys.stderr)
         traceback.print_exc(None, sys.stderr)
         sys.exit(1)
     finally:
@@ -115,4 +118,4 @@ if __name__ == '__main__':
 
     # Wait until all of the sockets are closed by the OS
     time.sleep(0.5)
-    print "FINISHED"
+    print("FINISHED")

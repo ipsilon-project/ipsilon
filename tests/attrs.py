@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -85,17 +87,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('attrs', __file__)
 
     def setup_servers(self, env=None):
-        print "Installing IDP server"
+        print("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print "Starting IDP's httpd server"
+        print("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print "Installing SP server"
+        print("Installing SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -103,7 +105,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print "Starting SP's httpd server"
+        print("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -117,28 +119,28 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print "attrs: Authenticate to IDP ...",
+    print("attrs: Authenticate to IDP ...", end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "attrs: Add SP Metadata to IDP ...",
+    print("attrs: Add SP Metadata to IDP ...", end=' ')
     try:
         sess.add_sp_metadata(idpname, spname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
 
-    print "attrs: Access SP Protected Area Variables...",
+    print("attrs: Access SP Protected Area Variables...", end=' ')
     try:
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/sp/index.shtml')
         page.expected_value('text()', 'Test User %s' % user)
     except ValueError as e:
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")

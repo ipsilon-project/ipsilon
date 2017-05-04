@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
 
+from __future__ import print_function
+
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
@@ -50,7 +52,7 @@ class IpsilonTest(IpsilonTestBase):
                              stdout=subprocess.PIPE)
         output, _ = p.communicate()
         if p.returncode:
-            print 'Sqlite dump failed'
+            print('Sqlite dump failed')
             sys.exit(1)
         return output
 
@@ -73,7 +75,7 @@ class IpsilonTest(IpsilonTestBase):
 
     def test_upgrade_from(self, env, old_version, with_readonly):
         # Setup IDP Server
-        print "Installing IDP server to test upgrade from %i" % old_version
+        print("Installing IDP server to test upgrade from %i" % old_version)
         name = 'idp_v%i' % old_version
         if with_readonly:
             name = name + '_readonly'
@@ -180,11 +182,12 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://%s' % url, user,
                     'ipsilon')
 
-    print "dbupgrades: From v%s %s: Authenticate to IDP ..." % (from_version,
+    print("dbupgrades: From v%s %s: Authenticate to IDP ..." % (from_version,
                                                                 with_ro),
+          end=' ')
     try:
         sess.auth_to_idp(idpname)
     except Exception as e:  # pylint: disable=broad-except
-        print >> sys.stderr, " ERROR: %s" % repr(e)
+        print(" ERROR: %s" % repr(e), file=sys.stderr)
         sys.exit(1)
-    print " SUCCESS"
+    print(" SUCCESS")
