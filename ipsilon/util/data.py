@@ -860,6 +860,12 @@ class Store(Log):
         raise NotImplementedError()
 
     def upgrade_database(self):
+        if self.is_readonly:
+            # If the database is readonly, we cannot do anything to the
+            #  schema. Let's just return, and assume people checked the
+            #  upgrade notes
+            return
+
         # Do whatever is needed to get schema to current version
         old_schema_version = self._get_schema_version()
         if old_schema_version is None:
