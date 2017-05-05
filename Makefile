@@ -155,6 +155,10 @@ quickrun: container-quickrun
 	docker run -v `pwd`:/code -t --rm -it ipsilon-quickrun
 
 # Testing within containers
+container-centos6:
+	@echo "Building CentOS 6 container ..."
+	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-centos tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/centos:6/' | docker build -f - -q -t ipsilon-centos6 - && echo "CentOS 6 container built" || echo "CentOS 6 container build failed (optional)"
+
 container-centos7:
 	@echo "Building CentOS 7 container ..."
 	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-centos tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/centos:7/' | docker build -f - -q -t ipsilon-centos7 -
@@ -170,8 +174,12 @@ container-fedora25:
 	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:25/' | docker build -f - -q -t ipsilon-fedora25 -
 	@echo "Fedora 25 container built"
 
-containers: container-centos7 container-fedora24 container-fedora25
+containers: container-centos6 container-centos7 container-fedora24 container-fedora25
 	@echo "Containers built"
+
+containertest-centos6: container-centos6
+	@echo "Starting CentOS 6 tests ..."
+	@docker run -v `pwd`:/code -t --rm -a stderr ipsilon-centos6 && echo "CentOS 6 passed" || echo "CentOS 6 failed (optional)"
 
 containertest-centos7: container-centos7
 	@echo "Starting CentOS 7 tests ..."
@@ -193,5 +201,5 @@ containertest-lint: container-fedora25
 	@docker run -v `pwd`:/code -t --rm -a stderr --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
 	@echo "Code lint tests passed"
 
-containertest: containertest-lint containertest-centos7 containertest-fedora24 containertest-fedora25
+containertest: containertest-lint containertest-centos6 containertest-centos7 containertest-fedora24 containertest-fedora25
 	@echo "Container tests passed"
