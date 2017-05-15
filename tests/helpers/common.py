@@ -81,6 +81,8 @@ class IpsilonTestBase(object):
         self.testuser = pwd.getpwuid(os.getuid())[0]
         self.processes = []
         self.allow_wrappers = allow_wrappers
+        self.stdout = None
+        self.stderr = None
 
     def platform_supported(self):
         """This return whether the current platform supports this test.
@@ -116,7 +118,8 @@ class IpsilonTestBase(object):
                '-x509', '-nodes', '-subj', '/CN=Ipsilon Test CA',
                '-keyout', os.path.join(self.testdir, 'certs', 'root.key.pem'),
                '-out', os.path.join(self.testdir, 'certs', 'root.cert.pem')]
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd,
+                              stdout=self.stdout, stderr=self.stderr)
         open(os.path.join(self.testdir, 'certs', 'db'), 'w').close()
 
         with open(os.path.join(self.testdir, 'certs', 'serial'), 'w') as ser:
@@ -203,7 +206,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
                '-out', '%s.csr' % certpath,
                '-keyout', keypath,
                '-subj', '/CN=Ipsilon Test %s' % name]
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd,
+                              stdout=self.stdout, stderr=self.stderr)
         cmd = ['openssl', 'ca', '-batch', '-notext', '-days', '2',
                '-md', 'sha1',
                '-subj', '/CN=Ipsilon Test %s' % name,
@@ -221,7 +225,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
             # We just set it to a known value to make sure openssl doesn't
             # crash.
             ipaddr = '127.0.0.10'
-        subprocess.check_call(cmd, env={'ADDR': addr, 'IPADDR': ipaddr})
+        subprocess.check_call(cmd, env={'ADDR': addr, 'IPADDR': ipaddr},
+                              stdout=self.stdout, stderr=self.stderr)
 
     def setup_idp_server(self, profile, name, addr, port, env):
         http_conf_file = self.setup_http(name, addr, port)
@@ -233,7 +238,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         cmd = [os.path.join(self.rootdir,
                             'ipsilon/install/ipsilon-server-install'),
                '--config-profile=%s' % profile]
-        subprocess.check_call(cmd, env=env)
+        subprocess.check_call(cmd, env=env,
+                              stdout=self.stdout, stderr=self.stderr)
         os.symlink(os.path.join(self.rootdir, 'ipsilon'),
                    os.path.join(self.testdir, 'lib', name, 'ipsilon'))
 
@@ -244,13 +250,15 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         cmd = [os.path.join(self.rootdir,
                             'ipsilon/install/ipsilon-client-install'),
                '--config-profile=%s' % profile]
-        subprocess.check_call(cmd, env=env)
+        subprocess.check_call(cmd, env=env,
+                              stdout=self.stdout, stderr=self.stderr)
 
         return http_conf_file
 
     def setup_pgdb(self, datadir, env):
         cmd = ['/usr/bin/pg_ctl', 'initdb', '-D', datadir, '-o', '-E UNICODE']
-        subprocess.check_call(cmd, env=env)
+        subprocess.check_call(cmd, env=env,
+                              stdout=self.stdout, stderr=self.stderr)
         auth = 'host all all 127.0.0.1/24 trust\n'
         filename = os.path.join(datadir, 'pg_hba.conf')
         with open(filename, 'a') as f:
@@ -267,7 +275,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         env['ETCD_INITIAL_ADVERTISE_PEER_URLS'] = 'http://%s:%s' % (addr,
                                                                     srvport)
         p = subprocess.Popen(['/usr/bin/etcd'],
-                             env=env, preexec_fn=os.setsid)
+                             env=env, preexec_fn=os.setsid,
+                             stdout=self.stdout, stderr=self.stderr)
         self.processes.append(p)
         return p
 
@@ -277,7 +286,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         env['REQUESTS_CA_BUNDLE'] = os.path.join(self.testdir, 'certs',
                                                  'root.cert.pem')
         p = subprocess.Popen(['/usr/sbin/httpd', '-DFOREGROUND', '-f', conf],
-                             env=env, preexec_fn=os.setsid)
+                             env=env, preexec_fn=os.setsid,
+                             stdout=self.stdout, stderr=self.stderr)
         self.processes.append(p)
         return p
 
@@ -286,13 +296,15 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
                               '-k %s -c port=%s -c \
                                listen_addresses=%s' % (rundir, port, addr),
                               '-l', log, '-w'],
-                             env=env, preexec_fn=os.setsid)
+                             env=env, preexec_fn=os.setsid,
+                             stdout=self.stdout, stderr=self.stderr)
         self.processes.append(p)
         p.wait()
         for d in ['adminconfig', 'users', 'transactions', 'sessions',
                   'saml2.sessions.db']:
             cmd = ['/usr/bin/createdb', '-h', addr, '-p', port, d]
-            subprocess.check_call(cmd, env=env)
+            subprocess.check_call(cmd, env=env,
+                                  stdout=self.stdout, stderr=self.stderr)
 
     def setup_ldap(self, env):
         ldapdir = os.path.join(self.testdir, 'ldap')
@@ -304,14 +316,16 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         with open(filename, 'w+') as f:
             f.write(text)
         subprocess.check_call(['/usr/sbin/slapadd', '-f', filename, '-l',
-                               'tests/ldapdata.ldif'], env=env)
+                               'tests/ldapdata.ldif'], env=env,
+                               stdout=self.stdout, stderr=self.stderr)
 
         return filename
 
     def start_ldap_server(self, conf, addr, port, env):
         p = subprocess.Popen(['/usr/sbin/slapd', '-d', '0', '-f', conf,
                              '-h', 'ldap://%s:%s' % (addr, port)],
-                             env=env, preexec_fn=os.setsid)
+                             env=env, preexec_fn=os.setsid,
+                             stdout=self.stdout, stderr=self.stderr)
         self.processes.append(p)
 
     def setup_kdc(self, env):
@@ -358,7 +372,8 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
             raise ValueError('KDC Setup failed')
 
         kdcproc = subprocess.Popen(['krb5kdc', '-n'],
-                                   env=kdcenv, preexec_fn=os.setsid)
+                                   env=kdcenv, preexec_fn=os.setsid,
+                                   stdout=self.stdout, stderr=self.stderr)
         self.processes.append(kdcproc)
 
         return kdcenv
@@ -423,4 +438,5 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
         exe = self.execname
         if exe.endswith('c'):
             exe = exe[:-1]
-        return subprocess.call([exe], env=env)
+        return subprocess.call([exe], env=env,
+                               stdout=self.stdout, stderr=self.stderr)
