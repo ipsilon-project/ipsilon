@@ -454,7 +454,7 @@ class HttpSessions(object):
             raise ValueError('Failed to post SP data [%s]' % repr(r))
 
     # pylint: disable=dangerous-default-value
-    def set_attributes_and_mapping(self, idp, mapping=[], attrs=[],
+    def set_attributes_and_mapping(self, idp, mapping=None, attrs=None,
                                    spname=None):
         """
         Set allowed attributes and mapping in the IDP or the SP. In the
@@ -469,6 +469,10 @@ class HttpSessions(object):
         attrs is the list of attributes that will be allowed:
            ['fullname', 'givenname', 'surname']
         """
+        if mapping is None:
+            mapping = []
+        if attrs is None:
+            attrs = []
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
         if spname:  # per-SP setting
@@ -560,7 +564,7 @@ class HttpSessions(object):
         if r.status_code != 200:
             raise ValueError('Failed to disable plugin [%s]' % repr(r))
 
-    def set_plugin_order(self, idp, plugtype, order=[]):
+    def set_plugin_order(self, idp, plugtype, order=None):
         """
         Set the order of the specified login stack plugin type.
 
@@ -568,6 +572,9 @@ class HttpSessions(object):
 
         order must be a list of zero or more plugin names in order
         """
+        if order is None:
+            order = []
+
         idpsrv = self.servers[idp]
         idpuri = idpsrv['baseuri']
 
