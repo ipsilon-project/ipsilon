@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
+# Copyright (C) 2014-2017 Ipsilon project Contributors, for license see COPYING
 
 from __future__ import print_function
 
@@ -8,33 +8,51 @@ __requires__ = ['sqlalchemy >= 0.8']
 import pkg_resources  # pylint: disable=unused-import
 
 import argparse
-import inspect
 from ipsilon.util import plugin
 import os
 import sys
 import subprocess
-import time
-import traceback
 from helpers.common import WRAP_HOSTNAME  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 
 
 logger = None
 
 
-class Tests(object):
+VERBOSE_SHOWTESTS = 1
+VERBOSE_SHOWCASES = 2
+VERBOSE_SHOWOUTPUT = 3
 
-    def __init__(self):
-        p = plugin.Plugins()
-        (pathname, dummy) = os.path.split(inspect.getfile(Tests))
-        self.plugins = p.get_plugins(pathname, 'IpsilonTest')
+
+TEST_RESULT_SUCCESS = 0
+TEST_RESULT_SKIP = 1
+TEST_RESULT_FAIL = 2
+TEST_RESULT_EXCEPTION = 3
+TEST_RESULT_SETUP_FAILED = 4
+
+
+def get_tests():
+    p = plugin.Plugins()
+    (pathname, _) = os.path.split(os.path.realpath(__file__))
+    return p.get_plugins(pathname, 'IpsilonTest')
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Ipsilon Tests Environment')
+    parser.add_argument('--results-header', default='Test results:',
+                        help='Test results header')
     parser.add_argument('--path', default='%s/testdir' % os.getcwd(),
                         help="Directory in which tests are run")
-    parser.add_argument('--test', default='test1',
-                        help="The test to run")
+    parser.add_argument('--fail-on-first-error', '-x', action='store_true',
+                        help='Abort test run on first test failure')
+    parser.add_argument('--test', action='append', default=None,
+                        help="Add a test to run")
+    parser.add_argument('--list-tests', '-L', action='store_true',
+                        help='List all available tests')
+    parser.add_argument('--no-overview', '-q', action='store_true',
+                        help='Suppress final summary')
+    parser.add_argument('--verbose', '-v', action='count',
+                        help='Increase verbosity')
     parser.add_argument('--wrappers', default='auto',
                         choices=['yes', 'no', 'auto'],
                         help="Run the tests with socket wrappers")
@@ -79,23 +97,17 @@ def try_wrappers(base, wrappers, allow_wrappers):
     return wenv
 
 
-if __name__ == '__main__':
+def run_test(testname, test, args):
+    supported = test.platform_supported()
+    if supported is not None:
+        return (TEST_RESULT_SKIP, supported)
+    if args['verbose'] <= VERBOSE_SHOWOUTPUT:
+        devnull = open(os.devnull, 'w')
+        test.stdout = devnull
+        test.stderr = devnull
 
-    args = parse_args()
-
-    tests = Tests()
-    if args['test'] not in tests.plugins:
-        print("Unknown test [%s]" % args['test'], file=sys.stderr)
-        sys.exit(1)
-    test = tests.plugins[args['test']]
-
-    if not test.platform_supported():
-        print("Test %s not supported on platform" % args['test'],
-              file=sys.stderr)
-        sys.exit(0)
-
-    if not os.path.exists(args['path']):
-        os.makedirs(args['path'])
+    if args['verbose'] >= VERBOSE_SHOWCASES:
+        test.print_cases = True
 
     test.setup_base(args['path'], test)
 
@@ -103,19 +115,92 @@ if __name__ == '__main__':
     env['PYTHONPATH'] = test.rootdir
     env['TESTDIR'] = test.testdir
 
+    results = []
+    post_setup = False
+    TC.store_results(results)
     try:
         test.setup_servers(env)
+        post_setup = True
 
-        code = test.run(env)
+        code, results = test.run(env)
         if code:
-            sys.exit(code)
+            return (TEST_RESULT_FAIL, code, results)
     except Exception as e:  # pylint: disable=broad-except
-        print("Error: %s" % repr(e), file=sys.stderr)
-        traceback.print_exc(None, sys.stderr)
-        sys.exit(1)
+        if post_setup:
+            return (TEST_RESULT_EXCEPTION, e, results)
+        else:
+            return (TEST_RESULT_SETUP_FAILED, test.current_setup_step)
     finally:
         test.wait()
 
-    # Wait until all of the sockets are closed by the OS
-    time.sleep(0.5)
-    print("FINISHED")
+    return (TEST_RESULT_SUCCESS, results)
+
+
+def result_to_str(result):
+    if result[0] == TEST_RESULT_SUCCESS:
+        return 'Test passed'
+    elif result[0] == TEST_RESULT_SKIP:
+        return 'Test skipped: %s' % result[1]
+    elif result[0] == TEST_RESULT_FAIL:
+        return 'Test failed with code %i' % result[1]
+    elif result[0] == TEST_RESULT_EXCEPTION:
+        return 'Test failed with error: %s' % repr(result[1])
+    elif result[0] == TEST_RESULT_SETUP_FAILED:
+        return 'Test setup failed at step: %s' % result[1]
+    else:
+        return 'Unknown test result %s' % result[0]
+
+
+def result_is_fail(result):
+    return result[0] not in (TEST_RESULT_SUCCESS, TEST_RESULT_SKIP)
+
+
+def main():
+    args = parse_args()
+
+    tests = get_tests()
+    if args['list_tests']:
+        for testname in tests.keys():
+            print(testname)
+        sys.exit(0)
+
+    if args['test'] is None:
+        args['test'] = tests.keys()
+    unknown_tests = False
+    for test in args['test']:
+        if test not in tests:
+            unknown_tests = True
+            print("Unknown test [%s]" % test, file=sys.stderr)
+    if unknown_tests:
+        sys.exit(1)
+    args['test'] = set(args['test'])
+
+    if not os.path.exists(args['path']):
+        os.makedirs(args['path'])
+
+    test_results = {}
+
+    for test in args['test']:
+        if args['verbose'] >= VERBOSE_SHOWTESTS:
+            print('Running test %s' % test)
+        result = run_test(test, tests[test], args)
+        test_results[test] = result
+
+        if args['verbose'] >= VERBOSE_SHOWTESTS:
+            print(result_to_str(result))
+
+        if args['fail_on_first_error'] and result_is_fail(result):
+            break
+
+    if not args['no_overview']:
+        print(args['results_header'])
+        for test in test_results:
+            print('{:15s} {}'.format(test, result_to_str(test_results[test])))
+
+    if any(result_is_fail(result)
+           for result in test_results.values()):
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

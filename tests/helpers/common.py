@@ -12,6 +12,8 @@ import random
 from string import Template
 import subprocess
 
+from control import TC  # pylint: disable=relative-import
+
 
 WRAP_HOSTNAME = 'idp.ipsilon.dev'
 TESTREALM = 'IPSILON.DEV'
@@ -81,6 +83,8 @@ class IpsilonTestBase(object):
         self.testuser = pwd.getpwuid(os.getuid())[0]
         self.processes = []
         self.allow_wrappers = allow_wrappers
+        self.current_setup_step = None
+        self.print_cases = False
         self.stdout = None
         self.stderr = None
 
@@ -89,9 +93,13 @@ class IpsilonTestBase(object):
 
         This is used for example with specific modules or features that are not
         supported on all platforms due to dependency availability.
+
+        If the platform is supported, it returns None.
+        Otherwise it returns a string indicating why the platform does not
+        support the current test.
         """
         # Every test defaults to being available on every platform
-        return True
+        return None
 
     def force_remove(self, op, name, info):
         os.chmod(name, 0700)
@@ -317,7 +325,7 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
             f.write(text)
         subprocess.check_call(['/usr/sbin/slapadd', '-f', filename, '-l',
                                'tests/ldapdata.ldif'], env=env,
-                               stdout=self.stdout, stderr=self.stderr)
+                              stdout=self.stdout, stderr=self.stderr)
 
         return filename
 
@@ -434,9 +442,40 @@ basicConstraints = CA:false""" % {'certdir': os.path.join(self.testdir,
     def setup_servers(self, env=None):
         raise NotImplementedError()
 
+    def setup_step(self, message):
+        """Method to inform setup step starting."""
+        self.current_setup_step = message
+
     def run(self, env):
+        """Method to run the test process and receive progress reports.
+
+        The test process is run in a subprocess because it needs to be run with
+        the socket and nss wrappers, which are used a LD_PRELOAD, which means
+        the environment must be set before the process starts.
+
+        The process running run() (Test Control process) communicates with the
+        Test Process by reading specially formatted strings from standard out.
+
+        All lines read from the test's stdout will be passed into TC.get_result
+        to determine whether a test result was provided.
+        """
         exe = self.execname
         if exe.endswith('c'):
             exe = exe[:-1]
-        return subprocess.call([exe], env=env,
-                               stdout=self.stdout, stderr=self.stderr)
+        return self.run_and_collect([exe], env)
+
+    def run_and_collect(self, cmd, env):
+        p = subprocess.Popen(cmd, env=env,
+                             stdout=subprocess.PIPE, stderr=self.stderr)
+        results = []
+        for line in p.stdout:
+            line = line[:-1]  # Strip newline
+            result = TC.get_result(line)
+            if result:
+                if self.print_cases:
+                    TC.output(result)
+                results.append(result)
+            else:
+                if self.stdout is None:
+                    print(line)
+        return p.wait(), results
