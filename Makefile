@@ -1,3 +1,5 @@
+.PHONY: tests
+
 RPMBUILD = $(PWD)/dist/rpmbuild
 
 all: testdeps lint pep8 test
@@ -82,7 +84,7 @@ TESTDIR := $(shell mktemp --directory /tmp/ipsilon-testdir.XXXXXXXX)
 
 tests:
 	echo "Testdir: $(TESTDIR)"
-	./runtests --path=$(TESTDIR) -vv
+	./runtests --path=$(TESTDIR)
 
 test: lp-test unittests tests
 
@@ -154,26 +156,26 @@ containers: container-centos6 container-centos7 container-fedora24 container-fed
 
 containertest-centos6: container-centos6
 	@echo "Starting CentOS 6 tests ..."
-	@docker run -v `pwd`:/code -t --rm -a stderr ipsilon-centos6 && echo "CentOS 6 passed" || echo "CentOS 6 failed (optional)"
+	@docker run -v `pwd`:/code -t --rm ipsilon-centos6 && echo "CentOS 6 passed" || echo "CentOS 6 failed (optional)"
 
 containertest-centos7: container-centos7
 	@echo "Starting CentOS 7 tests ..."
-	@docker run -v `pwd`:/code -t --rm -a stderr ipsilon-centos7
+	@docker run -v `pwd`:/code -t --rm ipsilon-centos7
 	@echo "CentOS 7 passed"
 
 containertest-fedora24: container-fedora24
 	@echo "Starting Fedora 24 tests ..."
-	@docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora24
+	@docker run -v `pwd`:/code -t --rm ipsilon-fedora24
 	@echo "Fedora 24 passed"
 
 containertest-fedora25: container-fedora25
 	@echo "Starting Fedora 25 tests ..."
-	@docker run -v `pwd`:/code -t --rm -a stderr ipsilon-fedora25
+	@docker run -v `pwd`:/code -t --rm ipsilon-fedora25
 	@echo "Fedora 25 passed"
 
 containertest-lint: container-fedora25
 	@echo "Starting code lint tests ..."
-	@docker run -v `pwd`:/code -t --rm -a stderr --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
+	@docker run -v `pwd`:/code -t --rm --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
 	@echo "Code lint tests passed"
 
 containertest: containertest-lint containertest-centos6 containertest-centos7 containertest-fedora24 containertest-fedora25
