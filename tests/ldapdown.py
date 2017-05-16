@@ -1,15 +1,13 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2015 Ipsilon project Contributors, for license see COPYING
+# Copyright (C) 2015-2017 Ipsilon project Contributors, for license see COPYING
 
 # Test that we get a reasonable error back when the LDAP backend is down
 
-from __future__ import print_function
-
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
-import sys
 from string import Template
 
 
@@ -94,24 +92,24 @@ class IpsilonTest(IpsilonTestBase):
 
     def setup_servers(self, env=None):
 
-        print("Installing IDP's ldap server")
+        self.setup_step("Installing IDP's ldap server")
         addr = '127.0.0.10'
         port = '45389'
         conf = self.setup_ldap(env)
 
-        print("Not starting IDP's ldap server")
+        self.setup_step("Not starting IDP's ldap server")
 
-        print("Installing IDP server")
+        self.setup_step("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print("Starting IDP's httpd server")
+        self.setup_step("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print("Installing SP server")
+        self.setup_step("Installing SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -119,7 +117,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print("Starting SP's httpd server")
+        self.setup_step("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -133,14 +131,9 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'tuser')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print("ldapdown: Authenticate to IDP with no LDAP backend...", end=' ')
-    try:
+    with TC.case('Authenticate to Idp with no LDAP backend'):
         sess.auth_to_idp(
             idpname,
             rule='//div[@class="alert alert-danger"]/p/text()',
             expected="Internal system error"
         )
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")

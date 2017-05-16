@@ -1,14 +1,12 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
-
-from __future__ import print_function
+# Copyright (C) 2014-2017 Ipsilon project Contributors, for license see COPYING
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
 import pwd
-import sys
 import inspect
 from string import Template
 
@@ -62,17 +60,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('openid', __file__)
 
     def setup_servers(self, env=None):
-        print("Installing IDP server")
+        self.setup_step("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print("Starting IDP's httpd server")
+        self.setup_step("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print("Installing first SP server")
+        self.setup_step("Installing first SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -81,7 +79,7 @@ class IpsilonTest(IpsilonTestBase):
             inspect.currentframe())))
         fixup_sp_httpd(os.path.dirname(conf), testdir)
 
-        print("Starting SP's httpd server")
+        self.setup_step("Starting SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -95,103 +93,56 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print("openid: Authenticate to IDP ...", end=' ')
-    try:
+    with TC.case('Authenticate to IdP'):
         sess.auth_to_idp(idpname)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Run OpenID Protocol ...", end=' ')
-    try:
+    with TC.case('Run OpenID Protocol'):
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/?extensions=NO',
                                require_consent=True)
         page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Run OpenID Protocol without consent ...", end=' ')
-    try:
+    with TC.case('Run OpenID Protocol without consent'):
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/?extensions=NO',
                                require_consent=False)
         page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Revoking SP consent ...", end=' ')
-    try:
+    with TC.case('Revoking SP consent'):
         page = sess.revoke_all_consent(idpname)
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Run OpenID Protocol without consent ...", end=' ')
-    try:
+    with TC.case('Run OpenID Protocol without consent'):
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/?extensions=NO',
                                require_consent=True)
         page.expected_value('text()', 'SUCCESS, WITHOUT EXTENSIONS')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Run OpenID Protocol with extensions ...", end=' ')
-    try:
+    with TC.case('Run OpenID PRotocol with extensions'):
         # We expect consent again because we added more attributes
         page = sess.fetch_page(idpname,
                                'https://127.0.0.11:45081/?extensions=YES',
                                require_consent=True)
         page.expected_value('text()', 'SUCCESS, WITH EXTENSIONS')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("openid: Set IDP authz stack to deny ...", end=' ')
-    try:
+    with TC.case('Set IdP authz stack to deny'):
         sess.disable_plugin(idpname, 'authz', 'allow')
         sess.enable_plugin(idpname, 'authz', 'deny')
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
     sess2 = HttpSessions()
     sess2.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess2.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print("openid: Run OpenID Protocol with IDP deny, with pre-auth ...",
-          end=' ')
-    try:
+    with TC.case('Run OpenID Protocol with IdP deny, with pre-auth'):
         sess2.auth_to_idp(idpname)
         page = sess2.fetch_page(idpname,
                                 'https://127.0.0.11:45081/?extensions=NO')
         page.expected_value('text()', 'ERROR: Cancelled')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
     sess3 = HttpSessions()
     sess3.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess3.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print("openid: Run OpenID Protocol with IDP deny, without pre-auth ...",
-          end=' ')
-    try:
+    with TC.case('Run OpenID Protocol with IdP deny, without pre-auth'):
         page = sess3.fetch_page(idpname,
                                 'https://127.0.0.11:45081/?extensions=NO')
         page.expected_value('text()', 'ERROR: Cancelled')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")

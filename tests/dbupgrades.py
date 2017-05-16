@@ -1,10 +1,9 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
-
-from __future__ import print_function
+# Copyright (C) 2014-2017 Ipsilon project Contributors, for license see COPYING
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
 import pwd
@@ -49,11 +48,10 @@ class IpsilonTest(IpsilonTestBase):
             db_name = 'adminconfig'
         test_db = os.path.join(db_outdir, '%s.sqlite' % db_name)
         p = subprocess.Popen(['/usr/bin/sqlite3', test_db, '.dump'],
-                             stdout=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=self.stderr)
         output, _ = p.communicate()
         if p.returncode:
-            print('Sqlite dump failed')
-            sys.exit(1)
+            TC.fail('Sqlite dump failed')
         return output
 
     def use_readonly_adminconfig(self, name):
@@ -75,7 +73,7 @@ class IpsilonTest(IpsilonTestBase):
 
     def test_upgrade_from(self, env, old_version, with_readonly):
         # Setup IDP Server
-        print("Installing IDP server to test upgrade from %i" % old_version)
+        TC.info("Installing IDP server to test upgrade from %i" % old_version)
         name = 'idp_v%i' % old_version
         if with_readonly:
             name = name + '_readonly'
@@ -105,7 +103,9 @@ class IpsilonTest(IpsilonTestBase):
                 if database not in ['adminconfig',
                                     'openid'] or not with_readonly:
                     cmd = ['/usr/bin/sqlite3', db_out, '.read %s' % db_in]
-                    subprocess.check_call(cmd)
+                    subprocess.check_call(cmd,
+                                          stdout=self.stdout,
+                                          stderr=self.stderr)
 
             # Upgrade that database
             cmd = [os.path.join(self.rootdir,
@@ -113,7 +113,8 @@ class IpsilonTest(IpsilonTestBase):
                    cfgfile]
             subprocess.check_call(cmd,
                                   cwd=os.path.join(self.testdir, 'lib', name),
-                                  env=env)
+                                  env=env,
+                                  stdout=self.stdout, stderr=self.stderr)
 
         # Check some version-specific changes, to see if the upgrade went OK
         if old_version == 0:
@@ -156,18 +157,29 @@ class IpsilonTest(IpsilonTestBase):
             exe.append('no-readonly')
         exe.append(name)
         exe.append('%s:%s' % (addr, port))
-        exit_code = subprocess.call(exe, env=env)
-        if exit_code:
-            sys.exit(exit_code)
+        result = self.run_and_collect(exe, env=env)
 
         # Now kill the last http server
         os.killpg(http_server.pid, signal.SIGTERM)
         self.processes.remove(http_server)
 
+        return result
+
     def run(self, env):
+        overall_exit_code = 0
+        overall_results = []
+
         for version in range(ipsilon.util.data.CURRENT_SCHEMA_VERSION):
             for with_readonly in [True, False]:
-                self.test_upgrade_from(env, version, with_readonly)
+                exit_code, results = self.test_upgrade_from(env,
+                                                            version,
+                                                            with_readonly)
+
+            if exit_code != 0:
+                overall_exit_code = 1
+            overall_results.extend(results)
+
+        return overall_exit_code, overall_results
 
 
 if __name__ == '__main__':
@@ -182,12 +194,5 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://%s' % url, user,
                     'ipsilon')
 
-    print("dbupgrades: From v%s %s: Authenticate to IDP ..." % (from_version,
-                                                                with_ro),
-          end=' ')
-    try:
+    with TC.case('From v%s %s: Authenticate to IdP' % (from_version, with_ro)):
         sess.auth_to_idp(idpname)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")

@@ -1,14 +1,12 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2016 Ipsilon project Contributors, for license see COPYING
-
-from __future__ import print_function
+# Copyright (C) 2016-2017 Ipsilon project Contributors, for license see COPYING
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import os
 import pwd
-import sys
 from string import Template
 
 idp_g = {'TEMPLATES': '${TESTDIR}/templates/install',
@@ -93,17 +91,17 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('authz', __file__)
 
     def setup_servers(self, env=None):
-        print("Installing IDP server")
+        self.setup_step("Installing IDP server")
         name = 'idp1'
         addr = '127.0.0.10'
         port = '45080'
         idp = self.generate_profile(idp_g, idp_a, name, addr, port)
         conf = self.setup_idp_server(idp, name, addr, port, env)
 
-        print("Starting IDP's httpd server")
+        self.setup_step("Starting IDP's httpd server")
         self.start_http_server(conf, env)
 
-        print("Installing first SP server")
+        self.setup_step("Installing first SP server")
         name = 'sp1'
         addr = '127.0.0.11'
         port = '45081'
@@ -111,10 +109,10 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print("Starting first SP's httpd server")
+        self.setup_step("Starting first SP's httpd server")
         self.start_http_server(conf, env)
 
-        print("Installing second SP server")
+        self.setup_step("Installing second SP server")
         name = 'sp2'
         addr = '127.0.0.12'
         port = '45082'
@@ -122,7 +120,7 @@ class IpsilonTest(IpsilonTestBase):
         conf = self.setup_sp_server(sp, name, addr, port, env)
         fixup_sp_httpd(os.path.dirname(conf))
 
-        print("Starting second SP's httpd server")
+        self.setup_step("Starting second SP's httpd server")
         self.start_http_server(conf, env)
 
 
@@ -138,107 +136,56 @@ if __name__ == '__main__':
     sess.add_server(sp1name, 'https://127.0.0.11:45081')
     sess.add_server(sp2name, 'https://127.0.0.12:45082')
 
-    print("authz: Authenticate to IDP ...", end=' ')
-    try:
+    with TC.case('Authenticate to IdP'):
         sess.auth_to_idp(idpname)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Add SP1 Metadata to IDP ...", end=' ')
-    try:
+    with TC.case('Add SP1 Metadata to IdP'):
         sess.add_sp_metadata(idpname, sp1name)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Add SP2 Metadata to IDP ...", end=' ')
-    try:
+    with TC.case('Add SP2 Metadata to IdP'):
         sess.add_sp_metadata(idpname, sp2name)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Access SP1 when authz stack set to allow ...", end=' ')
-    try:
+    with TC.case('Access SP1 when authz stack set to allow'):
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Set IDP authz stack to deny ...", end=' ')
-    try:
+    with TC.case('Set IdP authz stack to deny'):
         sess.disable_plugin(idpname, 'authz', 'allow')
         sess.enable_plugin(idpname, 'authz', 'deny')
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
     sess2 = HttpSessions()
     sess2.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess2.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print("authz: Fail access SP1 when authz stack set to deny, with "
-          "pre-auth ...", end=' ')
-    try:
+    with TC.case('Fail access to SP1 when authz stack set to deny, with '
+                 'pre-auth'):
         sess2.auth_to_idp(idpname)
         page = sess2.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_status(401)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
     sess3 = HttpSessions()
     sess3.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess3.add_server(sp1name, 'https://127.0.0.11:45081')
 
-    print("authz: Fail access SP1 when authz stack set to deny, without "
-          "pre-auth ...", end=' ')
-    try:
+    with TC.case('Fail access to SP1 with authz stack set to deny, without '
+                 'pre-auth'):
         page = sess3.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_status(401)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Set IDP authz stack to spgroup ...", end=' ')
-    try:
+    with TC.case('Set IdP authz stack to spgroup'):
         sess.disable_plugin(idpname, 'authz', 'deny')
         sess.enable_plugin(idpname, 'authz', 'spgroup')
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
     sess4 = HttpSessions()
     sess4.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess4.add_server(sp1name, 'https://127.0.0.11:45081')
     sess4.add_server(sp2name, 'https://127.0.0.12:45082')
 
-    print("authz: Access SP1 when authz stack set to spgroup ...", end=' ')
-    try:
+    with TC.case('Access SP1 with authz stack set to spgroup'):
         sess4.auth_to_idp(idpname)
         page = sess4.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("authz: Fail to access SP2 when authz stack set to spgroup ...",
-          end=' ')
-    try:
+    with TC.case('Fail to access SP2 with authz stack set to spgroup'):
         page = sess4.fetch_page(idpname, 'https://127.0.0.12:45082/sp/')
         page.expected_status(401)
-    except Exception as e:  # pylint: disable=broad-except
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")

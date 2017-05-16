@@ -1,15 +1,13 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2014 Ipsilon project Contributors, for license see COPYING
-
-from __future__ import print_function
+# Copyright (C) 2014-2017 Ipsilon project Contributors, for license see COPYING
 
 from helpers.common import IpsilonTestBase  # pylint: disable=relative-import
+from helpers.control import TC  # pylint: disable=relative-import
 from helpers.http import HttpSessions  # pylint: disable=relative-import
 import ConfigParser
 import os
 import pwd
-import sys
 from string import Template
 import subprocess
 import uuid
@@ -141,30 +139,31 @@ class IpsilonTest(IpsilonTestBase):
         super(IpsilonTest, self).__init__('fconf', __file__)
 
     def setup_servers(self, env=None):
-        print("Installing IDP server")
+        self.setup_step("Installing IDP server")
         idp = self.generate_profile(idp_g, idp_a, idpname, idpaddr, idpport)
         idpconf = self.setup_idp_server(idp, idpname, idpaddr, idpport, env)
 
-        print("Installing SP server")
+        self.setup_step("Installing SP server")
         sp = self.generate_profile(sp_g, sp_a, spname, spaddr, spport)
         spconf = self.setup_sp_server(sp, spname, spaddr, spport, env)
         fixup_sp_httpd(os.path.dirname(spconf))
 
         fixup_idp_conf(self.testdir)
 
-        print("Testing database upgrade")
+        self.setup_step("Testing database upgrade")
         cfgfile = os.path.join(self.testdir, 'etc', idpname, 'ipsilon.conf')
         cmd = [os.path.join(self.rootdir,
                             'ipsilon/install/ipsilon-upgrade-database'),
                cfgfile]
         subprocess.check_call(cmd,
                               cwd=os.path.join(self.testdir, 'lib', idpname),
-                              env=env)
+                              env=env,
+                              stdout=self.stdout, stderr=self.stderr)
 
-        print("Starting IDP's httpd server")
+        self.setup_step("Starting IDP's httpd server")
         self.start_http_server(idpconf, env)
 
-        print("Starting SP's httpd server")
+        self.setup_step("Starting SP's httpd server")
         self.start_http_server(spconf, env)
 
 
@@ -176,20 +175,10 @@ if __name__ == '__main__':
     sess.add_server(idpname, 'https://127.0.0.10:45080', user, 'ipsilon')
     sess.add_server(spname, 'https://127.0.0.11:45081')
 
-    print("fconf: Access IdP Homepage ... ", end=' ')
-    try:
+    with TC.case('Access IdP homepage'):
         page = sess.fetch_page(idpname, 'https://127.0.0.10:45080/idp1/')
         page.expected_value('//title/text()', 'Ipsilon')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
 
-    print("fconf: Access SP Protected Area ...", end=' ')
-    try:
+    with TC.case('Access SP protected area'):
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
-    except ValueError as e:
-        print(" ERROR: %s" % repr(e), file=sys.stderr)
-        sys.exit(1)
-    print(" SUCCESS")
