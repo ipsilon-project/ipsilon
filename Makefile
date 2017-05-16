@@ -78,36 +78,11 @@ lp-test:
 		   ./tests
 	pep8 --ignore=E121,E123,E126,E226,E24,E704,E402 tests
 
-wrappers:
-	#rm -fr wrapdir
-	#mkdir wrapdir
-	#LD_PRELOAD=libsocket_wrapper.so
-	#SOCKET_WRAPPER_DIR=wrapdir
-	#SOCKET_WRAPPER_DEFAULT_IFACE=9
-
 TESTDIR := $(shell mktemp --directory /tmp/ipsilon-testdir.XXXXXXXX)
 
-tests: wrappers
+tests:
 	echo "Testdir: $(TESTDIR)"
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=test1
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testroot
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testlogout
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testnameid
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testrest
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testmapping
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testgssapi
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=attrs
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=trans
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=pgdb
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testetcd
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=fconf
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldap
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=ldapdown
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openid
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=openidc
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=authz
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=dbupgrades
-	PYTHONPATH=./ ./tests/tests.py --path=$(TESTDIR) --test=testcleanup
+	./runtests --path=$(TESTDIR) -vv
 
 test: lp-test unittests tests
 
