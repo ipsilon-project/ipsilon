@@ -206,7 +206,7 @@ class OpenIDCStore(Store):
         if not token['refreshable']:
             return None
 
-        if token['refreshable_until'] and \
+        if token.get('refreshable_until') and \
                 token['refreshable_until'] >= int(time.time()):
             return None
 
