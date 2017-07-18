@@ -157,6 +157,22 @@ if __name__ == '__main__':
     with TC.case('Add first SP metadata to IDP'):
         sess.add_sp_metadata(idpname, sp1name)
 
+    with TC.case('Make sure we send no RelayState if none was requested'):
+        page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/',
+                               follow_redirect=1)
+        # Cut off the RelayState
+        target = page.result.headers['Location']
+        target = target[:target.find('&RelayState=')]
+        page = sess.fetch_page(idpname, target, post_forms=False)
+        data = sess.get_form_data(page, 'saml-response', ['name', 'value'])
+        if data[0] != 'https://127.0.0.11:45081/saml2/postResponse':
+            TC.fail('Incorrect form found')
+        if 'RelayState' in data[2]:
+            TC.fail('RelayState found in response form')
+        if len(data[3]) > 1 and data[3][1] == 'None':
+            TC.fail('RelayState of None sent')
+        # Note that at this point, we have not actually submitted the response
+
     with TC.case('Access first AP protected area'):
         page = sess.fetch_page(idpname, 'https://127.0.0.11:45081/sp/')
         page.expected_value('text()', 'WORKS!')
