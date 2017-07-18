@@ -380,13 +380,14 @@ class AuthenticateRequest(ProviderPageBase):
         elif login.protocolProfile == lasso.LOGIN_PROTOCOL_PROFILE_BRWS_POST:
             login.buildAuthnResponseMsg()
             self.debug('POSTing back to SP [%s]' % (login.msgUrl))
+            fields = [[lasso.SAML2_FIELD_RESPONSE, login.msgBody]]
+            if login.msgRelayState is not None:
+                fields.append([lasso.SAML2_FIELD_RELAYSTATE,
+                               login.msgRelayState])
             context = {
                 "title": 'Redirecting back to the web application',
                 "action": login.msgUrl,
-                "fields": [
-                    [lasso.SAML2_FIELD_RESPONSE, login.msgBody],
-                    [lasso.SAML2_FIELD_RELAYSTATE, login.msgRelayState],
-                ],
+                "fields": fields,
                 "submit": 'Return to application',
             }
             return self._template('saml2/post_response.html', **context)
