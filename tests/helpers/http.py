@@ -269,7 +269,7 @@ class HttpSessions(object):
         return ['post', url, {'data': params}]
 
     def fetch_page(self, idp, target_url, follow_redirect=True, krb=False,
-                   require_consent=None, return_prefix=None):
+                   require_consent=None, return_prefix=None, post_forms=True):
         """
         Fetch a page and parse the response code to determine what to do
         next.
@@ -289,7 +289,12 @@ class HttpSessions(object):
         action = 'get'
         args = {}
         seen_consent = False
+        redirects = 0
         r = None
+
+        if follow_redirect is True:
+            # Just make sure we get to an end at some point
+            follow_redirect = 50
 
         while True:
             if return_prefix and url.startswith(return_prefix):
@@ -299,8 +304,9 @@ class HttpSessions(object):
                     return None
             r = self.access(action, url, krb=krb, **args)
             if r.status_code == 303 or r.status_code == 302:
-                if not follow_redirect:
+                if follow_redirect is False or redirects >= follow_redirect:
                     return PageTree(r)
+                redirects += 1
                 url = r.headers['location']
                 action = 'get'
                 args = {}
@@ -311,41 +317,48 @@ class HttpSessions(object):
 
                 # Fall back, hopefully to testauth authentication.
                 try:
-                    (action, url, args) = self.handle_login_form(idp, page)
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_login_form(idp, page)
+                        continue
                 except WrongPage:
                     pass
             elif r.status_code == 200:
                 page = PageTree(r)
 
                 try:
-                    (action, url, args) = self.handle_login_form(idp, page)
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_login_form(idp, page)
+                        continue
                 except WrongPage:
                     pass
 
                 try:
-                    (action, url, args) = self.handle_return_form(page)
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_return_form(page)
+                        continue
                 except WrongPage:
                     pass
 
                 try:
-                    (action, url, args) = self.handle_openid_consent_form(page)
-                    seen_consent = True
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_openid_consent_form(
+                            page)
+                        seen_consent = True
+                        continue
                 except WrongPage:
                     pass
 
                 try:
-                    (action, url, args) = self.handle_openid_form(page)
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_openid_form(page)
+                        continue
                 except WrongPage:
                     pass
 
                 try:
-                    (action, url, args) = self.handle_openidc_form(page)
-                    continue
+                    if post_forms:
+                        (action, url, args) = self.handle_openidc_form(page)
+                        continue
                 except WrongPage:
                     pass
 
