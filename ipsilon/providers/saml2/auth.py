@@ -341,6 +341,9 @@ class AuthenticateRequest(ProviderPageBase):
             attr.attributeValue = []
             vals = []
             for value in values:
+                if value is None:
+                    self.log('Ignoring None value for attribute %s' % key)
+                    continue
                 self.debug('value %s' % value)
                 node = lasso.MiscTextNode.newWithString(value)
                 node.textChild = True
