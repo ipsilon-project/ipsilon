@@ -514,7 +514,7 @@ class Installer(ProviderInstaller):
         # Check storage path is present or create it
         path = os.path.join(opts['data_dir'], 'saml2')
         if not os.path.exists(path):
-            os.makedirs(path, 0700)
+            os.makedirs(path, 0o700)
 
         # Use the same cert for signing and ecnryption for now
         cert = Certificate(path)

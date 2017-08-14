@@ -5,7 +5,7 @@ import pwd
 from string import Template
 
 
-def fix_user_dirs(path, user=None, mode=0700):
+def fix_user_dirs(path, user=None, mode=0o700):
     pw = None
     if user:
         pw = pwd.getpwnam(user)
@@ -15,7 +15,7 @@ def fix_user_dirs(path, user=None, mode=0700):
             target = os.path.join(root, name)
             if pw:
                 os.chown(target, pw.pw_uid, pw.pw_gid)
-            os.chmod(target, mode & 0666)
+            os.chmod(target, mode & 0o666)
         if pw:
             os.chown(root, pw.pw_uid, pw.pw_gid)
         os.chmod(root, mode)

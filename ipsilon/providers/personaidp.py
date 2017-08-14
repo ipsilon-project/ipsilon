@@ -98,7 +98,7 @@ class Installer(ProviderInstaller):
         # Check storage path is present or create it
         path = os.path.join(opts['data_dir'], 'persona')
         if not os.path.exists(path):
-            os.makedirs(path, 0700)
+            os.makedirs(path, 0o700)
 
         keyfile = os.path.join(path, 'persona.key')
         exponent = 0x10001
