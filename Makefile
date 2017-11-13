@@ -141,17 +141,17 @@ container-centos7:
 	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-centos tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/centos:7/' | docker build -f - -q -t ipsilon-centos7 -
 	@echo "CentOS 7 container built"
 
-container-fedora24:
-	@echo "Building Fedora 24 container ..."
-	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:24/' | docker build -f - -q -t ipsilon-fedora24 -
-	@echo "Fedora 24 container built"
+container-fedora26:
+	@echo "Building Fedora 26 container ..."
+	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:26/' | docker build -f - -q -t ipsilon-fedora26 -
+	@echo "Fedora 26 container built"
 
-container-fedora25:
-	@echo "Building Fedora 25 container ..."
-	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:25/' | docker build -f - -q -t ipsilon-fedora25 -
-	@echo "Fedora 25 container built"
+container-fedora27:
+	@echo "Building Fedora 27 container ..."
+	@(cat tests/containers/Dockerfile-base tests/containers/Dockerfile-fedora tests/containers/Dockerfile-rpm; echo "USER testuser") | sed -e 's/BASE/fedora:27/' | docker build -f - -q -t ipsilon-fedora27 -
+	@echo "Fedora 27 container built"
 
-containers: container-centos6 container-centos7 container-fedora24 container-fedora25
+containers: container-centos6 container-centos7 container-fedora26 container-fedora27
 	@echo "Containers built"
 
 containertest-centos6: container-centos6
@@ -163,20 +163,20 @@ containertest-centos7: container-centos7
 	@docker run -v `pwd`:/code -t --rm ipsilon-centos7
 	@echo "CentOS 7 passed"
 
-containertest-fedora24: container-fedora24
-	@echo "Starting Fedora 24 tests ..."
-	@docker run -v `pwd`:/code -t --rm ipsilon-fedora24
-	@echo "Fedora 24 passed"
+containertest-fedora26: container-fedora26
+	@echo "Starting Fedora 26 tests ..."
+	@docker run -v `pwd`:/code -t --rm ipsilon-fedora26
+	@echo "Fedora 26 passed"
 
-containertest-fedora25: container-fedora25
-	@echo "Starting Fedora 25 tests ..."
-	@docker run -v `pwd`:/code -t --rm ipsilon-fedora25
-	@echo "Fedora 25 passed"
+containertest-fedora27: container-fedora27
+	@echo "Starting Fedora 27 tests ..."
+	@docker run -v `pwd`:/code -t --rm ipsilon-fedora27
+	@echo "Fedora 27 passed"
 
-containertest-lint: container-fedora25
+containertest-lint: container-fedora27
 	@echo "Starting code lint tests ..."
-	@docker run -v `pwd`:/code -t --rm --entrypoint /usr/bin/make ipsilon-fedora25 lint pep8
+	@docker run -v `pwd`:/code -t --rm --entrypoint /usr/bin/make ipsilon-fedora27 lint pep8
 	@echo "Code lint tests passed"
 
-containertest: containertest-lint containertest-centos6 containertest-centos7 containertest-fedora24 containertest-fedora25
+containertest: containertest-lint containertest-centos6 containertest-centos7 containertest-fedora26 containertest-fedora27
 	@echo "Container tests passed"
