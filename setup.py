@@ -23,7 +23,7 @@ class TestCommand(Command):
 
 setup(
     name='ipsilon',
-    version='2.0.2',
+    version='2.1.0',
     license='GPLv3+',
     maintainer='Ipsilon project Contributors',
     maintainer_email='ipsilon@lists.fedorahosted.org',
