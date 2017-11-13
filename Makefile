@@ -8,7 +8,7 @@ all: testdeps lint pep8 test
 testdeps:
 	# Determine if test deps are installed
 	# First, some binaries
-	which pylint
+	which pylint-2
 	which pep8
 	which httpd
 	which postgres
@@ -39,10 +39,10 @@ testdeps:
 lint:
 	# Analyze code
 	# don't show recommendations, info, comments, report
-	# W0613 - unused argument
+        # W0613 - unused argument
 	# Ignore cherrypy class members as they are dynamically added
 	# Ignore IPA API class members as they are dynamically added
-	pylint -d c,r,i,W0613 -r n -f colorized \
+	pylint-2 -d c,r,i,W0613 -r n -f colorized \
 		   --notes= \
 		   --ignored-classes=cherrypy,API \
 		   --disable=star-args \
@@ -73,7 +73,7 @@ cscope:
 	git ls-files | xargs pycscope
 
 lp-test:
-	pylint -d c,r,i,W0613 -r n -f colorized \
+	pylint-2 -d c,r,i,W0613 -r n -f colorized \
 		   --notes= \
 		   --ignored-classes=cherrypy \
 		   --disable=star-args \
@@ -173,9 +173,9 @@ containertest-fedora27: container-fedora27
 	@docker run -v `pwd`:/code -t --rm ipsilon-fedora27
 	@echo "Fedora 27 passed"
 
-containertest-lint: container-fedora27
+containertest-lint: container-centos7
 	@echo "Starting code lint tests ..."
-	@docker run -v `pwd`:/code -t --rm --entrypoint /usr/bin/make ipsilon-fedora27 lint pep8
+	@docker run -v `pwd`:/code -t --rm --entrypoint /usr/bin/make ipsilon-centos7 lint pep8
 	@echo "Code lint tests passed"
 
 containertest: containertest-lint containertest-centos6 containertest-centos7 containertest-fedora26 containertest-fedora27

@@ -2,7 +2,7 @@ RUN yum update -y \
     && yum install -y which
 # This should be kept in sync with the develop page on the website.
 # Distro-specific packages should go in the distro sub-dockerfiles.
-RUN yum install -y make pylint python-pep8 python-openid python-openid-teams \
+RUN yum install -y make python2-pylint python-pep8 python-openid python-openid-teams \
         python-openid-cla python-cherrypy m2crypto lasso-python \
         python-sqlalchemy python-ldap python-pam python-fedora \
         freeipa-python httpd mod_auth_mellon postgresql-server \
